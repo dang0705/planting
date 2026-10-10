@@ -1,0 +1,219 @@
+{
+  "ticket": "z8v0kmvgab 三轴筛选改表（由 z8v0kmuqv6 D8 触发）",
+  "capturedAt": "2026-10-10",
+  "status": "IMPLEMENTED_LOCAL_ONLY",
+  "statusNote": "迁移 031、幂等回填 CLI、repository 改读预计算索引均已完成；本机 Docker 25 万株规模典型组合中位数 16–67 ms；全量 vitest 0 失败。未在云端执行 DDL/回填，未部署、未提交。",
+  "mysqlVersion": {
+    "testDb": "8.0.30-cynos-3.1.16.003（只读 SELECT VERSION()）",
+    "innodbBufferPool": "268435456（256 MiB）",
+    "rowFormat": "dynamic",
+    "multiValuedIndexAvailable": "是（8.0.17+ 支持 CAST(... AS CHAR(64) ARRAY) 与 JSON_OVERLAPS/MEMBER OF）"
+  },
+  "optionComparison": {
+    "multiValuedIndex": {
+      "writeAmplification": "在 75 万行结果表上加多值索引（含其他三轴与旧版本行），每个数组元素一条索引项（约 120 万+）；需对外部表 ALTER（该表由 Tropicals/抽取流程拥有，v2 只读，越权）",
+      "backfill": "ALTER 在线重建全表，256 MiB 缓冲池下预计数分钟到数十分钟，期间写放大与锁元数据风险",
+      "newBatch": "新 extraction_version 行写入即自动进索引，无需刷新",
+      "queryPlan": "只能加速单轴「含某值」的取行；按 taxon_id 排序 + 游标需要先取全部命中再文件排序（ELLIPTIC 约 16.7 万行），跨轴 AND 需多次回表或 EXISTS，且仍需联表判可搜索；MySQL 不对多值索引做 index merge 交集，大结果集无法提前停止",
+      "verdict": "不推荐"
+    },
+    "precomputedTable": {
+      "writeAmplification": "每份 visualAxisSources 一份条目表：约 25 万行 × 窄行（taxon + 3 个 BIGINT 掩码），覆盖索引两份；不改任何外部表",
+      "backfill": "离线分批（按百科 id 区间，每批一事务：先删后写 + 推进断点），幂等、可续跑；本机 Docker 25 万株 13.0 秒",
+      "newBatch": "新抽取版本 → 新 source_key → 新建一份索引，旧份保留供策略回滚；切换前必须先回填就绪（未就绪 503）",
+      "queryPlan": "按覆盖索引 (filter_set_id, taxon_id, 掩码…) 顺序只扫索引，位与判断同轴 OR / 跨轴 AND，命中行再按主键联百科、按 taxon 联可搜索目录，凑满 limit+1 即停；无文件排序，游标为索引区间续扫",
+      "verdict": "推荐（已实现）"
+    }
+  },
+  "files": {
+    "migration": "docs/backend-v2/schema/031_plant_visual_filter_index.sql（3 张新表：plant_visual_filter_sets / _value_bits / _entries；manifest 第 30 位）",
+    "backfill": [
+      "cloudfunctions-v2/src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+      "cloudfunctions-v2/src/plant-knowledge/visual-filter-index/visual-filter-index-cli.ts",
+      "cloudfunctions-v2/src/entries/visual-filter-index-cli.ts",
+      "cloudfunctions-v2/scripts/visual-filter-index.mjs（启动器，同 policy-release.mjs 模式）"
+    ],
+    "domain": "cloudfunctions-v2/src/plant-knowledge/domain/visual-filter-index.ts（source_key、位分配、掩码）",
+    "repository": "mysql-plant-visual-axis-repository.ts：filterPlants 改读索引（STRAIGHT_JOIN + FORCE INDEX idx_visual_filter_entry_scan），新增 readReadyFilterSet / readValueBits；结果项三轴取值仍按唯一键回查结果表",
+    "application": "filter-plants-by-visual-axes.ts：source_key → 已就绪索引；未就绪或位表缺值 → 503",
+    "contract": "plant-visual-axis-filter.md v1 修订 1（数据来源增索引表、错误表增「索引未就绪/过期 503」、性能节更新；参数/语义/DTO 不变）；contract-registry 哈希已更新",
+    "docs": [
+      "docs/backend-v2/data/v2-data-dictionary.md 新增 031 三表说明（data manifest 哈希同步）",
+      "docs/backend-v2/data/table-ownership.md",
+      "docs/backend-v2/architecture/configuration-rollout-2026-10-10.md 4.3 增 031 + 回填前置"
+    ]
+  },
+  "tddPath": {
+    "classicRed": [
+      "L1 test/plant-knowledge/visual-filter-index.spec.ts 与 L3 fake 文件级失败（模块不存在）",
+      "补纯规则模块后 fake 层 9 条断言失败（主查询未读索引、未就绪 503 等）",
+      "Docker：e2e 依赖回填模块，实现前不可运行"
+    ],
+    "green": "fake 143/143（plant-knowledge）；Docker 语义 15/15；Docker 规模 6/6；全量 312 文件 / 3377 通过 / 5 跳过 / 0 失败；typecheck 0；oxlint 0 errors",
+    "counterfactualRed": [
+      {
+        "mutation": "I1 排序改用百科表 taxon_id（失去索引顺序，退化为全量排序）",
+        "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+        "failedTests": [
+          "三轴筛选 25 万株规模（预计算索引） 单轴常见值 ELLIPTIC：首页与结果表直查一致，3 次中位数 < 1 秒"
+        ]
+      },
+      {
+        "mutation": "I2 去掉可搜索过滤",
+        "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+        "failedTests": [
+          "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+          "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+          "三轴筛选真实 MySQL → HTTP 不可搜索目录植物不返回"
+        ]
+      },
+      {
+        "mutation": "I3 读取未就绪（building）索引",
+        "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+        "failedTests": [
+          "三轴筛选真实 MySQL → HTTP 中断后续跑：回到构建中并截掉后半，再次回填得到与首次完全相同的条目",
+          "visual-filter 策略快照 按策略 visualAxisSources 的 source_key 定位已就绪索引（三轴均 visual-axis-all-v1），主查询只读该索引"
+        ]
+      },
+      {
+        "mutation": "I4 回填不按 extraction_version 过滤",
+        "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+        "failedTests": [
+          "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+          "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+          "三轴筛选真实 MySQL → HTTP UNKNOWN、CONFLICT、非数组、其他版本行都不命中；目录外代码不影响同行合法代码"
+        ]
+      },
+      {
+        "mutation": "I6 跨轴 AND 变成只看第一轴",
+        "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+        "failedTests": [
+          "三轴筛选真实 MySQL → HTTP 跨轴 AND：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+          "三轴筛选真实 MySQL → HTTP 三轴 AND + 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序"
+        ]
+      },
+      {
+        "mutation": "I5 回填批内不先删旧条目",
+        "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+        "failedTests": [
+          "三轴筛选真实 MySQL → HTTP 中断后续跑：断点落在半写入批次中，再次回填得到与首次完全相同的条目"
+        ],
+        "note": "首轮未变红：续跑用例的断点恰在批次边界；加强为「断点落在半写入批次中」后重跑变红"
+      }
+    ],
+    "expectedAdjustments": [
+      "fake 夹具新增索引批次 / 值位表分派，主查询识别片段改为 ORDER BY f.taxon_id；去重用例由「JSON 参数」改为「掩码 3」，版本绑定用例改为「source_key 定位已就绪索引」——Expected（去重、只用 all-v1）不变，只是假数据库边界随实现改写",
+      "p1-total-ddl 增 031 约束断言"
+    ]
+  },
+  "tests": [
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/visual-filter-index.spec.ts",
+      "layer": "L1",
+      "marker": "unit_fake",
+      "cases": 5
+    },
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/filter-plants-by-visual-axes.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "added": [
+        "source_key 定位已就绪索引",
+        "未就绪 503",
+        "位表过期 503"
+      ]
+    },
+    {
+      "file": "cloudfunctions-v2/test/e2e/plant-visual-axis-filter.mysql.spec.ts",
+      "layer": "L3",
+      "marker": "unit_real_data（Docker，执行真实 031 + 真实回填，批大小 37 跨批）",
+      "cases": 15,
+      "added": [
+        "一次建成就绪且收录数 = 独立期望 120",
+        "重跑幂等",
+        "断点落在半写入批次中续跑结果逐行相同",
+        "构建中 503",
+        "策略指向未构建版本 503"
+      ]
+    },
+    {
+      "file": "cloudfunctions-v2/test/e2e/plant-visual-axis-filter-scale.mysql.spec.ts",
+      "layer": "L3",
+      "marker": "unit_real_data（Docker，缓冲池 256 MiB，25 万株、约 52.5 万结果行）",
+      "cases": 6,
+      "covers": [
+        "5 个典型组合首页与结果表直查逐项一致",
+        "3 次中位数 < 1 秒",
+        "跨 5 页与直查逐页一致无重复"
+      ]
+    }
+  ],
+  "timing_docker_250k": {
+    "backfillMs": 12977,
+    "combos": [
+      {
+        "label": "跨轴稀有组合 HEART × VINING",
+        "runsMs": [
+          43,
+          17,
+          19
+        ],
+        "medianMs": 19
+      },
+      {
+        "label": "单轴常见值 ELLIPTIC",
+        "runsMs": [
+          21,
+          25,
+          14
+        ],
+        "medianMs": 21
+      },
+      {
+        "label": "三轴组合 + 同轴 OR",
+        "runsMs": [
+          21,
+          16,
+          25
+        ],
+        "medianMs": 21
+      },
+      {
+        "label": "极稀有值 FIDDLE × ROSETTE（接近全索引扫描）",
+        "runsMs": [
+          83,
+          67,
+          66
+        ],
+        "medianMs": 67
+      },
+      {
+        "label": "深页游标（taxon 中段续扫）",
+        "runsMs": [
+          22,
+          16,
+          16
+        ],
+        "medianMs": 16
+      }
+    ],
+    "note": "端到端 HTTP 计时（本机），不含 CloudBase 网络往返与冷启动"
+  },
+  "cloudExecutionPlan": {
+    "authorizationSteps": [
+      "1. 授权在 qinghuazhi_v2_test 执行 031（只新建 3 张表；可经 CloudBase MCP manageMysqlDatabase 逐条执行或 DBA 客户端）；执行后用 information_schema 读回三表与索引。预计 < 10 秒",
+      "2. 授权运行回填：本机或受控环境设置 V2_MYSQL_* 指向测试库（需能直连测试库 MySQL；若只有 MCP RunSql 通道则 BLOCKED，需开放直连或改用一次性受控函数），先 dry-run：node scripts/visual-filter-index.mjs build --release models/policy-releases/plant-knowledge.public_search.v2.release.json --batch-size 5000，确认 sourceKey 与预计批数（约 55 批）",
+      "3. 授权 --apply 正式回填。预计 2–6 分钟（推算：测试库 256 MiB 缓冲池，单轴 23.7 万行回表扫描实测 17.6 秒；回填需按区间读约 75 万结果行 + 27 万百科行并写约 24 万条目；Docker 同规模 13 秒）；中断可直接重跑续建",
+      "4. 只读核对：plant_visual_filter_sets.status='ready'、plant_count；抽样对照结果表直查",
+      "5. 授权部署新 plant-knowledge 代码（含三轴筛选与索引读取）",
+      "6. 授权 activate plant-knowledge/public_search v2（--expect-current plant-knowledge-public-search/v1.0.0）；再对测试环境四个组合做 e2e_real_api 计时"
+    ],
+    "rollback": "三轴接口在索引缺失/未就绪时 503，其余接口不受影响；需撤下时 DBA 另行批准删除 031 三表"
+  },
+  "notCovered": [
+    "云端 DDL 与回填未执行；测试库真实延迟待步骤 6 实测",
+    "回填 --batch-size 为运维 CLI 参数（必填、代码上限 20000），未登记配置目录，需主代理裁决是否登记",
+    "plant_search_documents.is_searchable 变化不需重建索引（查询时实时联表）；百科 taxon_id 变更需重建索引（外部表合同通知条件）",
+    "旧索引批次清理流程（按删除证据规则另行处理）"
+  ]
+}

@@ -27,10 +27,12 @@ import {
   type VisualAxisParameter,
   type VisualAxisSelection
 } from '../domain/visual-axis-filter.js'
+import { selectionMask, visualFilterSourceKey } from '../domain/visual-filter-index.js'
 import type {
   VisualAxisValueRow,
   VisualFilterPlantRow,
-  VisualFilterSearch
+  VisualFilterSearch,
+  VisualFilterValueBitRow
 } from '../repository/mysql-plant-visual-axis-repository.js'
 
 /** 三轴筛选只读端口；由 Repository 实现，每个方法各自借用一条只读连接。 */
@@ -39,7 +41,13 @@ export type PlantVisualAxisPort = {
   readonly readCatalog: (
     catalogVersion: string
   ) => Promise<ReadonlyMap<VisualAxisCode, VisualAxisCatalogAxis>>
-  /** 筛选主查询（多取 1 行）。 */
+  /** 按 source_key 读取已就绪索引批次 id；未就绪为 null。 */
+  readonly readReadyFilterSet: (sourceKey: string) => Promise<string | number | null>
+  /** 读取索引批次的值位表。 */
+  readonly readValueBits: (
+    filterSetId: string | number
+  ) => Promise<readonly VisualFilterValueBitRow[]>
+  /** 筛选主查询（读预计算索引，多取 1 行）。 */
   readonly filterPlants: (search: VisualFilterSearch) => Promise<readonly VisualFilterPlantRow[]>
   /** 回查命中植物的三轴取值。 */
   readonly readAxisValues: (
@@ -141,6 +149,7 @@ export type PlantVisualFilterResponse = {
 
 type FilterOutcome =
   | 'invalid_value'
+  | 'index_unavailable'
   | {
       /** 本次策略发布版本，原样写入响应。 */
       readonly releaseVersion: string
@@ -160,7 +169,9 @@ function readSearchParameters(request: IncomingMessage): URLSearchParams {
 }
 
 /** 组装公开结果：截到 limit，多取的 1 行只用于生成 nextCursor。 */
-function toResponse(outcome: Exclude<FilterOutcome, 'invalid_value'>): PlantVisualFilterResponse {
+function toResponse(
+  outcome: Exclude<FilterOutcome, 'invalid_value' | 'index_unavailable'>
+): PlantVisualFilterResponse {
   const page = outcome.rows.slice(0, outcome.limit)
   const valuesById = new Map<string, Map<string, unknown>>()
   for (const row of outcome.values) {
@@ -241,9 +252,30 @@ export function createFilterPlantsByVisualAxesRouteHandler(
         if (!selectionsWithinCatalog(domainDecision.selections, catalog)) {
           return 'invalid_value'
         }
+        // 修订 1：策略 visualAxisSources → source_key → 已就绪索引；未就绪或位表过期一律 503，不回退结果表直查。
+        const filterSetId = await dependencies.visualAxes.readReadyFilterSet(
+          visualFilterSourceKey(policy.sources)
+        )
+        if (filterSetId === null) {
+          return 'index_unavailable'
+        }
+        const bitsByAxis = new Map<string, Map<string, number>>()
+        for (const bit of await dependencies.visualAxes.readValueBits(filterSetId)) {
+          const axisBits = bitsByAxis.get(bit.axisCode) ?? new Map<string, number>()
+          axisBits.set(bit.valueCode, bit.bitPosition)
+          bitsByAxis.set(bit.axisCode, axisBits)
+        }
+        const masks: Array<{ axisCode: VisualAxisCode; mask: bigint }> = []
+        for (const selection of domainDecision.selections) {
+          const mask = selectionMask(selection.values, bitsByAxis.get(selection.axisCode))
+          if (mask === null) {
+            return 'index_unavailable'
+          }
+          masks.push({ axisCode: selection.axisCode, mask })
+        }
         const rows = await dependencies.visualAxes.filterPlants({
-          selections: domainDecision.selections,
-          sources: policy.sources,
+          filterSetId,
+          masks,
           afterTaxonRef: domainDecision.afterTaxonRef,
           fetchLimit: domainDecision.limit + 1
         })
@@ -263,6 +295,9 @@ export function createFilterPlantsByVisualAxesRouteHandler(
       run: outcome => {
         if (outcome === 'invalid_value') {
           throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')
+        }
+        if (outcome === 'index_unavailable') {
+          throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用')
         }
         return toResponse(outcome)
       }

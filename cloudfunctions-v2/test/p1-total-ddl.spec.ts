@@ -21,6 +21,7 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
   // Expected 来源：主代理 2026-10-09 裁决 A3——Tropicals 浇水基线表按 v2 惯例纳入 024 迁移。
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '024_watering_baseline_policy.sql'), '浇水基线 024 迁移必须登记')
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '030_user_plant_care_context_plant_light.sql'), 'Lux 存档 030 迁移必须登记')
+  assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '031_plant_visual_filter_index.sql'), '三轴筛选索引 031 迁移必须登记')
 
   let sql = ''
   const FIRST_CAPTURE_INDEX = 1
@@ -63,6 +64,17 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       assert.deepEqual([...content.matchAll(/ADD COLUMN `([^`]+)` [^\n]* NULL COMMENT '[^']+'/gu)].map(match => match[1]), ['plant_light_lux', 'plant_light_measured_at_ms', 'plant_light_source'])
       assert.match(content, /ADD CONSTRAINT `ck_user_plant_care_context_plant_light` CHECK/u)
       assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|MODIFY|CREATE TABLE|CREATE TRIGGER)\b|NOT NULL COMMENT/iu)
+    }
+    // Expected 来源：plant-visual-axis-filter/v1 修订 1（ClickUp z8v0kmvgab 改表票）——031 只新建三张预计算筛选索引表，
+    // 不改既有表、不建触发器、不写数据；条目表以 (filter_set_id, taxon_id, 掩码…) 覆盖索引按 taxon_id 顺序扫描，taxon_id 排序规则与百科表一致。
+    if (entry.file === '031_plant_visual_filter_index.sql') {
+      assert.deepEqual([...content.matchAll(/^CREATE TABLE `([^`]+)`/gmu)].map(match => match[1]),
+        ['plant_visual_filter_sets', 'plant_visual_filter_value_bits', 'plant_visual_filter_entries'])
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|MODIFY|ALTER|CREATE TRIGGER|INSERT|UPDATE|DELETE)\b/u)
+      assert.match(content, /UNIQUE KEY `uk_visual_filter_entry_taxon` \(`filter_set_id`, `taxon_id`\)/u)
+      assert.match(content, /KEY `idx_visual_filter_entry_scan` \(`filter_set_id`, `taxon_id`, `leaf_shape_mask`, `growth_form_mask`, `leaf_surface_mask`, `encyclopedia_id`\)/u)
+      assert.match(content, /`taxon_id` VARCHAR\(512\) NOT NULL COLLATE utf8mb4_unicode_ci/u)
+      assert.match(content, /UNIQUE KEY `uk_visual_filter_set_source` \(`source_key`\)/u)
     }
     if (isCarePlanExpiryIndex) {
       assert.deepEqual([...content.matchAll(/^CREATE INDEX `([^`]+)` ON `([^`]+)`/gmu)].map(match => [match[1], match[2]]), [['idx_care_plan_expiry_scan', 'care_plans']])

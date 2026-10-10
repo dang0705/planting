@@ -12,12 +12,17 @@ import {
   plantKnowledgePublicSearchV2ReleaseVersion
 } from '../support/business-policy-fixtures.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { visualFilterSourceKey } from '../../src/plant-knowledge/domain/visual-filter-index.js'
 import {
   axesPath,
+  bitRowsFor,
+  catalogRows,
   fakeState,
   filterPath,
+  filterSqlMarker,
   monstera,
   plantRow,
+  readyFilterSetId,
   start,
   stop
 } from './support/visual-axis-fake.js'
@@ -32,7 +37,7 @@ import {
 
 afterEach(stop)
 
-const filterCall = () => fakeState.calls.find(call => call.sql.includes('ORDER BY e.taxon_id'))
+const filterCall = () => fakeState.calls.find(call => call.sql.includes(filterSqlMarker))
 const validation = { error: { type: 'VALIDATION_FAILED', message: '请求参数不合法' } }
 
 describe('三轴筛选路由冻结', () => {
@@ -112,7 +117,8 @@ describe('visual-filter 参数校验（400 先于业务查询）', () => {
     const response = await fetch(`${base}${filterPath}?leafShape=HEART,HEART,ELLIPTIC&unknown=1`)
     expect(response.status).toBe(200)
     const parameters = filterCall()?.parameters ?? []
-    expect(parameters).toContain(JSON.stringify(['HEART', 'ELLIPTIC']))
+    // 生效枚举顺序：HEART 位 0、ELLIPTIC 位 1 → 同轴 OR 掩码 3（预计算索引，修订 1）。
+    expect(parameters).toContain('3')
   })
 })
 
@@ -156,22 +162,47 @@ describe('visual-filter 策略快照', () => {
     await fetch(`${base}${filterPath}?leafShape=HEART&limit=50`)
     expect(
       fakeState.calls
-        .filter(call => call.sql.includes('ORDER BY e.taxon_id'))
+        .filter(call => call.sql.includes(filterSqlMarker))
         .at(-1)
         ?.parameters.at(-1)
     ).toBe(51)
   })
 
-  test('主查询按策略指定的 extraction_version 绑定（三轴均 visual-axis-all-v1），不使用 v2 / v1 批次', async () => {
+  test('按策略 visualAxisSources 的 source_key 定位已就绪索引（三轴均 visual-axis-all-v1），主查询只读该索引', async () => {
     const base = await start()
     await fetch(`${base}${filterPath}?leafShape=HEART&growthForm=VINING&leafSurface=GLOSSY`)
-    const parameters = filterCall()?.parameters ?? []
-    expect(parameters.filter(value => value === 'visual-axis-all-v1')).toHaveLength(3)
-    expect(parameters).not.toContain('visual-axis-v2')
-    expect(parameters).not.toContain('visual-axis-v1')
-    expect(plantKnowledgePublicSearchRulesV2().visualAxisSources?.LEAF_SHAPE).toBe(
+    const sources = plantKnowledgePublicSearchRulesV2().visualAxisSources!
+    expect([sources.LEAF_SHAPE, sources.GROWTH_FORM, sources.LEAF_SURFACE]).toEqual([
+      'visual-axis-all-v1',
+      'visual-axis-all-v1',
       'visual-axis-all-v1'
-    )
+    ])
+    const setCall = fakeState.calls.find(call => call.sql.includes('FROM plant_visual_filter_sets'))
+    expect(setCall?.sql).toContain("status = 'ready'")
+    expect(setCall?.parameters).toEqual([visualFilterSourceKey(sources)])
+    const parameters = filterCall()?.parameters ?? []
+    expect(parameters[0]).toBe(readyFilterSetId)
+    // 叶型 HEART 位 0 → 1；株型 VINING 位 1 → 2；叶面 GLOSSY 位 0 → 1。
+    expect(parameters.slice(1, 4)).toEqual(['1', '2', '1'])
+    expect(filterCall()?.sql).not.toContain('plant_visual_axis_results')
+  })
+
+  test('策略指定版本尚无已就绪索引 → 503，不执行主查询', async () => {
+    const base = await start({ filterSets: [] })
+    const response = await fetch(`${base}${filterPath}?leafShape=HEART`)
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({
+      error: { type: 'SERVICE_UNAVAILABLE', message: '服务暂时不可用' }
+    })
+    expect(filterCall()).toBeUndefined()
+  })
+
+  test('值位表缺少某个生效枚举值（索引过期）→ 503，不执行主查询', async () => {
+    const base = await start({
+      bits: bitRowsFor(catalogRows).filter(row => row.value_code !== 'ELLIPTIC')
+    })
+    expect((await fetch(`${base}${filterPath}?leafShape=ELLIPTIC`)).status).toBe(503)
+    expect(filterCall()).toBeUndefined()
   })
 })
 
@@ -249,8 +280,7 @@ describe('visual-filter 响应', () => {
     await fetch(`${base}${filterPath}?leafShape=HEART`)
     const valuesCall = fakeState.calls.find(
       call =>
-        !call.sql.includes('ORDER BY e.taxon_id') &&
-        call.sql.includes('FROM plant_visual_axis_results')
+        !call.sql.includes(filterSqlMarker) && call.sql.includes('FROM plant_visual_axis_results')
     )
     expect(valuesCall?.sql).toContain("status = 'EXTRACTED'")
     expect(valuesCall?.parameters).toEqual(expect.arrayContaining([1, 'visual-axis-all-v1']))
@@ -272,8 +302,7 @@ describe('visual-filter 响应', () => {
     expect(first.data.nextCursor).not.toContain('tropicals.cn')
     await fetch(`${base}${filterPath}?leafShape=HEART&limit=2&cursor=${first.data.nextCursor}`)
     const parameters =
-      fakeState.calls.filter(call => call.sql.includes('ORDER BY e.taxon_id')).at(-1)?.parameters ??
-      []
+      fakeState.calls.filter(call => call.sql.includes(filterSqlMarker)).at(-1)?.parameters ?? []
     expect(parameters).toContain('https://tropicals.cn/species/b')
     expect(parameters.at(-1)).toBe(3)
   })

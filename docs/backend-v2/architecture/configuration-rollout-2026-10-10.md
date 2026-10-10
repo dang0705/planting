@@ -83,7 +83,7 @@ weather → plant-knowledge → care → care-plan-expiry → care-outbox-dispat
 |---|---|---|---|
 | 4.1 | `http/request_write` → v2 | `http.request_write.v2.release.json` | 先用 `list` 查出现有 v1 版本号，再以它作为 `--expect-current` |
 | 4.2 | `care/mvp_watering` → v4 | `care.mvp_watering.v4.release.json` | 先用 `list` 查出现有 v3 版本号（如 `care-watering-mvp/v3.0.0`） |
-| 4.3 | `plant-knowledge/public_search` → v2（三轴筛选，plant-visual-axis-filter/v1，ClickUp z8v0kmuqv6） | `plant-knowledge.public_search.v2.release.json` | `plant-knowledge-public-search/v1.0.0`。**必须在含三轴筛选的新 plant-knowledge 代码部署之后**：旧代码只认 v1 正文，先切 v2 会令目录搜索、百科与已发布身份搜索全部 503；新代码在 v1 下只让两个三轴入口 503，其余不变 |
+| 4.3 | `plant-knowledge/public_search` → v2（三轴筛选，plant-visual-axis-filter/v1，ClickUp z8v0kmuqv6） | `plant-knowledge.public_search.v2.release.json` | `plant-knowledge-public-search/v1.0.0`。**前置（z8v0kmvgab）**：先执行迁移 `031_plant_visual_filter_index.sql`，再运行 `node scripts/visual-filter-index.mjs build --release models/policy-releases/plant-knowledge.public_search.v2.release.json --batch-size 5000`（先 dry-run，再 `--apply`），确认 `plant_visual_filter_sets.status = 'ready'`；索引未就绪时三轴接口为 503。**必须在含三轴筛选的新 plant-knowledge 代码部署之后**：旧代码只认 v1 正文，先切 v2 会令目录搜索、百科与已发布身份搜索全部 503；新代码在 v1 下只让两个三轴入口 503，其余不变 |
 
 步骤同第 2 节（publish → activate）。v4 与 v3 在同一输入下公开结果一致，有锁定测试 `test/care/watering/mvp-watering-v4.spec.ts` 保证。
 

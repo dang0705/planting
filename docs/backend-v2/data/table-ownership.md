@@ -3,7 +3,7 @@
 | 所有者 | 允许写入 |
 |---|---|
 | identity | users、platform_identities、user_sessions、service_replay_nonces；不另建 principal_mappings |
-| plant-knowledge | taxonomy、identity、alias、evidence、CMS、release、enrichment |
+| plant-knowledge | taxonomy、identity、alias、evidence、CMS、release、enrichment、三轴筛选预计算索引（031，离线回填写入、HTTP 只读） |
 | user-plant | user_plants、profile、care_context、assets、timeline projection、guest 及 authenticated Ephemeral backing case / promotion / binding |
 | care | facts、plans、reminders、weather、soil evidence、environment observations/snapshots/derivations、care decision derivations、temporary care；Care 只读 plant-knowledge 已发布的 Internal Care Knowledge / Reference Profile，不直接写知识表 |
 | diagnosis | diagnosis、answers、evidence、results、temporary diagnosis；诊断来源与主张、原因/Outcome/Action 候选修订、逐项来源关联、CMS 审核凭据、专用 release/active 指针与激活审计（逻辑合同见[诊断知识持久化与发布](../contracts/diagnosis-knowledge-persistence.md)，当前未建表） |

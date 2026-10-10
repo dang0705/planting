@@ -162,6 +162,18 @@ Tropicals 浇水频率 tier 与运行时触发状态到名义天数区间的映�
 
 外部表 `tropicals_species_encyclopedia_ref` 不属 v2 迁移，由 Tropicals 导入流程拥有；v2 只读，读取列与变更通知条件见 `cloudfunctions-v2/models/plant-knowledge/tropicals-encyclopedia-external-table-contract.md`。
 
+### `plant_visual_filter_sets` / `plant_visual_filter_value_bits` / `plant_visual_filter_entries` — 三轴筛选预计算索引（031）
+
+plant-visual-axis-filter/v1 修订 1（ClickUp z8v0kmvgab）。plant-knowledge 只读外部表 `plant_visual_axis_results`、`plant_visual_axis_values`、`tropicals_species_encyclopedia_ref`，由离线幂等回填脚本写入本组表；HTTP 函数只读。
+
+| 表 | 一行代表 | 关键列与约束 |
+|---|---|---|
+| `plant_visual_filter_sets` | 一份 `visualAxisSources`（各轴 extraction_version + 枚举 catalog_version）对应的一份索引 | `source_key` = 规范 JSON SHA-256，唯一；`status` building/ready，ready 才可读；`next_encyclopedia_id` 断点续跑 |
+| `plant_visual_filter_value_bits` | 某份索引里某轴某个枚举值占用的位 | (`filter_set_id`, `axis_code`, `value_code`) 与 (`filter_set_id`, `axis_code`, `bit_position`) 双唯一；位序号 0–63 |
+| `plant_visual_filter_entries` | 某份索引里一株植物 | (`filter_set_id`, `taxon_id`) 唯一；三轴各一个 BIGINT UNSIGNED 位掩码，0 = 缺值；至少一轴非 0 才收录；覆盖索引按 taxon_id 顺序扫描 |
+
+内部主键与 `encyclopedia_id` 永不进入公开响应；可搜索与否不预计算，查询时实时联 `plant_search_documents`。
+
 ## 6. 养护与诊断域
 
 - `care_environment_observations`：不可变原子环境事实；一行只表达一种光照、空气温度、相对湿度、空气运动、盆器、基质、排水或盆土表面因素，并保存用户植物归属、来源类型/引用、空间范围、单位、置信度、观察时间、有效期和规范化证据 SHA-256。室外天气始终保持 `outdoor`，不能冒充室内或植物周围实测。

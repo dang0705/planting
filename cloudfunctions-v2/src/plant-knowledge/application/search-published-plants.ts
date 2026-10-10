@@ -35,7 +35,10 @@ type PublishedPlantSearchResponse = {
 /** 搜索用例的依赖；数据库查询由 Repository 注入，审计只接收脱敏事件。 */
 export type SearchPublishedPlantsDependencies = {
   /** 读取当前双 active release 准入的身份匹配项（最多 maxItems 条）。 */
-  readonly searchPublishedPlants: (query: string, maxItems: number) => Promise<PublishedPlantSearchRepositoryResult>
+  readonly searchPublishedPlants: (
+    query: string,
+    maxItems: number
+  ) => Promise<PublishedPlantSearchRepositoryResult>
   /** 读取公开搜索策略快照（plant-knowledge/public_search）；null 时 503。 */
   readonly readPublicSearchRules: PolicyRulesPort<PlantKnowledgePublicSearchRules>
   /** 请求完成后的脱敏结果事件端口。 */
@@ -141,7 +144,8 @@ export function createSearchPublishedPlantsRouteHandler(
       domainRule: { kind: 'execute', run: ({ command }) => command },
       transactionPersistence: {
         kind: 'execute',
-        run: async ({ domainDecision }) => dependencies.searchPublishedPlants(domainDecision.q, domainDecision.maxItems)
+        run: async ({ domainDecision }) =>
+          dependencies.searchPublishedPlants(domainDecision.q, domainDecision.maxItems)
       },
       publicResponse: { kind: 'execute', run: toPublicSearchResponse },
       writeAudit: dependencies.writeAudit

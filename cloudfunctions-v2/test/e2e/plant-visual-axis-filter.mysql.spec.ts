@@ -6,7 +6,11 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
-import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
+import {
+  fixturePolicyPorts,
+  plantKnowledgePublicSearchRulesV2
+} from '../support/business-policy-fixtures.js'
+import { applyVisualFilterMigration, buildIndex } from './support/visual-filter-index-fixture.js'
 
 /**
  * Expected：plant-visual-axis-filter/v1（用户 2026-10-10 审定）。
@@ -21,6 +25,8 @@ const container = `qhz-visual-axis-${process.pid}`
 let database: Connection | undefined
 let server: Server | undefined
 let base = ''
+const sources = plantKnowledgePublicSearchRulesV2().visualAxisSources!
+let buildReport: Awaited<ReturnType<typeof buildIndex>> | undefined
 
 function docker(args: string[]): string {
   const result = spawnSync('docker', args, { encoding: 'utf8' })
@@ -250,6 +256,9 @@ beforeAll(async () => {
   await database.query(
     'ANALYZE TABLE plant_visual_axis_results, tropicals_species_encyclopedia_ref, plant_search_documents'
   )
+  // 修订 1（z8v0kmvgab）：执行真实 031 迁移并用真实回填模块构建索引；批大小取 37 以覆盖多批与跨批边界。
+  await applyVisualFilterMigration(database)
+  buildReport = await buildIndex(database, sources, 37)
   server = createPlantKnowledgeServer({
     ...fixturePolicyPorts(),
     connectionSource: createMysql2ConnectionSource({
@@ -413,5 +422,76 @@ describe('三轴筛选真实 MySQL → HTTP', () => {
       ['GROWTH_FORM', forms],
       ['LEAF_SURFACE', surfaces]
     ])
+  })
+
+  test('回填报告：一次建成并就绪，收录至少一轴有合法取值的植物', async () => {
+    expect(buildReport).toMatchObject({ status: 'built' })
+    const [rows] = await database!.query('SELECT status, plant_count FROM plant_visual_filter_sets')
+    expect(rows).toEqual([{ status: 'ready', plant_count: buildReport!.plantCount }])
+    // 独立期望：主体 120 株中三轴全缺的只有 n 同时被 3、5、7 整除者（105），另加干扰植物 204。
+    expect(buildReport!.plantCount).toBe(120 - 1 + 1)
+  })
+
+  test('重复执行回填为空操作（幂等）', async () => {
+    const [before] = await database!.query(
+      'SELECT COUNT(*) AS n, MAX(updated_at_ms) AS t FROM plant_visual_filter_entries'
+    )
+    expect(
+      await buildIndex(database!, sources, 37, Date.parse('2026-10-11T00:00:00Z'))
+    ).toMatchObject({ status: 'already_ready' })
+    const [after] = await database!.query(
+      'SELECT COUNT(*) AS n, MAX(updated_at_ms) AS t FROM plant_visual_filter_entries'
+    )
+    expect(after).toEqual(before)
+  })
+
+  test('中断后续跑：断点落在半写入批次中，再次回填得到与首次完全相同的条目', async () => {
+    const snapshot =
+      'SELECT taxon_id, encyclopedia_id, leaf_shape_mask, growth_form_mask, leaf_surface_mask FROM plant_visual_filter_entries ORDER BY taxon_id'
+    const [full] = await database!.query(snapshot)
+    await database!.query(
+      "UPDATE plant_visual_filter_sets SET status = 'building', built_at_ms = NULL, next_encyclopedia_id = 60"
+    )
+    // 模拟中断在批次中途：断点停在 60，但 60–79 已写入（同一区间重跑必须先删再写，不能重复或报唯一键冲突）。
+    await database!.query('DELETE FROM plant_visual_filter_entries WHERE encyclopedia_id >= 80')
+    // 构建中的索引不可读：接口 503，而不是返回半份结果。
+    expect(
+      (await fetch(`${base}/api/v2/plant-knowledge/catalog/visual-filter?leafShape=HEART`)).status
+    ).toBe(503)
+    expect(await buildIndex(database!, sources, 37)).toMatchObject({ status: 'built' })
+    const [rebuilt] = await database!.query(snapshot)
+    expect(rebuilt).toEqual(full)
+  })
+
+  test('策略指向尚未构建索引的数据版本 → 503（不回退结果表直查）', async () => {
+    const ports = fixturePolicyPorts()
+    const v2 = plantKnowledgePublicSearchRulesV2()
+    const other = createPlantKnowledgeServer({
+      ...ports,
+      readPublicSearchSnapshot: async () => ({
+        rules: {
+          ...v2,
+          visualAxisSources: { ...v2.visualAxisSources!, LEAF_SHAPE: 'visual-axis-all-v2' }
+        },
+        releaseVersion: 'plant-knowledge-public-search/v2.0.1'
+      }),
+      connectionSource: createMysql2ConnectionSource({
+        host: '127.0.0.1',
+        port: Number(docker(['port', container, '3306/tcp']).split(':').at(-1)),
+        database: 'visual_fixture',
+        user: 'root',
+        password: ''
+      }),
+      writeAudit: () => undefined
+    })
+    await new Promise<void>(resolve => other.listen(0, '127.0.0.1', resolve))
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:${(other.address() as AddressInfo).port}/api/v2/plant-knowledge/catalog/visual-filter?leafShape=HEART`
+      )
+      expect(response.status).toBe(503)
+    } finally {
+      await new Promise<void>(resolve => other.close(() => resolve()))
+    }
   })
 })

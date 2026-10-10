@@ -64,7 +64,8 @@ let server: Server | undefined
 
 /** 挂载真实 plant-knowledge HTTP 服务，仅替换 Repository 下方的 MySQL 连接。 */
 async function startService(database: FakeDatabase): Promise<string> {
-  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(),
+  server = createPlantKnowledgeServer({
+    ...fixturePolicyPorts(),
     connectionSource: database.connectionSource,
     writeAudit: () => undefined
   })

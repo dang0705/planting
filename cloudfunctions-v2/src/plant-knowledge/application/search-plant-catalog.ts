@@ -62,7 +62,11 @@ const schema: JSONSchemaType<PlantCatalogQuery> = {
   required: ['q', 'limit'],
   properties: {
     q: { type: 'string', minLength: 1, maxLength: absoluteBounds.searchQueryMaxCodePoints },
-    limit: { type: 'integer', minimum: absoluteBounds.catalogMinimumLimit, maximum: absoluteBounds.searchResultMaxItems }
+    limit: {
+      type: 'integer',
+      minimum: absoluteBounds.catalogMinimumLimit,
+      maximum: absoluteBounds.searchResultMaxItems
+    }
   }
 }
 const validate = new Ajv({ allErrors: true }).compile(schema)
@@ -102,8 +106,15 @@ export function createSearchPlantCatalogRouteHandler(
       // 默认条数、条数上限与查询长度上限来自请求内锁定的公开搜索策略（用户 2026-10-10 裁定）；策略不可用 503，先于参数校验。
       run: async input => {
         const rules = await requirePolicy(dependencies.readPublicSearchRules)
-        const candidate = { ...input, limit: input.limit === null ? rules.catalogDefaultLimit : input.limit }
-        if (!validate(candidate) || [...candidate.q].length > rules.searchQueryMaxCodePoints || candidate.limit > rules.searchResultMaxItems) {
+        const candidate = {
+          ...input,
+          limit: input.limit === null ? rules.catalogDefaultLimit : input.limit
+        }
+        if (
+          !validate(candidate) ||
+          [...candidate.q].length > rules.searchQueryMaxCodePoints ||
+          candidate.limit > rules.searchResultMaxItems
+        ) {
           throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')
         }
         return candidate

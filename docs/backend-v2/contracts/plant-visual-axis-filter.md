@@ -2,6 +2,7 @@
 
 - 合同版本：`plant-visual-axis-filter/v1`
 - 状态：**已冻结**（用户 2026-10-10 审定草案 D1–D8 全部按推荐；每页默认 20、上限 50）
+- 修订：2026-10-10 v1 修订 1（ClickUp `z8v0kmvgab` 改表票）：筛选改读预计算筛选索引，新增「索引未就绪 → 503」；参数、组合语义、排序、分页与 DTO 不变。
 - 负责域：`plant-knowledge`（目录/百科领域内的只读能力，不新增业务域）
 - 票据：ClickUp `z8v0kmuqv6`「[E01/E02][P2] 植物三轴筛选只读纵向切片」
 - 真相源：用户 2026-10-07 确认的三轴准入与 `qinghuazhi_v2_test` 数据源；2026-10-10 测试库只读核验（`.codex/backend-v2/evidence/E02-three-axis-filter-discovery-2026-10-10.json`）；用户 2026-10-10 审定。
@@ -16,7 +17,8 @@
 | `plant_visual_axis_results` | 每轴只读策略指定的一个 `extraction_version`；只有 `status='EXTRACTED'` 且 `values_json` 为数组的行参与匹配 |
 | `plant_visual_axis_values` | 策略指定 `catalog_version`、`is_active=1` 的三轴枚举：中文名、定义、排序；也是请求取值合法性的唯一来源 |
 | `tropicals_species_encyclopedia_ref` | 经 `id = encyclopedia_id` 内部关联，取 `taxon_id`、`name`、`scientific_name`、封面两列；内部 id 不对外 |
-| `plant_search_documents` | 经 `taxon_id` 关联，**只返回 `is_searchable=1`**，与目录搜索、百科读取一致 |
+| `plant_search_documents` | 经 `taxon_id` 关联，**只返回 `is_searchable=1`**，与目录搜索、百科读取一致（查询时实时联表，不预计算） |
+| `plant_visual_filter_sets` / `plant_visual_filter_value_bits` / `plant_visual_filter_entries`（031） | 预计算筛选索引：按策略 `visualAxisSources` 的规范 JSON SHA-256 定位唯一一份**已就绪**索引；每株一行，三轴各一个位掩码，位与生效枚举值一一对应。只收录「所选版本 EXTRACTED 且为数组」的目录内代码，与本节结果表规则逐条等价；由离线幂等回填脚本构建，HTTP 函数只读 |
 
 规则目录 `plant_visual_axis_rule_catalog` 只作抽取审计，不在运行时读取，规则正文不得公开。核心 90 视图 `plant_visual_profile_v2` 和 `visual-axis-v2`、`visual-axis-v1` 批次不进入 v1（D2）。
 
@@ -57,6 +59,7 @@
 - 排序（D3）：按 `catalogTaxonRef`（`taxon_id`）升序，排序规则与百科表 `taxon_id` 列一致（唯一，无并列）。
 - 游标分页：`nextCursor` 编码本页最后一项的 `catalogTaxonRef`；下一页从严格大于它的位置开始。每页多取 1 条判断是否还有下一页，没有时 `nextCursor=null`。不返回总数，不使用 offset。
 - 同一组筛选条件、同一策略快照、数据不变时，逐页翻完的并集等于一次性全量结果：不重复、不遗漏。
+- 实现：索引条目表以 `(filter_set_id, taxon_id, 三个掩码, encyclopedia_id)` 覆盖索引按 `taxon_id` 顺序只扫索引，`taxon_id` 排序规则与百科表一致（utf8mb4_unicode_ci），凑满一页即停止。
 
 ## 6. 成功 DTO
 
@@ -110,6 +113,7 @@ type PlantVisualFilterResponse = {
 |---|---:|---|
 | 未知轴值、值格式非法、空值段、重复参数、三轴全空、limit 越界或非法、游标损坏 | 400 | `VALIDATION_FAILED` |
 | 策略快照不可用，或活动发布不含三轴字段 | 503 | `SERVICE_UNAVAILABLE` |
+| 策略指定的数据版本尚无「已就绪」筛选索引，或索引的值位表缺少某个生效枚举值（索引过期） | 503 | `SERVICE_UNAVAILABLE` |
 | 数据库异常；生效枚举缺失某一准入轴 | 500 | `INTERNAL_ERROR` |
 
 错误正文沿用 `http-api/v1` 稳定错误信封，不泄露 SQL、内部主键、规则或策略正文。
@@ -117,7 +121,8 @@ type PlantVisualFilterResponse = {
 ## 9. 已知局限
 
 - **排序**：taxon_id 升序会让冷门学名（如 `abuta-*`）排在前面。按热度或中文名排序另立票 ClickUp `z8v0kmvg9b`「植物筛选结果热度/中文名排序」（https://app.clickup.com/t/z8v0kmvg9b），需要 DDL 或预计算表。
-- **性能（D8）**：结果表没有针对标签数组的多值索引。驱动轴走 `(axis_code, status)` 索引扫描并逐行用 `JSON_OVERLAPS` 判断，其余轴按唯一键逐行回查。v1 不加索引；测试环境实测典型组合超过 1 秒时，再开改表票。实测结果见证据文件。
+- **性能（D8）**：直接查结果表在测试库实测中位数 ≥ 28 秒（证据 `E02-three-axis-filter-implementation-2026-10-10.json`），按 D8 开改表票 `z8v0kmvgab`，改为预计算筛选索引（031）。上线顺序：先执行 031，再回填并确认索引就绪，最后才能让三轴接口对外；索引未就绪时接口为 503。
+- **新抽取批次**：策略切到新 `extraction_version` 前，必须先为新的 `visualAxisSources` 回填出一份新索引；旧索引保留以便回滚策略。
 - **缺值比例高**：all-v1 抽样约三成植物缺某一轴，缺值不命中，因此筛选结果是「已标注且命中」的子集。
 - 核心 90 的 v2 精标不参与 v1。
 

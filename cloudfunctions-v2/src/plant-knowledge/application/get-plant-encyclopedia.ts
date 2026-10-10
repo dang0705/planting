@@ -74,7 +74,9 @@ export type GetPlantEncyclopediaDependencies = {
   readonly readPublicSearchRules: PolicyRulesPort<PlantKnowledgePublicSearchRules>
 }
 /** 分类引用与 slug 的代码绝对上限（= catalog_taxon_ref VARCHAR(512)）；实际上限来自策略快照，只能更小。 */
-const referenceMaxCodePoints = RUNTIME_PARAMETERS.policyBounds.plantKnowledgePublicSearch.value.encyclopediaReferenceMaxCodePoints
+const referenceMaxCodePoints =
+  RUNTIME_PARAMETERS.policyBounds.plantKnowledgePublicSearch.value
+    .encyclopediaReferenceMaxCodePoints
 const querySchema: JSONSchemaType<PlantEncyclopediaQuery> = {
   type: 'object',
   additionalProperties: false,
@@ -121,8 +123,11 @@ export function createGetPlantEncyclopediaRouteHandler(
         kind: 'execute',
         run: async input => {
           const rules = await requirePolicy(dependencies.readPublicSearchRules)
-          if (!validate(input) || [...input.scientificNameSlug].length > rules.encyclopediaReferenceMaxCodePoints
-            || [...input.catalogTaxonRef].length > rules.encyclopediaReferenceMaxCodePoints) {
+          if (
+            !validate(input) ||
+            [...input.scientificNameSlug].length > rules.encyclopediaReferenceMaxCodePoints ||
+            [...input.catalogTaxonRef].length > rules.encyclopediaReferenceMaxCodePoints
+          ) {
             throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')
           }
           return input

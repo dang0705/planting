@@ -148,16 +148,43 @@ export const fakeState = {
   calls: [] as Array<{ sql: string; parameters: Parameters }>
 }
 
+/** 筛选主查询（读预计算索引）的识别片段。 */
+export const filterSqlMarker = 'ORDER BY f.taxon_id'
+
+/** 默认已就绪索引的内部 id。 */
+export const readyFilterSetId = 7
+
+/** 由枚举行按轴内 sort_order 顺序生成值位表（与回填脚本的分配规则一致）。 */
+export function bitRowsFor(catalog: readonly Row[]): Row[] {
+  const byAxis = new Map<string, Row[]>()
+  for (const row of catalog) {
+    byAxis.set(String(row.axis_code), [...(byAxis.get(String(row.axis_code)) ?? []), row])
+  }
+  return [...byAxis.values()].flatMap(rows =>
+    [...rows]
+      .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
+      .map((row, index) => ({
+        axis_code: row.axis_code,
+        value_code: row.value_code,
+        bit_position: index
+      }))
+  )
+}
+
 /** 假数据库与策略快照替换项。 */
 export type Options = {
   readonly pageRows?: readonly Row[]
   readonly axisRows?: readonly Row[]
+  /** 索引批次查询结果；省略为一份已就绪索引，传空数组表示未就绪。 */
+  readonly filterSets?: readonly Row[]
+  /** 值位表；省略时由生效枚举生成。 */
+  readonly bits?: readonly Row[]
   readonly catalog?: readonly Row[]
   readonly failure?: Error
   readonly snapshot?: () => Promise<unknown>
 }
 
-/** 按 SQL 片段分派的假 MySQL：枚举查询、筛选主查询、命中植物的三轴取值查询。 */
+/** 按 SQL 片段分派的假 MySQL：枚举、索引批次、值位表、筛选主查询、命中植物的三轴取值。 */
 export async function start(options: Options = {}): Promise<string> {
   fakeState.calls = []
   const connection: Mysql2QueryConnection = {
@@ -175,7 +202,13 @@ export async function start(options: Options = {}): Promise<string> {
       if (sql.includes('FROM plant_visual_axis_values')) {
         return options.catalog ?? catalogRows
       }
-      if (sql.includes('ORDER BY e.taxon_id')) {
+      if (sql.includes('FROM plant_visual_filter_sets')) {
+        return options.filterSets ?? [{ id: readyFilterSetId }]
+      }
+      if (sql.includes('FROM plant_visual_filter_value_bits')) {
+        return options.bits ?? bitRowsFor(options.catalog ?? catalogRows)
+      }
+      if (sql.includes(filterSqlMarker)) {
         return options.pageRows ?? [plantRow(monstera, 1)]
       }
       return options.axisRows ?? axisValueRows

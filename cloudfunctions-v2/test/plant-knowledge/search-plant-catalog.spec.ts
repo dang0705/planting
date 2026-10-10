@@ -45,7 +45,8 @@ async function start(
       return rows
     }
   }
-  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(),
+  server = createPlantKnowledgeServer({
+    ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => connection },
     writeAudit: () => undefined
   })

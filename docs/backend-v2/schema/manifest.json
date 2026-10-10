@@ -177,6 +177,12 @@
       "owner": "user-plant",
       "file": "030_user_plant_care_context_plant_light.sql",
       "sha256": "0d72df89e56bd95536dc92c030a8ad522d0c6381a8aa5a704ca5740476e74fc3"
+    },
+    {
+      "order": 30,
+      "owner": "plant-knowledge",
+      "file": "031_plant_visual_filter_index.sql",
+      "sha256": "1c9c4a0ddbab8fde47169f53fb1c33e4f53119d7d79fabb9da9daf1c6f60d494"
     }
   ]
 }

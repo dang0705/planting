@@ -15,7 +15,10 @@ import { createMysqlPlantEncyclopediaRepository } from '../repository/mysql-plan
 import { createSearchPlantCatalogRouteHandler } from '../application/search-plant-catalog.js'
 import { createMysqlPlantCatalogRepository } from '../repository/mysql-plant-catalog-repository.js'
 import { createSearchPublishedPlantsRouteHandler } from '../application/search-published-plants.js'
-import { createFilterPlantsByVisualAxesRouteHandler, type PlantVisualAxisPort } from '../application/filter-plants-by-visual-axes.js'
+import {
+  createFilterPlantsByVisualAxesRouteHandler,
+  type PlantVisualAxisPort
+} from '../application/filter-plants-by-visual-axes.js'
 import { createListPlantVisualAxesRouteHandler } from '../application/list-plant-visual-axes.js'
 import { createMysqlPlantVisualAxisRepository } from '../repository/mysql-plant-visual-axis-repository.js'
 import { createMysqlPublishedPlantRepository } from '../repository/mysql-published-plant-repository.js'
@@ -44,14 +47,30 @@ export type PlantKnowledgeServerDependencies = {
 const okStatus = 200
 
 /** 三轴筛选只读端口：每次调用借用一条只读连接，结束即归还。 */
-function createVisualAxisPort(connectionSource: PlantKnowledgeServerDependencies['connectionSource']): PlantVisualAxisPort {
+function createVisualAxisPort(
+  connectionSource: PlantKnowledgeServerDependencies['connectionSource']
+): PlantVisualAxisPort {
   return {
     readCatalog: catalogVersion =>
-      withReadConnection(connectionSource, connection => createMysqlPlantVisualAxisRepository(connection).readCatalog(catalogVersion)),
+      withReadConnection(connectionSource, connection =>
+        createMysqlPlantVisualAxisRepository(connection).readCatalog(catalogVersion)
+      ),
+    readReadyFilterSet: sourceKey =>
+      withReadConnection(connectionSource, connection =>
+        createMysqlPlantVisualAxisRepository(connection).readReadyFilterSet(sourceKey)
+      ),
+    readValueBits: filterSetId =>
+      withReadConnection(connectionSource, connection =>
+        createMysqlPlantVisualAxisRepository(connection).readValueBits(filterSetId)
+      ),
     filterPlants: search =>
-      withReadConnection(connectionSource, connection => createMysqlPlantVisualAxisRepository(connection).filterPlants(search)),
+      withReadConnection(connectionSource, connection =>
+        createMysqlPlantVisualAxisRepository(connection).filterPlants(search)
+      ),
     readAxisValues: (ids, sources) =>
-      withReadConnection(connectionSource, connection => createMysqlPlantVisualAxisRepository(connection).readAxisValues(ids, sources))
+      withReadConnection(connectionSource, connection =>
+        createMysqlPlantVisualAxisRepository(connection).readAxisValues(ids, sources)
+      )
   }
 }
 
@@ -63,8 +82,14 @@ export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDep
     writeAudit: dependencies.writeAudit
   }
   const dispatch = createRouteDispatcher([
-    { route: listPlantVisualAxesRoute, handler: createListPlantVisualAxesRouteHandler(visualAxisDependencies) },
-    { route: filterPlantsByVisualAxesRoute, handler: createFilterPlantsByVisualAxesRouteHandler(visualAxisDependencies) },
+    {
+      route: listPlantVisualAxesRoute,
+      handler: createListPlantVisualAxesRouteHandler(visualAxisDependencies)
+    },
+    {
+      route: filterPlantsByVisualAxesRoute,
+      handler: createFilterPlantsByVisualAxesRouteHandler(visualAxisDependencies)
+    },
     {
       route: getPlantEncyclopediaRoute,
       handler: createGetPlantEncyclopediaRouteHandler({
@@ -92,7 +117,10 @@ export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDep
       handler: createSearchPublishedPlantsRouteHandler({
         searchPublishedPlants: (query, maxItems) =>
           withReadConnection(dependencies.connectionSource, connection =>
-            createMysqlPublishedPlantSearchRepository(connection).searchPublishedPlants(query, maxItems)
+            createMysqlPublishedPlantSearchRepository(connection).searchPublishedPlants(
+              query,
+              maxItems
+            )
           ),
         readPublicSearchRules: dependencies.readPublicSearchRules,
         writeAudit: dependencies.writeAudit

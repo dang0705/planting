@@ -15,11 +15,15 @@ export type PublishedPlantSearchRepositoryResult = {
 /** 已发布植物身份搜索 Repository。 */
 export type PublishedPlantSearchRepository = {
   /** 按规范化查询词搜索当前双 active release 准入身份；maxItems 来自请求内锁定的公开搜索策略。 */
-  readonly searchPublishedPlants: (query: string, maxItems: number) => Promise<PublishedPlantSearchRepositoryResult>
+  readonly searchPublishedPlants: (
+    query: string,
+    maxItems: number
+  ) => Promise<PublishedPlantSearchRepositoryResult>
 }
 
 /** 返回条数的代码绝对上限（`plant-knowledge.public_search.absolute_bounds.searchResultMaxItems` = 公开合同 20）；策略只能在其内调小。 */
-const absoluteMaximumItems = RUNTIME_PARAMETERS.policyBounds.plantKnowledgePublicSearch.value.searchResultMaxItems
+const absoluteMaximumItems =
+  RUNTIME_PARAMETERS.policyBounds.plantKnowledgePublicSearch.value.searchResultMaxItems
 const extraLookaheadRowCount = 1
 const zero = 0
 
@@ -102,9 +106,14 @@ export function createMysqlPublishedPlantSearchRepository(
   return {
     async searchPublishedPlants(query, maxItems) {
       // LIMIT 只能拼接已校验整数（mysql2 预处理语句不接受 LIMIT 占位符）；多读 1 行用于判断 truncated。
-      if (!Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > absoluteMaximumItems) { throw new RangeError('搜索返回上限不合法') }
+      if (!Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > absoluteMaximumItems) {
+        throw new RangeError('搜索返回上限不合法')
+      }
       const pattern = toLiteralPrefixPattern(query)
-      const rows = await executor.query(`${searchPublishedPlantsSql}${String(maxItems + extraLookaheadRowCount)}`, [pattern, pattern, query, query])
+      const rows = await executor.query(
+        `${searchPublishedPlantsSql}${String(maxItems + extraLookaheadRowCount)}`,
+        [pattern, pattern, query, query]
+      )
       const validatedRows = rows.map(toPublishedPlantRow)
       const truncated = validatedRows.length > maxItems
       return {
