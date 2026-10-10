@@ -203,14 +203,14 @@ describe('各云函数环境读取器', () => {
     expect(storage?.envId).toBe('env-1')
     expect(storage?.totalDeadlineMs).toBe(10_000)
     expect(storage?.readApiKey()).toBeUndefined()
-    environment.V2_CLOUDBASE_STORAGE_API_KEY = secret
+    environment.CLOUDBASE_STORAGE_API_KEY = secret
     expect(storage?.readApiKey()).toBe(secret)
     expect(JSON.stringify(storage)).not.toContain(secret)
   })
 
   it('凭证变量名清单只登记名字', () => {
     expect([...CREDENTIAL_ENVIRONMENT_NAMES].sort()).toEqual([
-      'DOUYIN_APPID', 'DOUYIN_APP_SECRET', 'PLATFORM_SUBJECT_HMAC_KEY_V1', 'V2_CLOUDBASE_STORAGE_API_KEY', 'V2_MYSQL_PASSWORD',
+      'CLOUDBASE_STORAGE_API_KEY', 'DOUYIN_APPID', 'DOUYIN_APP_SECRET', 'PLATFORM_SUBJECT_HMAC_KEY_V1', 'V2_MYSQL_PASSWORD',
       'WECHAT_MINIPROGRAM_APPID', 'WECHAT_MINIPROGRAM_PRIVATE_KEY'
     ])
   })

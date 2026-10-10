@@ -7668,7 +7668,7 @@
       ],
       "status": "confirmed",
       "endpointProfile": "cloudbase_storage_http_api_v1",
-      "credentialRef": "env:V2_CLOUDBASE_STORAGE_API_KEY",
+      "credentialRef": "env:CLOUDBASE_STORAGE_API_KEY",
       "connectTimeoutMs": 2000,
       "readTimeoutMs": 8000,
       "totalDeadlineMs": 10000,

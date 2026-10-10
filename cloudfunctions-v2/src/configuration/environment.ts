@@ -46,7 +46,7 @@ export const CREDENTIAL_ENVIRONMENT_NAMES = Object.freeze([
   'DOUYIN_APPID',
   'DOUYIN_APP_SECRET',
   'PLATFORM_SUBJECT_HMAC_KEY_V1',
-  'V2_CLOUDBASE_STORAGE_API_KEY',
+  'CLOUDBASE_STORAGE_API_KEY',
 ] as const)
 
 /** 平台登录凭证变量名（凭证清单的子集）。 */
@@ -59,7 +59,7 @@ const platformLoginCredentialNames = [
 ] as const
 
 /** CloudBase 云存储 API Key 的凭证变量名（配置目录 Provider `cloudbase_storage.credentialRef`）。 */
-const storageCredentialEnvironmentName = 'V2_CLOUDBASE_STORAGE_API_KEY'
+const storageCredentialEnvironmentName = 'CLOUDBASE_STORAGE_API_KEY'
 /** CloudBase 云存储网关环境 ID 变量名；缺失时不创建存储 Provider。 */
 const storageEnvironmentIdName = 'V2_CLOUDBASE_ENV_ID'
 

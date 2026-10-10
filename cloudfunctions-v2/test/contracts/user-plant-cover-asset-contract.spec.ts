@@ -37,7 +37,7 @@ describe('封面资产合同制品', () => {
   test('配置目录：链接有效期以平台默认为准；云存储 Provider 走 HTTP API 且只引用环境变量名', () => {
     expect(catalog.variables.find(variable => variable.id === 'storage.read_url.ttl_seconds')).toMatchObject({ status: 'confirmed', currentValue: 'platform_default' })
     expect(catalog.providerProfiles.find(profile => profile.providerCode === 'cloudbase_storage')).toMatchObject({
-      status: 'confirmed', endpointProfile: 'cloudbase_storage_http_api_v1', credentialRef: 'env:V2_CLOUDBASE_STORAGE_API_KEY'
+      status: 'confirmed', endpointProfile: 'cloudbase_storage_http_api_v1', credentialRef: 'env:CLOUDBASE_STORAGE_API_KEY'
     })
   })
 

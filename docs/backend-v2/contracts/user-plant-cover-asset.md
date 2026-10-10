@@ -92,8 +92,8 @@ export type CoverUploadTargetResponse = {
 
 ## 4. 部署前置条件
 
-- 用户在 CloudBase 控制台创建专用服务端 API Key（建议名 `http-function-user-plant-storage`），写入环境变量 `V2_CLOUDBASE_STORAGE_API_KEY`；
-  代码只通过 Provider `cloudbase_storage` 的 `credentialRef = env:V2_CLOUDBASE_STORAGE_API_KEY` 读取，不打印、不记录、不返回。
+- 用户在 CloudBase 控制台创建专用服务端 API Key（建议名 `http-function-user-plant-storage`），写入环境变量 `CLOUDBASE_STORAGE_API_KEY`；
+  代码只通过 Provider `cloudbase_storage` 的 `credentialRef = env:CLOUDBASE_STORAGE_API_KEY` 读取，不打印、不记录、不返回。
 - 环境变量 `V2_CLOUDBASE_ENV_ID`：用于云存储 HTTP API 网关域名 `https://{环境}.api.tcloudbasegateway.com`。
 - 按 `docs/backend-v2/storage/user-plant-cover-storage-rules.json` 在控制台「云存储 → 权限设置 → 自定义安全规则」下发（人工执行）。
 - 未满足前：登记接口返回 503；单株读取的 `cover.url` 为 null。
