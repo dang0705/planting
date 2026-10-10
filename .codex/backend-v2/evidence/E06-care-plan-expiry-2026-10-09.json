@@ -112,5 +112,78 @@
     "未执行迁移",
     "未提交 git",
     "未改 src/**（前端）"
-  ]
+  ],
+  "live": {
+    "capturedAt": "2026-10-10",
+    "environment": "cloud1-2grufevs395a9d5e / qinghuazhi_v2_test（只读核验）",
+    "function": {
+      "name": "care-plan-expiry",
+      "type": "Event",
+      "runtime": "Nodejs20.19",
+      "handler": "index.main",
+      "timeoutSeconds": 60,
+      "memoryMb": 256,
+      "env": "V2_MYSQL_* 5 项已配置（值未读取）",
+      "installDependency": "FALSE"
+    },
+    "trigger": {
+      "name": "care-plan-expiry-hourly",
+      "type": "timer",
+      "cron": "0 0 * * * * *",
+      "matchesCatalog": true
+    },
+    "runs": {
+      "source": "CLS 日志 care_plan_expiry_run，2026-10-09 23:21 ~ 2026-10-10 08:00",
+      "count": 10,
+      "manualApi": 1,
+      "timer": 9,
+      "outcomes": "全部 drained、batchCount=1、expiredCount=0、durationMs 40–316",
+      "provesTimeLimitField": "outcome≠not_started → 运行时上下文 time_limit_in_ms 可读（遗留项关闭）",
+      "provesDbPath": "每次成功执行一批条件更新并提交（数据库连通、SQL 合法）",
+      "logRedaction": "日志仅含 event/outcome/expiredCount/batchCount/cutoffAt/durationMs，无标识"
+    },
+    "migration028": {
+      "indexPresent": "idx_care_plan_expiry_scan(status, scheduled_at_ms, id)",
+      "explain": "扫描语句 key=idx_care_plan_expiry_scan、Using index（表当前为空，type=index；数据量上来后需复核是否走 range）"
+    },
+    "carePlansStatusCounts": "空表（无任何计划行）",
+    "notExecuted": {
+      "steps": "造测试用户/会话/植物/建议/计划、改 scheduled_at_ms、并发完成 vs 扫描、HTTP 409 线上验证、清理删除",
+      "reason": "本子代理不执行：①在云端测试环境伪造登录会话并用其认证访问线上网关属于创建账号/以令牌认证，非本地开发主机，不适用测试例外；②永久删除数据库行属于禁止操作；③授权经主代理转述，非用户本人在对话中直接给出。需用户本人执行或以其他方式完成。",
+      "coveredElsewhere": "409 CARE_PLAN_EXPIRED 与互斥逻辑已有 unit_fake 证据；真实 InnoDB 竞争仍未验证"
+    },
+    "vpcNote": "getFunctionDetail 返回 VpcConfig 字段为占位样式（vpc=VpcId, subnet=SubnetId），但运行日志证明数据库可达；建议控制台复核 VPC 实际绑定"
+  },
+  "local": {
+    "capturedAt": "2026-10-10",
+    "layer": "unit_real_data",
+    "spec": "cloudfunctions-v2/test/e2e/care-plan-expiry.mysql.spec.ts",
+    "runner": "npx vitest run --config vitest.mysql.config.mjs test/e2e/care-plan-expiry.mysql.spec.ts",
+    "environment": "本机 docker mysql:8.4（tmpfs，仅绑定 127.0.0.1，随用例删除容器）+ schema manifest 全量 DDL 001–028；不连接云端",
+    "skipPolicy": "docker info 失败时 describe.skipIf 整组跳过；默认 npm test 配置本就排除 *.mysql.spec.ts",
+    "expectedSource": "long-term-care-contract.md §12（用户 2026-10-09 裁决；主代理配置裁决 72h、每批 500）",
+    "realPath": "expireDueCarePlans + Foundation MySQL 事务驱动 + 扫描用例；completePlan 用例 + 共享幂等 Repository + 计划/事实/观察 Repository",
+    "results": {
+      "runs": "连续 5 次实跑均 6/6 通过（约 14.5s/次）",
+      "cases": [
+        "028 索引存在且扫描 UPDATE 的 EXPLAIN key=idx_care_plan_expiry_scan",
+        "到期 planned → expired 且版本+1；71h 未到期、completed、cancelled、已 expired 不动",
+        "重复运行幂等：第二次 expiredCount=0、版本不变",
+        "批量分页：1201 条 → 3 批（500/500/201）全部过期、版本均为 2",
+        "已过期再完成（done+浇水+盆土）→ 409 CARE_PLAN_EXPIRED，care_facts/观察 0 行；未过期计划完成 → 200 completed v2",
+        "并发 24 轮：完成与扫描同时发起，每轮读回恰好一方生效、version=2；completed 轮事实 1 行且扫描 0 条，expired 轮完成返回 409 且事实 0 行；无双写"
+      ],
+      "concurrencyDistribution": "扫描起跑错位 0～55ms 后稳定为 completed=22 / expired=2（错位前 24 轮全为 expired，已改为强制两种先后顺序都出现）"
+    },
+    "counterfactualRed": {
+      "mutation": "把 Repository 条件 status = 'planned' 改为 status <> 'expired'（去掉对已完成/已跳过的保护）",
+      "result": "2 failed | 4 passed：『未到期/completed/cancelled 不动』与『并发互斥无双写』变红",
+      "restored": "恢复原文件后 6/6 通过"
+    },
+    "fullGate": "默认 vitest 278 files / 2932 passed / 5 skipped（他人既有跳过）/ 0 failed；typecheck 0 error；oxlint 0 error",
+    "notCovered": [
+      "CloudBase MySQL 上的真实竞争（云端造数/伪造会话方案 B 未执行）",
+      "HTTP 层在真实库上的 409（路由透传由 L3 unit_fake 覆盖）"
+    ]
+  }
 }
