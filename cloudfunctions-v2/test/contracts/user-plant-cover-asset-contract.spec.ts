@@ -41,11 +41,13 @@ describe('封面资产合同制品', () => {
     })
   })
 
-  test('存储安全规则文件：客户端不可读；写入限本人上传且路径为 user-plant/usr_…/covers/', () => {
-    const rules = readJson<{ read: unknown; write: string }>('docs/backend-v2/storage/user-plant-cover-storage-rules.json')
-    expect(rules.read).toBe(false)
-    expect(rules.write).toContain('resource.openid == auth.openid')
-    expect(rules.write).toContain("auth.loginType != 'ANONYMOUS'")
-    expect(rules.write).toContain('^user-plant\\/usr_[A-Za-z0-9_-]{8,60}\\/covers\\/')
+  // Expected 来源：用户 2026-10-10 裁定「保持现有规则，不下发新规则」——存储桶沿用「仅创建者和管理员可读写」，
+  // 目录归属由服务端登记校验；自定义规则草案不采用、不下发。
+  test('存储权限：沿用「仅创建者和管理员可读写」，自定义规则草案标记为未采用、不下发', () => {
+    const contract = fs.readFileSync(path.join(root, 'docs/backend-v2/contracts/user-plant-cover-asset.md'), 'utf8')
+    expect(contract).toContain('仅创建者和管理员可读写')
+    expect(contract).not.toContain('自定义安全规则」下发')
+    const readme = fs.readFileSync(path.join(root, 'docs/backend-v2/storage/README.md'), 'utf8')
+    expect(readme).toContain('未采用')
   })
 })

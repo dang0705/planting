@@ -21,7 +21,8 @@
 
 0. 前端先调用 `GET /api/v2/user-plants/{userPlantRef}/cover-upload-target` 取本次上传路径（见 §2.1），不自己拼目录。
 1. 前端用小程序云存储能力把图片上传到私有目录 `user-plant/{用户公开编号}/covers/{文件名}`（用户公开编号即 `usr_…`）。
-   存储安全规则见 `docs/backend-v2/storage/user-plant-cover-storage-rules.json`：只允许已登录用户写入该目录形状且只能写自己上传的文件，客户端一律不可读。
+   存储权限沿用存储桶现有的「仅创建者和管理员可读写」（用户 2026-10-10 裁定保持现有规则、不下发自定义规则）：用户只能读写自己上传的文件，
+   云函数以管理员身份读写；客户端读取封面统一走服务端签发的临时链接。
    规则无法把目录里的用户公开编号与登录身份绑定，因此“目录属于谁”由服务端登记时校验（见第 3 步）。
 2. 前端调用本接口登记：
 
@@ -76,7 +77,7 @@ export type CoverUploadTargetResponse = {
 - 只读、不落库、不预占：每次调用生成新的随机文件名；没登记的上传由孤儿文件清理任务回收。登记时仍按 §2 第 3 步校验“目录 = 本人”，
   所以即使前端改了路径，传到别人目录的文件也无法登记。
 - 唯一例外披露：`cloudPath` 中含本人用户公开编号（只给本人、仅此路径形状），不进入日志、审计或其他响应；不返回桶名与环境 ID。
-- 存储安全规则不变：仍只允许已登录非匿名用户写 `user-plant/usr_…/covers/{文件名}` 形状、且只能写自己上传的文件。
+- 存储权限不变：沿用「仅创建者和管理员可读写」；路径形状与目录归属由登记接口校验。
 
 ## 3. 规则
 
@@ -95,7 +96,7 @@ export type CoverUploadTargetResponse = {
 - 用户在 CloudBase 控制台创建专用服务端 API Key（建议名 `http-function-user-plant-storage`），写入环境变量 `CLOUDBASE_STORAGE_API_KEY`；
   代码只通过 Provider `cloudbase_storage` 的 `credentialRef = env:CLOUDBASE_STORAGE_API_KEY` 读取，不打印、不记录、不返回。
 - 环境变量 `V2_CLOUDBASE_ENV_ID`：用于云存储 HTTP API 网关域名 `https://{环境}.api.tcloudbasegateway.com`。
-- 按 `docs/backend-v2/storage/user-plant-cover-storage-rules.json` 在控制台「云存储 → 权限设置 → 自定义安全规则」下发（人工执行）。
+- 存储权限：无需变更，沿用「仅创建者和管理员可读写」（2026-10-10 读回确认）。`docs/backend-v2/storage/user-plant-cover-storage-rules.json` 为未采用的草案，不下发。
 - 未满足前：登记接口返回 503；单株读取的 `cover.url` 为 null。
 
 ## 5. 错误集合
