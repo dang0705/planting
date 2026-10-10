@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-10",
+  "kind": "read_only_audit_and_plan",
+  "agent": "user_plant_terra",
+  "plan": "docs/backend-v2/architecture/care-events-plan-2026-10-10.md",
+  "tdd": "未启动：只读调研与规划，不改产品行为",
+  "v1Sources": [
+    "cloudfunctions/layer/utils/fertilization-reminder-planner.js",
+    "cloudfunctions/layer/utils/fertilization-history.js",
+    "cloudfunctions/plant-user-http/fertilization-reminder-domain.js",
+    "cloudfunctions/plant-user-http/fertilization-reminder-service.js",
+    "cloudfunctions/plant-user-http/fertilization-reminder-storage.js",
+    "cloudfunctions/layer/utils/plant-knowledge.js（genus_care_profiles.fertilizing_monthly_strategy_json）",
+    "cloudfunctions/diagnose-http/services/session-state-write-service.js（诊断直写 fertilization_guard_json）",
+    "SQL-cvs/genus_fertilizing_monthly_audit_v1.json",
+    "src/pages/index/components/FertilizationMonthlySheet.vue、fertilization-reminder-options.js"
+  ],
+  "v1Findings": {
+    "inputs": ["genus", "calendar month", "fertilizerType liquid|slowRelease", "lastAppliedDate + source", "condition answers", "healthStatus", "diagnosis guard"],
+    "rule": "属×月×肥料类型查月表；仅 interval 且有来源可排提醒；条件码须全部答是；有上次施肥取[上次+min,上次+max]中点，无则今天+min；到期取今天；固定 09:00",
+    "output": "nextCheckDate/earliest/latest/dueNow + 规则快照，写手机日历",
+    "dataCoverage": { "version": "fertilizing_monthly_v1_2026_08_09_r3", "genera": 151, "audited": 148, "conflict": 2, "unsupported": 1, "defaultForOtherGenera": "unsupported" },
+    "evidenceSources": "RHS 185 引用、UMN 41、UMD 23、UGA 23、Iowa State 35、UF/IFAS 13 等推广站",
+    "cellKinds": "liquid interval 872 / pause 755 / avoid 129；slowRelease unspecified 640 / pause 642 / avoid 292 / interval 130",
+    "knownIssues": [
+      "月份为温带（英美）日历月，scope 标注温带室内盆栽参考，不适配中国南北差异",
+      "缓释肥多为 unspecified",
+      "中点与 09:00 为工程取舍无文献依据",
+      "以 _openid 归属的旧表 user_fertilization_events / user_fertilization_reminder_events",
+      "诊断命中过湿根压直接写 user_plants.fertilization_guard_json（暂缓 7 天无来源），违反 v2 诊断只产生建议",
+      "生长判断依赖用户自答，未联动环境数据"
+    ]
+  },
+  "verdict": {
+    "reuseAfterAdaptation": ["属级月表数据（迁入 plant-knowledge 发布，月份改生长阶段）", "liquid/slowRelease 与 pause/avoid/interval 语义", "条件问答（改为可选观察 + 城市气候推断）", "健康禁忌（改为近期诊断类别禁忌）"],
+    "notRecommended": ["旧表与 _openid 归属", "pending 15 分钟提醒流程（改用 v2 建议→确认→计划）", "诊断直写暂缓施肥护栏"],
+    "directReuse": []
+  },
+  "v2Facts": {
+    "careFactsTable": "004_care_diagnosis.sql care_facts.fact_type VARCHAR(32) 无 CHECK（注释已列 fertilizing、repotting）",
+    "timelineItemType": "003 user_plant_timeline_projection.item_type 无 CHECK",
+    "careOutboxCheck": "029 ck_care_outbox_event_type 需迁移放开",
+    "existingRewards": "care.fertilizing_check_completed.v1 / DUE_FERTILIZER_CHECK 5 积分（只奖励到期检查）",
+    "existingCatalog": ["care.fertilizing.algorithm_version pending", "diagnosis.visual_gen.agent_allowlist_ref pending", "subscription.points.due_fertilizer_check confirmed 5"]
+  },
+  "decisionPoints": ["D1 首版范围", "D2 事实类型命名", "D3 换盆是否同步档案", "D4 打药药剂名约束", "D5 补记窗口", "D6 换盆后浇水重置", "D7 v1 月表改造复用", "D8 废弃诊断直写护栏", "D9 记录事件不发积分", "D10 统一时间线事件类型"],
+  "notChanged": ["产品代码", "DDL", "配置目录（只给登记建议）", "ClickUp"]
+}
