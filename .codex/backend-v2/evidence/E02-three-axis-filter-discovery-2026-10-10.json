@@ -1,0 +1,354 @@
+{
+  "ticket": "z8v0kmuqv6 [E01/E02][P2] 植物三轴筛选只读纵向切片",
+  "capturedAt": "2026-10-10",
+  "phase": "discovery（只读核验）+ 合同草案；未实现、未改代码、未写库、未部署、未提交",
+  "status": "DRAFT_PENDING_USER_REVIEW",
+  "method": "CloudBase MCP queryMysqlDatabase runQuery，库限定 qinghuazhi_v2_test；按索引列过滤或用编号范围抽样，避免全表扫描超时；仅执行 SELECT/EXPLAIN/information_schema 查询",
+  "expectedSources": [
+    "ClickUp z8v0kmuqv6 票面（只读）",
+    "用户 2026-10-07 三轴准入与数据源指定（经票面转述）",
+    "docs/backend-v2/architecture/configuration-layers.md（configuration-layers/v2）",
+    "docs/backend-v2/contracts/plant-catalog-search.md",
+    "docs/backend-v2/contracts/plant-encyclopedia-read.md v2（封面 DTO）"
+  ],
+  "schema": {
+    "plant_visual_axis_results": {
+      "columnsPublicCandidate": [
+        "taxon_id",
+        "axis_code",
+        "values_json"
+      ],
+      "columnsInternal": [
+        "id",
+        "encyclopedia_id",
+        "status",
+        "confidence",
+        "evidence_text",
+        "source_field",
+        "source_encyclopedia_id",
+        "source_hash",
+        "extraction_version",
+        "created_at",
+        "updated_at"
+      ],
+      "indexes": {
+        "PRIMARY": "id",
+        "uk_visual_axis_result": "encyclopedia_id,axis_code,extraction_version",
+        "idx_visual_axis_result_axis": "axis_code,status",
+        "idx_visual_axis_result_taxon": "taxon_id"
+      },
+      "collation": "utf8mb4_0900_ai_ci（与百科表 utf8mb4_unicode_ci 不同）",
+      "tableRowsEstimate": 749777
+    },
+    "plant_visual_axis_values": {
+      "rows": 43,
+      "catalogVersions": [
+        "v1"
+      ],
+      "uk": "catalog_version,axis_code,value_code",
+      "columns": [
+        "axis_code",
+        "axis_name_zh",
+        "axis_mode",
+        "value_code",
+        "value_name_zh",
+        "value_definition_zh",
+        "sort_order",
+        "catalog_version",
+        "is_active"
+      ]
+    },
+    "plant_visual_axis_rule_catalog": {
+      "rows": 41,
+      "releaseVersions": [
+        "visual-axis-v2"
+      ],
+      "uk": "release_version,axis_code,value_code,rule_type",
+      "note": "无 visual-axis-all-v1 规则行；规则正文含正则，不得公开"
+    },
+    "views": {
+      "plant_visual_profile_v2": "核心 90 视图（v2），不得冒充全量"
+    },
+    "mysqlVersion": "8.0.30-cynos"
+  },
+  "enums_v1": {
+    "LEAF_SHAPE": {
+      "mode": "MULTI",
+      "values": [
+        "HEART",
+        "ELLIPTIC",
+        "LANCEOLATE",
+        "ARROW_SAGITTATE",
+        "ROUND",
+        "LINEAR_STRAP",
+        "SPOON",
+        "KIDNEY",
+        "PALMATE",
+        "PINNATE_COMPOUND",
+        "LOBED",
+        "FIDDLE",
+        "FAN",
+        "FORKED_ANTLER",
+        "NEEDLELIKE"
+      ]
+    },
+    "GROWTH_FORM": {
+      "mode": "MULTI",
+      "values": [
+        "UPRIGHT",
+        "SPREADING",
+        "CLUMPING",
+        "VINING",
+        "TRAILING",
+        "CREEPING",
+        "ROSETTE"
+      ]
+    },
+    "LEAF_SURFACE": {
+      "mode": "MULTI",
+      "values": [
+        "SMOOTH",
+        "GLOSSY",
+        "LEATHERY",
+        "FLESHY",
+        "VELVETY",
+        "WAXY",
+        "HAIRY",
+        "TEXTURED"
+      ]
+    },
+    "allActive": true,
+    "outOfCatalogValuesInAllV1": 0
+  },
+  "versionDistribution": {
+    "LEAF_SHAPE": {
+      "visual-axis-all-v1": {
+        "EXTRACTED": 237091,
+        "HIGH": 236733,
+        "MEDIUM": 358
+      },
+      "visual-axis-v2": {
+        "EXTRACTED": 90,
+        "HIGH": 68,
+        "MEDIUM": 22
+      },
+      "visual-axis-v1": {
+        "EXTRACTED": 36,
+        "UNKNOWN": 54
+      }
+    },
+    "GROWTH_FORM": {
+      "visual-axis-all-v1": {
+        "EXTRACTED": 193839,
+        "HIGH": 192582,
+        "MEDIUM": 1257
+      },
+      "visual-axis-v2": {
+        "EXTRACTED": 90,
+        "HIGH": 72,
+        "MEDIUM": 18
+      },
+      "visual-axis-v1": {
+        "EXTRACTED": 44,
+        "UNKNOWN": 46
+      }
+    },
+    "LEAF_SURFACE": {
+      "visual-axis-all-v1": {
+        "EXTRACTED": 182251
+      },
+      "visual-axis-v2": {
+        "EXTRACTED": 90
+      },
+      "visual-axis-v1": {
+        "EXTRACTED": 52,
+        "UNKNOWN": 38
+      },
+      "confidenceAllVersions": {
+        "HIGH": 182050,
+        "MEDIUM": 343,
+        "LOW": 38
+      }
+    },
+    "statusesObserved": [
+      "EXTRACTED",
+      "UNKNOWN"
+    ],
+    "conflictRows": 0,
+    "unknownOnlyIn": "visual-axis-v1"
+  },
+  "valueCounts_allV1": {
+    "LEAF_SHAPE": {
+      "ELLIPTIC": 167282,
+      "LANCEOLATE": 97869,
+      "LINEAR_STRAP": 33057,
+      "PINNATE_COMPOUND": 15851,
+      "HEART": 13597,
+      "LOBED": 13296,
+      "ROUND": 12218,
+      "SPOON": 8328,
+      "PALMATE": 7750,
+      "KIDNEY": 1714,
+      "ARROW_SAGITTATE": 1493,
+      "NEEDLELIKE": 1438,
+      "FAN": 1400,
+      "FIDDLE": 68,
+      "FORKED_ANTLER": 22
+    },
+    "GROWTH_FORM": {
+      "UPRIGHT": 104207,
+      "CLUMPING": 63433,
+      "VINING": 28967,
+      "SPREADING": 16201,
+      "ROSETTE": 14972,
+      "CREEPING": 14577,
+      "TRAILING": 7036
+    },
+    "LEAF_SURFACE": {
+      "LEATHERY": 104124,
+      "GLOSSY": 80582,
+      "HAIRY": 36757,
+      "SMOOTH": 25541,
+      "TEXTURED": 23914,
+      "FLESHY": 7055,
+      "WAXY": 5893,
+      "VELVETY": 2568
+    }
+  },
+  "valueCounts_v2_core90": {
+    "LEAF_SHAPE": {
+      "ELLIPTIC": 31,
+      "HEART": 18,
+      "PINNATE_COMPOUND": 14,
+      "LANCEOLATE": 13,
+      "ARROW_SAGITTATE": 10,
+      "LINEAR_STRAP": 9,
+      "PALMATE": 7,
+      "FORKED_ANTLER": 5,
+      "ROUND": 3,
+      "LOBED": 3,
+      "FIDDLE": 2,
+      "NEEDLELIKE": 1,
+      "FAN": 1,
+      "SPOON": 1
+    },
+    "GROWTH_FORM": {
+      "UPRIGHT": 50,
+      "CLUMPING": 33,
+      "VINING": 13,
+      "SPREADING": 8,
+      "CREEPING": 7,
+      "TRAILING": 7,
+      "ROSETTE": 4
+    },
+    "LEAF_SURFACE": {
+      "GLOSSY": 51,
+      "LEATHERY": 34,
+      "SMOOTH": 25,
+      "VELVETY": 10,
+      "FLESHY": 7,
+      "WAXY": 4,
+      "HAIRY": 4,
+      "TEXTURED": 3
+    }
+  },
+  "multiValue_allV1": {
+    "LEAF_SHAPE": {
+      "1": 114735,
+      "2": 108184,
+      "3": 12535,
+      "4": 1517,
+      "5": 113,
+      "6": 7,
+      "multiShare": "51.6%"
+    },
+    "GROWTH_FORM": {
+      "1": 143443,
+      "2": 45376,
+      "3": 4884,
+      "4": 134,
+      "5": 2,
+      "multiShare": "26.0%"
+    },
+    "LEAF_SURFACE": {
+      "1": 92556,
+      "2": 76445,
+      "3": 12025,
+      "4": 1213,
+      "5": 11,
+      "6": 1,
+      "multiShare": "49.2%"
+    },
+    "emptyArrays": 0
+  },
+  "missingness_sample": {
+    "range": "encyclopedia_id 1–30000（30000 行百科，连续）",
+    "LEAF_SHAPE_missing": "9209（30.7%）",
+    "GROWTH_FORM_missing": "9675（32.3%）",
+    "LEAF_SURFACE_missing": "10153（33.8%）",
+    "noAxisAtAll": "2708（9.0%）",
+    "note": "all-v1 不存 UNKNOWN 行，缺值即无行；全量缺值比例未直接统计（百科 MAX(id)=271810，按抽样外推）"
+  },
+  "integrity_sample": {
+    "range": "encyclopedia_id 1–30000，all-v1 三轴 60963 行",
+    "orphanEncyclopedia": 0,
+    "taxonMismatch": 0,
+    "nonArrayValues": 0,
+    "duplicateValuesInArray": 0
+  },
+  "crossVersion_core90": {
+    "LEAF_SHAPE": {
+      "allV1Missing": 38,
+      "sameSet": 36,
+      "differs": 16
+    },
+    "GROWTH_FORM": {
+      "allV1Missing": 42,
+      "sameSet": 34,
+      "differs": 14
+    },
+    "LEAF_SURFACE": {
+      "allV1Missing": 43,
+      "sameSet": 35,
+      "differs": 12
+    },
+    "examples": [
+      "龟背竹 叶型 all-v1 [HEART,LOBED] vs v2 [HEART]",
+      "八角金盘 叶型 all-v1 [PALMATE,LOBED] vs v2 [PALMATE]；株型/叶面 all-v1 无行，v2 来自外部权威（RHS/NC State）"
+    ],
+    "v2Provenance": {
+      "external_authority": 86,
+      "inheritedSameSpecies": 6
+    },
+    "overlapWithWeather90": 90
+  },
+  "encyclopediaLink": {
+    "join": "results.encyclopedia_id = tropicals_species_encyclopedia_ref.id（内部关联），results.taxon_id 冗余且抽样一致；对外只用 taxon_id",
+    "catalogLink": "plant_search_documents.taxon_id UNIQUE；抽样 1–5000：is_searchable 4866/5000，is_selectable 4400/5000"
+  },
+  "performance": {
+    "explain": "LEAF_SHAPE+GROWTH_FORM 组合：s 走 idx_visual_axis_result_axis(const,const) 预估 374888 行 + filesort，g 走 uk eq_ref",
+    "run": "LIMIT 21 组合查询在 MCP 只读通道内返回（未精确计时）",
+    "risk": "无多值索引；排序/深页需全轴扫描；提速需 DDL（多值索引或预计算表），本票禁止"
+  },
+  "draftContract": "docs/backend-v2/contracts/plant-visual-axis-filter.draft.md（草案，待用户审）",
+  "decisionsNeeded": [
+    "D1 每轴 extraction_version（推荐 all-v1，写入策略）",
+    "D2 核心 90 v2 是否启用及方式（推荐首版不启用；如启用为显式 scope=core90）",
+    "D3 排序（推荐 taxon_id 升序）",
+    "D4 是否限 is_searchable=1（推荐是）",
+    "D5 三轴全空是否允许（推荐 400）",
+    "D6 响应是否带版本标签（推荐顶层 releaseVersion）",
+    "D7 分页默认/上限取值与策略归属（推荐扩展 plant-knowledge/public_search 新 schema 版本；取值待用户）",
+    "D8 性能：接受首版扫描成本或先开 DDL 票"
+  ],
+  "configurationCatalog": "三轴筛选的分页、版本选择等配置项均未登记在 configuration-variable-catalog.json，需主代理裁决登记",
+  "notCovered": [
+    "全量缺值比例（只做 1–30000 抽样）",
+    "全量孤儿/不一致核验（只做抽样）",
+    "真实查询延迟精确计时",
+    "plant_visual_profile_v2 视图完整定义（只读取前 600 字符）",
+    "visual-axis-v1 批次用途来源未查证"
+  ],
+  "testLayers": "本阶段无测试；实现阶段计划 L1 参数解析/组合规则、L3 unit_fake HTTP、本地 Docker MySQL unit_real_data、测试环境 e2e_real_api 读回"
+}
