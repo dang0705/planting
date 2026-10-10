@@ -2591,6 +2591,50 @@
       "decisionNote": "用户 2026-10-10 裁定：每次诊断最多 3 张图；补拍为新的一次调用。前提为模型输入侧 1024² 像素硬上限（diagnosis-visual-image-input/v1）"
     },
     {
+      "id": "diagnosis.visual.image_normalization",
+      "chineseName": "视觉诊断服务端图片压缩规则",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "longEdgeMaxPx": 1024,
+        "upscale": false,
+        "keepAspectRatio": true,
+        "autoOrient": true,
+        "outputMime": "image/jpeg",
+        "jpegQuality": 85,
+        "flattenBackground": "#ffffff",
+        "stripMetadata": true,
+        "maxInputPixels": 50000000,
+        "acceptedInputMimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "library": "sharp@0.35.5"
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/diagnosis-visual-image-input.md",
+        "docs/backend-v2/architecture/image-compression-dependency-review-2026-10-11.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置，变更需架构重审并同步合同 diagnosis-visual-image-input",
+      "fallback": "图像库加载失败返回 503；图片不合格返回 400，绝不原样放行原图",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "长边 ≤1024、只缩不放大、先按 EXIF 转正、统一 JPEG、清除 EXIF/GPS；声明类型与真实内容不符、无法解码或像素数 >5000 万时拒绝；不接收 HEIC",
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/diagnosis/image/image-normalizer.ts"
+      ],
+      "decisionNote": "用户 2026-10-11 裁决：安装 sharp 0.35.5；长边不超过 1024、只缩不放大、统一 JPEG、清除 EXIF 和 GPS；不接收 HEIC。jpegQuality 85 与 maxInputPixels 5000 万为本轮实现取值（解压炸弹防护），请主代理复核"
+    },
+    {
       "id": "diagnosis.evaluation.ai_budget_cny",
       "chineseName": "视觉诊断离线评测 AI 调用预算上限",
       "domain": "diagnosis",
@@ -2763,8 +2807,8 @@
     {
       "domain": "diagnosis",
       "layer": "provider_runtime",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": 60000,
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
@@ -2796,14 +2840,13 @@
       "changePolicy": "部署环境变量；改动需重启实例",
       "fallback": "未设置时不创建 Provider，不使用代码默认值",
       "expected": "超时即中止该次请求并按不可用处理（可在同模型内按尝试次数重试，或切换下一个模型）",
-      "pendingReason": "探针实测平均 19～28 秒、最长约 41 秒；建议 60 秒，待主代理裁定",
-      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnc）：运维参数，只来自环境变量，无代码默认值"
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnc）：运维参数，只来自环境变量，无代码默认值；用户 2026-10-11 裁决（协调方转达，ClickUp z8v0kmvhnc 收尾）：定为 60000，改为 confirmed。仍只来自环境变量 V2_BAILIAN_DIAGNOSIS_TOTAL_DEADLINE_MS，代码无默认值，部署时必须设置"
     },
     {
       "domain": "diagnosis",
       "layer": "provider_runtime",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": 2,
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
@@ -2835,8 +2878,7 @@
       "changePolicy": "部署环境变量；改动需重启实例",
       "fallback": "未设置时不创建 Provider，不使用代码默认值",
       "expected": "只对不可用与限流在同一模型内重试；免费额度用完、额度不足时直接切下一个模型；请求不合法时不重试也不切换",
-      "pendingReason": "建议 2 次（1 次重试），待主代理裁定",
-      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnc）：运维参数，只来自环境变量，无代码默认值；与安全门重试（maxModelLoops，成本策略）是两件事"
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnc）：运维参数，只来自环境变量，无代码默认值；与安全门重试（maxModelLoops，成本策略）是两件事；用户 2026-10-11 裁决（协调方转达，ClickUp z8v0kmvhnc 收尾）：定为 2，改为 confirmed。仍只来自环境变量 V2_BAILIAN_DIAGNOSIS_MAX_ATTEMPTS，代码无默认值，部署时必须设置"
     },
     {
       "domain": "diagnosis",
@@ -5789,8 +5831,11 @@
       "layer": "domain_policy",
       "valueType": "object",
       "unit": "成本策略",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": {
+        "capability": "USER_DIAGNOSIS_VISUAL",
+        "mergedInto": "subscription.ai_action.diagnosis_visual_multi"
+      },
       "sourceRefs": [
         "docs/backend-v2/contracts/care-points-and-ai-quota.md",
         "docs/backend-v2/contracts/diagnosis-visual-api.md"
@@ -5802,35 +5847,12 @@
       ],
       "changePolicy": "取得真实证据后发布不可变领域策略版本",
       "fallback": "未冻结前停止对应范围，不从旧实现猜值",
-      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
-      "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
+      "expected": "单图与多图算同一次诊断：不单独计价，统一按 subscription.ai_action.diagnosis_visual_multi 预占与结算",
       "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
       "decisionGroup": "entitlements_cost_rewards",
       "configurationTier": "policy",
       "codeLocations": [],
-      "proposedValue": {
-        "capability": "USER_DIAGNOSIS_VISUAL",
-        "modelFamily": "qwen3.7-flash",
-        "providerCode": "aliyun_bailian",
-        "maxInputTokens": 28800,
-        "maxOutputTokens": 4000,
-        "maxImages": 1,
-        "maxModelLoops": 2,
-        "inputMicrosPerToken": 0.2,
-        "outputMicrosPerToken": 0.8,
-        "maxCostMicros": 17920,
-        "estimatedPoints": 23,
-        "pointsFormula": "ceil(costMicros / 800)",
-        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
-        "costPolicyVersion": "diagnosis-visual-cost/v1-draft",
-        "releaseWithoutCharge": [
-          "not_plant",
-          "image_unusable",
-          "model_failed",
-          "safety_gate_rejected"
-        ]
-      },
-      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）"
+      "decisionNote": "用户 2026-10-11 裁决（协调方转达，ClickUp z8v0kmvhnc 收尾）：单图与多图算同一次诊断，本项并入多图策略，不再单独冻结数值"
     },
     {
       "owner": "subscription",
@@ -5842,8 +5864,31 @@
       "layer": "domain_policy",
       "valueType": "object",
       "unit": "成本策略",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": {
+        "capability": "USER_DIAGNOSIS_VISUAL",
+        "modelFamily": "qwen3.7-flash",
+        "providerCode": "aliyun_bailian",
+        "maxInputTokens": 28800,
+        "maxOutputTokens": 4000,
+        "maxImages": 3,
+        "maxModelLoops": 2,
+        "inputMicrosPerToken": 0.2,
+        "outputMicrosPerToken": 0.8,
+        "maxCostMicros": 17920,
+        "estimatedPoints": 23,
+        "pointsFormula": "ceil(costMicros / 800)",
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
+        "costPolicyVersion": "diagnosis-visual-cost/v1",
+        "releaseWithoutCharge": [
+          "not_plant",
+          "image_unusable",
+          "model_failed",
+          "safety_gate_rejected"
+        ],
+        "reservePoints": 23,
+        "singleAndMultiImageSameAction": true
+      },
       "sourceRefs": [
         "docs/backend-v2/contracts/care-points-and-ai-quota.md",
         "docs/backend-v2/contracts/diagnosis-visual-api.md"
@@ -5856,7 +5901,6 @@
       "changePolicy": "取得真实证据后发布不可变领域策略版本",
       "fallback": "未冻结前停止对应范围，不从旧实现猜值",
       "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
-      "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
       "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
       "decisionGroup": "entitlements_cost_rewards",
       "configurationTier": "policy",
@@ -5883,7 +5927,7 @@
           "safety_gate_rejected"
         ]
       },
-      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）"
+      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）；用户 2026-10-11 裁决（协调方转达，ClickUp z8v0kmvhnc 收尾）：定稿为 confirmed——预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、图片最多 3 张、调用最多 2 次、结算 ceil(costMicros/800)、失败与非植物不扣点；单图与多图算同一次诊断（单图动作并入本策略）"
     },
     {
       "domain": "subscription",

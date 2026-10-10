@@ -51,7 +51,23 @@ const packageKinds = {
 }
 
 /** 生产依赖锁定版本；必须与 package.json 的 dependencies 完全一致。 */
-const productionDependencies = { ajv: '8.20.0', mysql2: '3.24.4', pino: '10.3.1', suncalc: '2.1.0' }
+const productionDependencies = { ajv: '8.20.0', mysql2: '3.24.4', pino: '10.3.1', sharp: '0.35.5', suncalc: '2.1.0' }
+
+/**
+ * 函数包按 CloudBase 运行平台安装依赖（用户 2026-10-11 裁决）：sharp 的原生二进制必须是 linux-x64 glibc 版本，
+ * 不能把构建机（例如 macOS arm64）的二进制打进包。npm 按这三个参数挑选 lockfile 中对应平台的可选依赖。
+ */
+const targetPlatformArgs = ['--os=linux', '--cpu=x64', '--libc=glibc']
+
+/** 需要 sharp 的函数（视觉诊断服务端压缩图片）；其他函数包移除 sharp 以免平白增加约 20MB。 */
+const sharpConsumers = new Set(['diagnosis', 'probe'])
+/** sharp 及其平台二进制所在路径（只在非消费方函数包中移除）。 */
+const sharpPackagePaths = ['node_modules/sharp', 'node_modules/@img']
+/** 消费方函数包里必须存在的 linux-x64 原生文件；缺失即构建失败。 */
+const requiredLinuxSharpFiles = [
+  'node_modules/@img/sharp-linux-x64/lib/sharp-linux-x64-0.35.5.node',
+  'node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so.8.18.7'
+]
 
 /**
  * mysql2 把 `@types/node` 声明为运行时依赖，但运行时从不加载它；这两个纯类型包在
@@ -116,9 +132,10 @@ async function bundleEntry(entryPath, outfile, target = packageKinds.http.target
  * @param {string} bundlePath esbuild 产物路径
  * @param {string} packageDir 函数包目录
  * @param {'http' | 'event'} [kind='http'] 函数包形态
+ * @param {string} [functionName='probe'] 函数名，用于判断是否需要 sharp
  * @returns {Promise<string>} 清单 JSON 正文
  */
-async function assemblePackage(bundlePath, packageDir, kind = 'http') {
+async function assemblePackage(bundlePath, packageDir, kind = 'http', functionName = 'probe') {
   const shape = packageKinds[kind]
   await mkdir(dirname(join(packageDir, shape.entrypoint)), { recursive: true })
   await cp(bundlePath, join(packageDir, shape.entrypoint))
@@ -130,12 +147,17 @@ async function assemblePackage(bundlePath, packageDir, kind = 'http') {
   await cp(join(projectDir, 'package-lock.json'), join(packageDir, 'package-lock.json'))
 
   // 部署目录仅按锁文件安装生产依赖，确保 TypeScript、Vitest、esbuild 和 Node 类型不会入包。
-  execFileSync('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], {
+  execFileSync('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', ...targetPlatformArgs], {
     cwd: packageDir,
     stdio: 'inherit'
   })
   for (const typeOnlyPath of typeOnlyPackagesToPrune) {
     await rm(join(packageDir, typeOnlyPath), { recursive: true, force: true })
+  }
+  if (!sharpConsumers.has(functionName)) {
+    for (const sharpPath of sharpPackagePaths) {
+      await rm(join(packageDir, sharpPath), { recursive: true, force: true })
+    }
   }
 
   /** 安装生产依赖后部署目录内的实际文件清单（尚未写入 manifest）。 */
@@ -154,6 +176,19 @@ async function assemblePackage(bundlePath, packageDir, kind = 'http') {
   )
   if (forbiddenPaths.length > 0) {
     throw new Error(`部署包混入源码或开发依赖：${forbiddenPaths.join(', ')}`)
+  }
+  /** 混入的非 linux-x64 glibc 平台二进制（例如构建机的 darwin 包）。 */
+  const foreignNativePaths = files.filter(
+    file => file.startsWith('node_modules/@img/') && !/^node_modules\/@img\/(sharp-linux-x64|sharp-libvips-linux-x64|colour)\//.test(file)
+  )
+  if (foreignNativePaths.length > 0) {
+    throw new Error(`部署包混入非 linux-x64 的 sharp 二进制：${foreignNativePaths.slice(0, 5).join(', ')}`)
+  }
+  if (sharpConsumers.has(functionName)) {
+    const missing = requiredLinuxSharpFiles.filter(file => !files.includes(file))
+    if (missing.length > 0) {
+      throw new Error(`部署包缺少 sharp 的 linux-x64 二进制：${missing.join(', ')}`)
+    }
   }
 
   /** 部署包清单：运行时、入口、生产依赖版本、产物摘要与文件列表。 */
@@ -190,5 +225,5 @@ for (const functionEntry of functionEntries) {
   const bundlePath = join(buildDir, 'bundles', `${functionEntry.name}.cjs`)
   const kind = functionEntry.kind ?? 'http'
   await bundleEntry(functionEntry.entry, bundlePath, packageKinds[kind].target)
-  await assemblePackage(bundlePath, join(functionsDir, functionEntry.name), kind)
+  await assemblePackage(bundlePath, join(functionsDir, functionEntry.name), kind, functionEntry.name)
 }

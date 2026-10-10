@@ -77,3 +77,12 @@
 3. HEIC：是否需要接收苹果手机的 HEIC 原图（sharp 预编译包可解码，但涉及专利与许可；不需要时可以在上传白名单里继续只允许 JPEG / PNG / WebP）。
 
 确认后按 TDD：先让 `image-normalizer.red.spec.ts` 在真实依赖下转绿，再补性能实测与函数包体积验证。
+
+## 6. 用户裁决与落地（2026-10-11）
+
+- 安装 sharp，锁定精确版本 0.35.5；函数包增大约 20MB 可接受（若超出 CloudBase 代码包上限改用层，层名带环境标识 `{name}_cloud1-2grufevs395a9d5e`）。
+- 不接收 HEIC，上传白名单保持 JPEG / PNG / WebP。
+- 落地方式：`scripts/build.mjs` 在每个函数包里用 `npm ci --omit=dev --ignore-scripts --os=linux --cpu=x64 --libc=glibc` 安装依赖，只装 linux-x64 glibc 二进制；本机开发机仍装自己平台的二进制，测试照常运行。
+- 只有 `diagnosis` 函数包（和本地探针包）保留 sharp；其他函数包构建后移除 `node_modules/sharp` 与 `node_modules/@img`。构建时校验：消费方包必须含 `sharp-linux-x64-0.35.5.node` 与 `libvips-cpp.so.8.18.7`，任何包不得混入其他平台二进制，否则构建失败。
+- 本机实测（2026-10-11）：`diagnosis` 函数包解压后约 27MB，zip 后约 10.2MB；其他函数包约 7.6～8.0MB，未受影响。暂不需要层。
+- 未覆盖：CloudBase Node.js 22 运行时真实加载 linux-x64 二进制的冒烟（需部署后在测试环境验证 `sharp.versions`）。

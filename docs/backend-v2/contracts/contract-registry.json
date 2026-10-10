@@ -184,7 +184,7 @@
       "file": "diagnosis-visual-image-input.md",
       "owner": "diagnosis + storage",
       "status": "FROZEN_NOT_IMPLEMENTED",
-      "sha256": "33cf9e83cadda5fa9675a16201d09c7f976882f961906f66fcb27bc7e85f9efc"
+      "sha256": "936582d20d25ff1faae154ac4515d4474ce854b71ceb1867a06a9c03d9d0d97c"
     },
     {
       "id": "diagnosis-visual-image-input-budget",

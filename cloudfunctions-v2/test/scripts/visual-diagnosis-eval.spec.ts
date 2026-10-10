@@ -400,7 +400,9 @@ describe('视觉诊断评测脚本：真实探针所需的增量能力', () => {
     const provider: EvalProvider = {
       async complete() {
         call += 1
-        if (call === 1) throw new Error('bailian_request_failed:400')
+        if (call === 1) {
+          throw new Error('bailian_request_failed:400')
+        }
         return {
           text: modelText(['pest_aphid']),
           usage: {
