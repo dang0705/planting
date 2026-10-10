@@ -5807,5 +5807,1647 @@
       "total": 1.243178,
       "note": "按价目快照与 usage 计算，实际以百炼账单为准；未出现 FreeTierOnly"
     }
+  },
+  "round5": {
+    "at": "2026-10-10",
+    "prompt": "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.2.draft.md",
+    "settings": "thinking=false；response_format=json_object；max_pixels=1048576；本地图片内联；29 个图片案例；报停线 1.5 元",
+    "runs": {
+      "qwen3.6-flash-2026-04-16": {
+        "stoppedReason": "provider_errors",
+        "costCny": 0.304904,
+        "summary": {
+          "scoredCases": 16,
+          "top1Rate": 0.625,
+          "top3Rate": 0.625,
+          "jsonValidRate": 0.8125,
+          "casesWithSafetyViolation": 0,
+          "cachedTokenShare": 0,
+          "groups": {
+            "image_determinable": {
+              "cases": 13,
+              "top1Rate": 0.7692307692307693,
+              "top3Rate": 0.7692307692307693,
+              "reasonableRate": 0.7692307692307693
+            },
+            "context_dependent_no_context": {
+              "cases": 0,
+              "top1Rate": 0,
+              "top3Rate": 0,
+              "reasonableRate": 0
+            },
+            "with_context": {
+              "cases": 0,
+              "top1Rate": 0,
+              "top3Rate": 0,
+              "reasonableRate": 0
+            }
+          },
+          "followUpQualityCountedInAcceptance": false,
+          "acceptance": {
+            "imageDeterminable": {
+              "cases": 13,
+              "top1Rate": 0.7692307692307693,
+              "top3Rate": 0.7692307692307693
+            },
+            "withContext": {
+              "cases": 0,
+              "top1Rate": 0,
+              "top3Rate": 0
+            }
+          }
+        },
+        "results": [
+          {
+            "caseId": "P01_pest_spider_mite",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "fungal_gray_mold"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 8983,
+              "completionTokens": 1729,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 882
+            },
+            "actualCostCny": 0.023228,
+            "latencyMs": 11847,
+            "rawTextSha256": "81aeedbbe03d2327c78a7151519351e907454c52c0cd73962fef77cb98c91e7f"
+          },
+          {
+            "caseId": "P02_pest_thrips",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "physio_overwatering",
+                "env_cold_damage",
+                "bacterial_leaf_spot"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "fertilizer_recent",
+                "root_inspection",
+                "soil_moisture",
+                "temperature_cold",
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 2222,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.026888,
+            "latencyMs": 14830,
+            "rawTextSha256": "73844191ed7efbe3ebe63fe2f5b70f1dfea1b3bd8eac3bda41d05e130e914054"
+          },
+          {
+            "caseId": "P03_pest_whitefly",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_whitefly"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 1716,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.023245,
+            "latencyMs": 9669,
+            "rawTextSha256": "ad9fa116b04cecfbf02067bfe3fe814b4efdc73e38cf06aacf46fafb7cfeac6d"
+          },
+          {
+            "caseId": "P04_pest_aphid",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_aphid"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9095,
+              "completionTokens": 1477,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 994
+            },
+            "actualCostCny": 0.021548,
+            "latencyMs": 8571,
+            "rawTextSha256": "785647a6048511da95eab9bb37fefe84589b868c3bc3d35055812897100fee83"
+          },
+          {
+            "caseId": "P05_pest_mealybug",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_mealybug"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9091,
+              "completionTokens": 1651,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 990
+            },
+            "actualCostCny": 0.022796,
+            "latencyMs": 11731,
+            "rawTextSha256": "29e0916737fa890c9fe07e17e05e81e897730a635c3b0c817bf0cacdf5944c4e"
+          },
+          {
+            "caseId": "P06_pest_scale_insect",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_scale_insect"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9117,
+              "completionTokens": 1655,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1016
+            },
+            "actualCostCny": 0.022856,
+            "latencyMs": 10963,
+            "rawTextSha256": "b1872a3d1c7180126c2b83ed72c479c60e8c4eba189be163d55d6d1fc0d90ada"
+          },
+          {
+            "caseId": "P07_fungal_powdery_mildew",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_powdery_mildew"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [
+                "humidity"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9117,
+              "completionTokens": 1646,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1016
+            },
+            "actualCostCny": 0.022792,
+            "latencyMs": 10454,
+            "rawTextSha256": "e760033a0f2ce785bb75022853333be51fa844306876736f9dcc29b4dbd206e3"
+          },
+          {
+            "caseId": "P08_fungal_leaf_spot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_leaf_spot",
+                "bacterial_leaf_spot"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "soil_moisture",
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 8983,
+              "completionTokens": 2101,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 882
+            },
+            "actualCostCny": 0.025907,
+            "latencyMs": 12065,
+            "rawTextSha256": "cef526231ba59ee5b9488a54ea3ab398a52c1065eac2fa5d47a5d8a3cc66adad"
+          },
+          {
+            "caseId": "P09_fungal_rust",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_rust"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 1602,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.022424,
+            "latencyMs": 9867,
+            "rawTextSha256": "9b3773e072167b6ebe4d85ff06b77a4f3b43509fbbc019803dfd46445175e35a"
+          },
+          {
+            "caseId": "P10_fungal_gray_mold",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "pest_aphid"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 1694,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.023087,
+            "latencyMs": 12026,
+            "rawTextSha256": "a3ee32950a10d7396ffef55ecee79a8ff418925a6b5c9d8d29ba3bfb606c82cc"
+          },
+          {
+            "caseId": "P11_fungal_sooty_mold",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": false,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_sooty_mold",
+                "pest_aphid"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 1897,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.024548,
+            "latencyMs": 11280,
+            "rawTextSha256": "8a87efd5bab95609ea5c6fbf50fed73332a2ac21021dbce4766875344a534c1d"
+          },
+          {
+            "caseId": "P12_bacterial_leaf_spot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "bacterial_leaf_spot"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "root_inspection"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 1838,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.024124,
+            "latencyMs": 11168,
+            "rawTextSha256": "93a32cb8bad40aef452ea1adf9657b5891b9a39dde460b6aec5976346f9ff63f"
+          },
+          {
+            "caseId": "P13_bacterial_soft_rot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "bacterial_soft_rot"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9075,
+              "completionTokens": 1468,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.02146,
+            "latencyMs": 9172,
+            "rawTextSha256": "41eac7951b1581196764b1de830014d634d5711040c206217bf25e9a94472a1d"
+          },
+          {
+            "caseId": "P14_viral_mosaic",
+            "score": {
+              "jsonValid": false,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "empty"
+            },
+            "usage": {
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0
+            },
+            "actualCostCny": 0,
+            "latencyMs": 0,
+            "rawTextSha256": "",
+            "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+          },
+          {
+            "caseId": "P15_nematode_root_knot",
+            "score": {
+              "jsonValid": false,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "empty"
+            },
+            "usage": {
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0
+            },
+            "actualCostCny": 0,
+            "latencyMs": 0,
+            "rawTextSha256": "",
+            "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+          },
+          {
+            "caseId": "P16_physio_edema",
+            "score": {
+              "jsonValid": false,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "empty"
+            },
+            "usage": {
+              "promptTokens": 0,
+              "completionTokens": 0,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 0
+            },
+            "actualCostCny": 0,
+            "latencyMs": 0,
+            "rawTextSha256": "",
+            "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+          }
+        ],
+        "note": "P14 起该快照免费额度耗尽（403 FreeTierOnly），完成 P01–P13 共 13 例"
+      },
+      "qwen3.5-plus": {
+        "stoppedReason": "completed",
+        "costCny": 0.284587,
+        "summary": {
+          "scoredCases": 29,
+          "top1Rate": 0.4827586206896552,
+          "top3Rate": 0.5517241379310345,
+          "jsonValidRate": 0.9655172413793104,
+          "casesWithSafetyViolation": 2,
+          "cachedTokenShare": 0.841248303934871,
+          "groups": {
+            "image_determinable": {
+              "cases": 19,
+              "top1Rate": 0.5263157894736842,
+              "top3Rate": 0.5789473684210527,
+              "reasonableRate": 0.5263157894736842
+            },
+            "context_dependent_no_context": {
+              "cases": 10,
+              "top1Rate": 0.4,
+              "top3Rate": 0.5,
+              "reasonableRate": 0.4
+            },
+            "with_context": {
+              "cases": 0,
+              "top1Rate": 0,
+              "top3Rate": 0,
+              "reasonableRate": 0
+            }
+          },
+          "followUpQualityCountedInAcceptance": false,
+          "acceptance": {
+            "imageDeterminable": {
+              "cases": 19,
+              "top1Rate": 0.5263157894736842,
+              "top3Rate": 0.5789473684210527
+            },
+            "withContext": {
+              "cases": 0,
+              "top1Rate": 0,
+              "top3Rate": 0
+            }
+          }
+        },
+        "results": [
+          {
+            "caseId": "P01_pest_spider_mite",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_spider_mite"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [
+                "humidity",
+                "soil_moisture"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 8984,
+              "completionTokens": 1909,
+              "cachedTokens": 0,
+              "cacheCreationTokens": 7905,
+              "reasoningTokens": 0,
+              "imageTokens": 882
+            },
+            "actualCostCny": 0.017931,
+            "latencyMs": 33916,
+            "rawTextSha256": "a521c624a23c7bed53662e2ca89d9672227cd0382d2ce469746fdc2ad345f1fb"
+          },
+          {
+            "caseId": "P02_pest_thrips",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "fungal_leaf_spot",
+                "env_sunburn"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "fertilizer_recent"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1937,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.010867,
+            "latencyMs": 31551,
+            "rawTextSha256": "b4c6e61e80440a8c83e47bd4bb44989c67a689c7a9fd6a90d1d41a4bac54ffb5"
+          },
+          {
+            "caseId": "P03_pest_whitefly",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_whitefly"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1926,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.010814,
+            "latencyMs": 31054,
+            "rawTextSha256": "0985893cfddc7f762fe83a1043beecd479ba29e9e125285e1ba4935a919ba2d4"
+          },
+          {
+            "caseId": "P04_pest_aphid",
+            "score": {
+              "jsonValid": false,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "not_json"
+            },
+            "usage": {
+              "promptTokens": 9096,
+              "completionTokens": 269,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 994
+            },
+            "actualCostCny": 0.002876,
+            "latencyMs": 5302,
+            "rawTextSha256": "d16ba1cf17f9640b6e9354ad71d23e696b00b8215729a67fb218f003155efe9c"
+          },
+          {
+            "caseId": "P05_pest_mealybug",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "pest_mealybug"
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [
+                "dose_in_step",
+                "missing_label_notice",
+                "missing_edible_interval_notice"
+              ],
+              "safetyFindings": [
+                {
+                  "code": "dose_in_step",
+                  "category": "dilution_or_concentration"
+                },
+                {
+                  "code": "missing_label_notice"
+                },
+                {
+                  "code": "missing_edible_interval_notice"
+                }
+              ],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9092,
+              "completionTokens": 1979,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 990
+            },
+            "actualCostCny": 0.011081,
+            "latencyMs": 34059,
+            "rawTextSha256": "417846e62cb19f1738d00f04518683832edd503c7b110b060c4c24a1dabb9ab8"
+          },
+          {
+            "caseId": "P06_pest_scale_insect",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "",
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9118,
+              "completionTokens": 2047,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1016
+            },
+            "actualCostCny": 0.011428,
+            "latencyMs": 33034,
+            "rawTextSha256": "b312e429a83fe216567f507837179e2b1fe5aee8b1aa9070d143081d503a107d"
+          },
+          {
+            "caseId": "P07_fungal_powdery_mildew",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9118,
+              "completionTokens": 1891,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1016
+            },
+            "actualCostCny": 0.01068,
+            "latencyMs": 32579,
+            "rawTextSha256": "6df20e2bb6a14d7051d91fdef063ee3788903f345ea6f7049d91302921c778df"
+          },
+          {
+            "caseId": "P08_fungal_leaf_spot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_leaf_spot",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 8984,
+              "completionTokens": 1633,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 882
+            },
+            "actualCostCny": 0.009334,
+            "latencyMs": 27167,
+            "rawTextSha256": "e9b47e4ce0a41dd6d85c228b3f20ce7891a7facac76a55b878003d6ea51d94c8"
+          },
+          {
+            "caseId": "P09_fungal_rust",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_rust",
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 2124,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.011764,
+            "latencyMs": 34382,
+            "rawTextSha256": "5b908f9255ed94fdf99a46bad4f73cc6fdab45a1e3d43447e102dbd6b0a32b39"
+          },
+          {
+            "caseId": "P10_fungal_gray_mold",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "",
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [
+                "agent_not_allowed"
+              ],
+              "safetyFindings": [
+                {
+                  "code": "agent_not_allowed",
+                  "agentName": ": "
+                }
+              ],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 2022,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.011275,
+            "latencyMs": 35149,
+            "rawTextSha256": "ede905fd14ea09820d6e3d1d54e33e7632dd88613420d5a8f2dededd2a3dbf70"
+          },
+          {
+            "caseId": "P11_fungal_sooty_mold",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "fungal_sooty_mold",
+                "pest_whitefly",
+                "pest_aphid"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 2268,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.012456,
+            "latencyMs": 35820,
+            "rawTextSha256": "da8dac1705f9c434a4456cfc4457a5ddf118ef8a06a7d20c88800c6ba88799f8"
+          },
+          {
+            "caseId": "P12_bacterial_leaf_spot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "fungal_leaf_spot",
+                "bacterial_leaf_spot"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 2011,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.011222,
+            "latencyMs": 33590,
+            "rawTextSha256": "45160adcb80ca3a037daa7850abde2abdcad16afa573c33ce1ee6ec3b24a45de"
+          },
+          {
+            "caseId": "P13_bacterial_soft_rot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "bacterial_soft_rot"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [
+                "soil_moisture",
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1964,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.010996,
+            "latencyMs": 33390,
+            "rawTextSha256": "fc4cbfec83054952ee204d68cbc8f77f51e5f2c7a726774903a754cb84b0c91e"
+          },
+          {
+            "caseId": "P14_viral_mosaic",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9096,
+              "completionTokens": 747,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 994
+            },
+            "actualCostCny": 0.005171,
+            "latencyMs": 12504,
+            "rawTextSha256": "7e9342963f4b513a7ce878a12023e2129374aaddb3065cf7c8d91ffaa49d9cf3"
+          },
+          {
+            "caseId": "P15_nematode_root_knot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "nematode_root_knot"
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1578,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.009144,
+            "latencyMs": 26102,
+            "rawTextSha256": "d46d430935f0f53fee9e9022db18a401155567fa5bda87743c04df3960f1da65"
+          },
+          {
+            "caseId": "P16_physio_edema",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "recent_relocation",
+                "watering_frequency"
+              ],
+              "followUpReasonable": true,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1482,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.008683,
+            "latencyMs": 25743,
+            "rawTextSha256": "568a1d9ad9f197565c5090d92b03a8d63e35b94746ffcb7e94d13bbe11c6663c"
+          },
+          {
+            "caseId": "P17_physio_low_light",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "recent_repot",
+                "root_inspection",
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9024,
+              "completionTokens": 926,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 922
+            },
+            "actualCostCny": 0.005972,
+            "latencyMs": 16511,
+            "rawTextSha256": "97d00d30ae0dbed40acb7485e92da9e198842d3f7006aa78858bdb5dfb1f190b"
+          },
+          {
+            "caseId": "P19_env_sunburn",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "fungal_leaf_spot",
+                "env_sunburn"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "sun_exposure",
+                "watering_frequency"
+              ],
+              "followUpReasonable": true,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 2190,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.012081,
+            "latencyMs": 36308,
+            "rawTextSha256": "d6dc83b06a30df6a40d490f713ee488f417cd7bf3f62480eb9e23523004e1d51"
+          },
+          {
+            "caseId": "P20_env_cold_damage",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": false,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "fertilizer_recent",
+                "pesticide_recent"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9024,
+              "completionTokens": 741,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 922
+            },
+            "actualCostCny": 0.005084,
+            "latencyMs": 12696,
+            "rawTextSha256": "72906f43e5ab8643535cd5fedd2f86d20992aa20fb1ae5e4236e0ae20f9fde6f"
+          },
+          {
+            "caseId": "P21_env_mechanical_damage",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "pest_caterpillar_chewing",
+                "none_natural_variegation"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1817,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.010291,
+            "latencyMs": 30222,
+            "rawTextSha256": "7ff71c44113059abbb44063f03aa3b17c3ff925cba54497d7d0402f069865c15"
+          },
+          {
+            "caseId": "P22_nutrient_iron_deficiency",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "nutrient_iron_deficiency",
+                "root_rot"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "fertilizer_recent",
+                "root_inspection",
+                "watering_frequency"
+              ],
+              "followUpReasonable": true,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9070,
+              "completionTokens": 1988,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 968
+            },
+            "actualCostCny": 0.011107,
+            "latencyMs": 32590,
+            "rawTextSha256": "574ecef299abdc79b6f6a9fec3a4b032360dd3cfb1fbd5e8e96c684da558a081"
+          },
+          {
+            "caseId": "P23_nutrient_nitrogen_deficiency",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "nutrient_nitrogen_deficiency",
+                "pest_spider_mite"
+              ],
+              "topCertaintyBand": "possible",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "fertilizer_recent",
+                "soil_moisture"
+              ],
+              "followUpReasonable": true,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1901,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.010694,
+            "latencyMs": 30994,
+            "rawTextSha256": "4e2f066908ef31cfc919bc10b312160db4c0cc9c1ed382590f558794e4fb38bb"
+          },
+          {
+            "caseId": "P24_chem_fertilizer_burn",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                "env_sunburn",
+                "fungal_anthracnose"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [
+                "recent_relocation",
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 2034,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.011332,
+            "latencyMs": 31955,
+            "rawTextSha256": "7737e483b7d9c31c4c89a4cedfda1784f379f7a75b485b30a8089837debdff58"
+          },
+          {
+            "caseId": "P25_root_rot",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": false,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "root_rot",
+                "",
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "root_inspection",
+                "watering_frequency"
+              ],
+              "followUpReasonable": true,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9118,
+              "completionTokens": 3154,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1016
+            },
+            "actualCostCny": 0.016742,
+            "latencyMs": 48613,
+            "rawTextSha256": "ffe8f59e1e52d37f65c0dfcb0ac3ecc65862c2328da88d0b7198943d4244c369"
+          },
+          {
+            "caseId": "P26_root_bound",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "root_bound"
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "context_dependent_no_context",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [
+                "watering_frequency"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9103,
+              "completionTokens": 1624,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1001
+            },
+            "actualCostCny": 0.009386,
+            "latencyMs": 27738,
+            "rawTextSha256": "69d05bbf8843d70188c247b61f34178b26085eba4b082b20cde8cca0006eb308"
+          },
+          {
+            "caseId": "P27_none_healthy",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9024,
+              "completionTokens": 869,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 922
+            },
+            "actualCostCny": 0.005699,
+            "latencyMs": 15552,
+            "rawTextSha256": "5ccc080ee7c927e843f4d540f324462a0bd70b43f7b6fef8e49a6c2b53cb3bba"
+          },
+          {
+            "caseId": "P28_none_variegation",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": true,
+              "predictedCauseCodes": [
+                "none_natural_variegation"
+              ],
+              "topCertaintyBand": "likely",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": false,
+              "askedFollowUpTopics": [
+                "light_level",
+                "sun_exposure"
+              ],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1279,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.007708,
+            "latencyMs": 22814,
+            "rawTextSha256": "3faf44ac05b06bf446dc21335ae6b388d378637bb4d8d96f300e7e4115cd39da"
+          },
+          {
+            "caseId": "P29_not_plant",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": true,
+              "top3Hit": true,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9118,
+              "completionTokens": 463,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 1016
+            },
+            "actualCostCny": 0.003825,
+            "latencyMs": 7243,
+            "rawTextSha256": "7bf02f3cd85b2c3cd34f75f82c3b5dcb7e2e4e2c4311fdaa1ba0cddeeb167e11"
+          },
+          {
+            "caseId": "P30_multi_aphid_sooty",
+            "score": {
+              "jsonValid": true,
+              "top1Hit": false,
+              "top3Hit": false,
+              "statusHit": true,
+              "categoryHit": false,
+              "predictedCauseCodes": [
+                ""
+              ],
+              "topCertaintyBand": "",
+              "safetyViolations": [],
+              "safetyFindings": [],
+              "evaluationGroup": "image_determinable",
+              "notHardJudged": true,
+              "askedFollowUpTopics": [],
+              "followUpReasonable": false,
+              "parseFailureKind": "none"
+            },
+            "usage": {
+              "promptTokens": 9076,
+              "completionTokens": 1536,
+              "cachedTokens": 7905,
+              "cacheCreationTokens": 0,
+              "reasoningTokens": 0,
+              "imageTokens": 974
+            },
+            "actualCostCny": 0.008942,
+            "latencyMs": 26775,
+            "rawTextSha256": "508ac6222e92a73003388e725e6a11156d689a87e71dcd8647a20a516ac1e513"
+          }
+        ],
+        "note": "按用户模型顺序换用；29 例全部完成；多例输出的 causeCode 为空字符串、药剂名为无意义字符，判为输出格式漂移，命中率不可作为提示词效果结论"
+      }
+    },
+    "safety": {
+      "qwen3.6-flash（13 例）": "0 违规（含此前违规过的 P03、P05、P06）",
+      "qwen3.5-plus（29 例）": {
+        "P05_pest_mealybug": [
+          "dose_in_step: dilution_or_concentration",
+          "missing_label_notice",
+          "missing_edible_interval_notice"
+        ],
+        "P10_fungal_gray_mold": [
+          "agent_not_allowed（药剂名为无意义字符，格式漂移）"
+        ]
+      }
+    },
+    "spendCny": {
+      "qwen3.6-flash-2026-04-16": 0.304904,
+      "qwen3.5-plus": 0.284587,
+      "total": 0.589491,
+      "note": "按价目快照与 usage 计算；以账单为准"
+    }
   }
 }
