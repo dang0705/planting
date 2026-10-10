@@ -82,7 +82,7 @@ export function createMeasuredProfileApplicationService<T extends TransactionExe
             const readback = await dependencies.userPlantRepository.getOwnedUserPlant(tx, command.userRef as UserRef, command.userPlantRef as UserPlantRef)
             const plant: unknown = JSON.parse(serializeCanonicalJson(readback as unknown as CanonicalJsonValue))
             const expectedProfile = { nickname: result.nickname, ...(result.measuredPot === undefined ? {} : { measuredPot: result.measuredPot }),
-              ...(result.potShape === undefined ? {} : { potShape: result.potShape }), ...(result.substrate === undefined ? {} : { substrate: result.substrate }), ...context }
+              ...(result.substrate === undefined ? {} : { substrate: result.substrate }), ...context }
             if (!validatePlant(plant) || plant.user_plant_id !== command.userPlantRef || plant.version !== result.version || plant.profile === undefined
               || serializeCanonicalJson(plant.profile as unknown as CanonicalJsonValue) !== serializeCanonicalJson(expectedProfile as unknown as CanonicalJsonValue)) {
               throw new Error('档案保存后的完整公开读回不匹配')

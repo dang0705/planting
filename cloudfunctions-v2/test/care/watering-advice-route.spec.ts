@@ -24,8 +24,8 @@ const user: UserPrincipalDto = { principalType: 'user', user_id: 'usr_route_user
 const body = {
   target: { kind: 'temporary_case', caseRef: 'gpc_route_case_00001' },
   catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-  location: { latitude: 31.230416, longitude: 121.473701 },
-  window: { orientation: 'S', glassLayers: 'double' },
+  cityCode: 'shanghai',
+  window: { orientation: 'S' },
   soil: { state: 'wet', scope: 'root_zone', observedAt: new Date(now - 3.5 * day).toISOString() }
 }
 const servers: Server[] = []
@@ -58,6 +58,8 @@ async function start(principal: GuestPrincipalDto | UserPrincipalDto = guest, ov
     readOwnedCase: async input => { stages.push(`owned:${input.owner.kind}:${input.owner.caseRef}`); return 'owned' },
     readWateringPolicy: async () => { stages.push('policy'); return null },
     readPlantBaseline: async ref => { stages.push(`baseline:${ref}`); return { tier: 'regular', trigger: 'SURFACE_DRY', baselineDays: { min: 5, max: 8 } } },
+    // 2026-10-10 纠偏：城市代码由城市目录换中心坐标（测试替身只认识上海）。
+    resolveCityCoordinates: async (cityCode: string) => (cityCode === 'shanghai' ? { latitude: 31.230416, longitude: 121.473701 } : null),
     fetchRadiation: async query => { stages.push('radiation'); queries.push(query); return null },
     createWateringAdvice: async input => {
       stages.push('transaction'); calls.push(input)
@@ -99,7 +101,7 @@ describe('POST /api/v2/care/watering-advice 路由', () => {
 
   test('R7 键顺序不同 → 同一请求摘要', async () => {
     const f = await start()
-    const reordered = { window: body.window, soil: body.soil, location: { longitude: 121.473701, latitude: 31.230416 }, catalogTaxonRef: body.catalogTaxonRef, target: body.target }
+    const reordered = { window: body.window, soil: body.soil, cityCode: 'shanghai', catalogTaxonRef: body.catalogTaxonRef, target: body.target }
     await f.post(body)
     await f.post(reordered)
     expect(f.calls[0]?.idempotency.requestHash).toBe(f.calls[1]?.idempotency.requestHash)
@@ -116,13 +118,13 @@ describe('POST /api/v2/care/watering-advice 路由', () => {
   test('R1 user_plant → 400「长期植物浇水建议暂未开放」，不读策略不调 Provider', async () => {
     const f = await start(user)
     // 长期植物请求不带 location（2026-10-10 起坐标由服务端按档案城市提供），这里只验证“分支未接入”时的 400。
-    const { location: _location, catalogTaxonRef: _taxon, ...userPlantBody } = body
+    const { cityCode: _cityCode, catalogTaxonRef: _taxon, ...userPlantBody } = body
     const response = await f.post({ ...userPlantBody, target: { kind: 'user_plant', userPlantRef: 'upl_route_plant_0001' } }, { authorization: 'Bearer user-session-bearer-0001' })
     expect(response).toMatchObject({ status: 400, body: { error: { type: 'VALIDATION_FAILED', message: '长期植物浇水建议暂未开放' } } })
     expect(f.stages).toEqual(['principal'])
   })
 
-  test.each([['非 JSON', '{'], ['未知字段', { ...body, userId: 'usr_x' }], ['时间晚于 now', { ...body, soil: { ...body.soil, observedAt: new Date(now + 60_000).toISOString() } }], ['缺 window', { target: body.target, catalogTaxonRef: body.catalogTaxonRef, location: body.location }]])('R2 %s → 400', async (_name, value) => {
+  test.each([['非 JSON', '{'], ['未知字段', { ...body, userId: 'usr_x' }], ['时间晚于 now', { ...body, soil: { ...body.soil, observedAt: new Date(now + 60_000).toISOString() } }], ['缺 window', { target: body.target, catalogTaxonRef: body.catalogTaxonRef, cityCode: body.cityCode }]])('R2 %s → 400', async (_name, value) => {
     const f = await start()
     expect((await f.post(value)).status).toBe(400)
     expect(f.calls).toEqual([])
@@ -184,6 +186,31 @@ describe('POST /api/v2/care/watering-advice 路由', () => {
       expect(observed).not.toContain(secret)
     }
     expect(Object.keys(response.body.data!).sort()).toEqual(['result', 'resultRef'])
+  })
+})
+
+/**
+ * Expected：watering-advice-http-contract.md（2026-10-10 用户纠偏）——临时案例只交城市代码，服务端取城市中心坐标（0.01°）；
+ * 城市不在目录 → 400；城市目录读取失败 → 503；均不调用辐射 Provider、不进入事务。层次：L3 / unit_fake。
+ */
+describe('临时案例城市代码', () => {
+  test('城市中心坐标降到 0.01° 后取辐射', async () => {
+    const f = await start()
+    expect((await f.post()).status).toBe(200)
+    expect(f.queries[0]).toMatchObject({ latitude: 31.23, longitude: 121.47 })
+  })
+  test('城市不在目录 → 400，不取辐射、不进入事务', async () => {
+    const f = await start(guest)
+    const response = await f.post({ ...body, cityCode: 'atlantis' })
+    expect(response.status).toBe(400)
+    expect(f.stages).not.toContain('radiation')
+    expect(f.calls).toEqual([])
+  })
+  test('城市目录读取失败 → 503，不进入事务', async () => {
+    const f = await start(guest, { resolveCityCoordinates: async () => { throw new Error('db down') } })
+    const response = await f.post()
+    expect(response.status).toBe(503)
+    expect(f.calls).toEqual([])
   })
 })
 

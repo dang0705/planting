@@ -310,7 +310,10 @@
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
         "USER_PLANT_NOT_FOUND",
-        "IDEMPOTENCY_CONFLICT"
+        "IDEMPOTENCY_CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "SERVICE_UNAVAILABLE"
       ]
     },
     {

@@ -63,7 +63,8 @@ export function createMysqlUserPlantListRepository<TTransaction extends Transact
       parameters.push(query.fetchLimit)
       const rows = await executor.executeQuery(
         transaction,
-        `${READ_PLANT_PROJECTION_SQL}
+        `${READ_PLANT_PROJECTION_SQL.replace('SELECT ', `SELECT EXISTS (SELECT 1 FROM \`user_plant_assets\` AS \`a\` WHERE \`a\`.\`user_plant_internal_id\` = \`p\`.\`id\`
+             AND \`a\`.\`user_internal_id\` = \`p\`.\`user_internal_id\` AND \`a\`.\`asset_purpose\` = 'profile' AND \`a\`.\`status\` = 'active') AS \`has_cover\`, `)}
        WHERE \`u\`.\`public_user_id\` = ?
          AND \`u\`.\`status\` = 'active' AND \`u\`.\`_openid\` = '' AND \`p\`.\`_openid\` = ''
          AND \`p\`.\`lifecycle_status\` IN (${lifecycles.map(() => '?').join(', ')})${cursorSql}
@@ -78,7 +79,8 @@ export function createMysqlUserPlantListRepository<TTransaction extends Transact
         if (row.kind !== 'read-plant' || typeof row.public_user_plant_id !== 'string') {
           throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物列表行不完整')
         }
-        const plant = projectReadPlantRow(row, row.public_user_plant_id as UserPlantRef)
+        // 封面合同（2026-10-10）：列表只返回是否有封面，不逐项签链接；has_cover 不进入单株投影。
+        const plant = { ...projectReadPlantRow(row, row.public_user_plant_id as UserPlantRef), hasCover: Number((row as unknown as { has_cover: unknown }).has_cover) === 1 }
         if (!lifecycles.includes(plant.lifecycle as ListableUserPlantLifecycle)) {
           throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物列表生命周期不在筛选范围')
         }

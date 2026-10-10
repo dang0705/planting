@@ -2,9 +2,10 @@ import type { JSONSchemaType } from 'ajv'
 import type { UserPlantDto, UserPlantProfileDto } from './types.js'
 import potSchema from '../../models/user-plant/measured-pot-profile.v1.schema.json'
 import patchV2Schema from '../../models/user-plant/profile-patch.v2.schema.json'
+import { publicCoverSchema } from './user-plant-cover-asset-contract.js'
 
 /** 公开投影中的环境分组只出现“对象分支”（未设置时省略，不返回 null）；规则复用 profile-patch/v2 唯一事实源。 */
-const groupObjectSchema = (key: 'potShape' | 'substrate' | 'location' | 'lighting' | 'ventilation') =>
+const groupObjectSchema = (key: 'substrate' | 'location' | 'lighting' | 'ventilation') =>
   ({ ...(patchV2Schema.properties[key].oneOf[1] as object), nullable: true, not: { type: 'null' } })
 
 /** 既有公开引用和UTC时间合同，不是新的可配置规则。 */
@@ -17,7 +18,6 @@ const publicProfileSchema = {
     nickname: { type: 'string', maxLength: 80 },
     measuredPot: { type: potSchema.type, additionalProperties: potSchema.additionalProperties,
       required: potSchema.required, properties: potSchema.properties, nullable: true, not: { type: 'null' } },
-    potShape: groupObjectSchema('potShape'),
     substrate: groupObjectSchema('substrate'),
     location: groupObjectSchema('location'),
     lighting: groupObjectSchema('lighting'),
@@ -47,6 +47,8 @@ export const userPlantSchema = {
         createdAt: { type: "string", pattern: ISO_UTC_PATTERN },
         updatedAt: { type: "string", pattern: ISO_UTC_PATTERN },
         profile: publicProfileSchema,
+        cover: publicCoverSchema,
+        hasCover: { type: 'boolean', nullable: true, not: { type: 'null' } },
       },
     },
     {
@@ -70,6 +72,8 @@ export const userPlantSchema = {
         createdAt: { type: "string", pattern: ISO_UTC_PATTERN },
         updatedAt: { type: "string", pattern: ISO_UTC_PATTERN },
         profile: publicProfileSchema,
+        cover: publicCoverSchema,
+        hasCover: { type: 'boolean', nullable: true, not: { type: 'null' } },
       },
     },
   ],

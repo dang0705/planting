@@ -282,5 +282,51 @@
       "vitest_default": "3160 passed / 5 skipped / 0 failed",
       "vitest_mysql_full": "64 files / 621 passed / 0 failed"
     }
+  },
+  "round5": {
+    "cover": {
+      "decision": "用户 2026-10-10：不引入 SDK，Node 22 原生 fetch 调 CloudBase 云存储 HTTP API；链接有效期以平台默认为准；API Key 由用户在控制台创建写入 .env.local；目录 user-plant/{用户公开编号}/",
+      "contract": "docs/backend-v2/contracts/user-plant-cover-asset.md（urlExpiresAt 可为 null；单株 cover / 列表 hasCover；Provider 不可用登记 503、单株 url=null；临时链接 URL 含对象路径为唯一例外）",
+      "storageRules": "docs/backend-v2/storage/user-plant-cover-storage-rules.json + README.md（只写文件，人工下发）",
+      "catalog": "storage.read_url.ttl_seconds=platform_default；Provider cloudbase_storage confirmed（endpointProfile cloudbase_storage_http_api_v1，credentialRef env:V2_CLOUDBASE_STORAGE_API_KEY；时限为代理推荐待主代理复核）",
+      "code": [
+        "src/foundation/storage/cloudbase-storage-http-adapter.ts",
+        "src/user-plant/domain/cover-asset.ts",
+        "src/user-plant/repository/mysql-user-plant-asset-repository.ts",
+        "src/user-plant/application/bind-user-plant-cover.ts",
+        "src/user-plant/application/get-user-plant-cover.ts",
+        "src/user-plant/http/bind-user-plant-cover-route.ts",
+        "src/entries/user-plant.ts（V2_CLOUDBASE_ENV_ID / V2_CLOUDBASE_STORAGE_API_KEY）"
+      ],
+      "classicRed": [
+        "test/foundation/cloudbase-storage-http-adapter.spec.ts",
+        "test/user-plant/cover-asset-rules.spec.ts",
+        "test/user-plant/bind-user-plant-cover-route.spec.ts",
+        "test/contracts/user-plant-cover-asset-contract.spec.ts",
+        "test/e2e/user-plant-cover.mysql.spec.ts（假 Provider）"
+      ],
+      "deployEnv": [
+        "V2_CLOUDBASE_ENV_ID",
+        "V2_CLOUDBASE_STORAGE_API_KEY"
+      ],
+      "openIssue": "前端不知道自己的用户公开编号（identity 合同禁止返回 user_id），无法拼出上传目录；需裁决：登录响应或独立接口返回本人上传目录前缀"
+    },
+    "contractCorrections": {
+      "decision": "用户 2026-10-10：盆型=尺寸；光照=朝向+城市+Lux；临时案例改城市代码",
+      "envProfile": "删除 potShape 分组与 lighting 的 glassLayers/distanceBand/obstruction（schema、合同、OpenAPI、配置目录完整度说明）；旧库内键不做 DDL，读取时忽略",
+      "wateringAdvice": "window 只剩 orientation（删除 azimuthDeg、glassLayers）；临时案例 location→cityCode（城市目录内，服务端取中心坐标；不在目录 400、目录故障 503）；长期植物不得提交 cityCode",
+      "resultImpact": "已核对：单通道 Lux 计算（deriveMvpPlantLightIntervals / assessMvpWatering）从不消费 glassLayers、azimuthDeg、orientation，删除后结果不变；仅输入清单形状变化（window 记 orientation，新增 cityRef）",
+      "classicRed": [
+        "test/user-plant/profile-patch-v2.spec.ts（4 例）",
+        "test/care/watering-advice-request.spec.ts、build-watering-advice.spec.ts、watering-advice-route*.spec.ts（20+ 例）",
+        "test/contracts/watering-advice-location-contract.spec.ts"
+      ]
+    },
+    "green": {
+      "typecheck": "0 error",
+      "lint": "0 error",
+      "vitest_default": "3205 passed / 5 skipped / 0 failed",
+      "vitest_mysql_full": "65 files / 629 passed / 0 failed"
+    }
   }
 }

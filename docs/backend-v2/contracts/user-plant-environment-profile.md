@@ -20,8 +20,6 @@ export type ProfilePatchV2 = {
   nickname?: string
   /** v1：完整实测盆器（measured-pot-profile/v1）；省略保留；不接受 null。 */
   measuredPot?: MeasuredPotProfile
-  /** 盆型与盆壁材质；省略保留，null 清除。 */
-  potShape?: { shape: PotShape | null; wallMaterial: WallMaterial | null } | null
   /** 基质；省略保留，null 清除。materials 1～9 项不重复；primaryMaterial 必须属于 materials 或为 null。 */
   substrate?: { materials: SubstrateMaterial[]; primaryMaterial: SubstrateMaterial | null } | null
   /** 位置：只存城市级引用与摆放类型，不存经纬度；省略保留，null 清除。 */
@@ -29,26 +27,25 @@ export type ProfilePatchV2 = {
   /** 光照：用户可理解的选项；省略保留，null 清除。 */
   lighting?: {
     windowFacing: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' | 'none'
-    glassLayers: 0 | 1 | 2 | 3
-    distanceBand: 'on_sill' | 'within_1m' | 'one_to_three_m' | 'beyond_3m'
-    obstruction: 'none' | 'partial' | 'heavy'
   } | null
   /** 通风：不等同室外风速；省略保留，null 清除。 */
   ventilation?: { airExchange: 'closed' | 'occasional' | 'frequent'; localAirflow: 'none' | 'fan' | 'ac' | 'heater' | 'natural_draft'; directBlowing: boolean | null } | null
 }
-type PotShape = 'round' | 'square' | 'hanging' | 'other'
-type WallMaterial = 'plastic' | 'glazed_ceramic' | 'terracotta' | 'cement' | 'fabric' | 'other'
 type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' | 'bark' | 'sphagnum' | 'gritty' | 'coarse_sand'
 ```
 
 - 除 `version` 外至少提供一项；未知键、错误枚举、客户端提交 DLI/透射率/持水倍率/完整度/首次完成时间等派生值一律 `400 VALIDATION_FAILED`。
 - `location.cityRef` 必须是 weather 城市目录（`city_climate_profiles.city_code`，策略版本 `v0-city-outdoor`）中存在的城市代码；不存在返回 `400 VALIDATION_FAILED`。
   城市目录读取失败返回 `503 SERVICE_UNAVAILABLE`。
-- 与草案的唯一差异：光照分组去掉恒为 `user_selected` 的 `source` 字段（只有一个取值，不承载信息）。
+- 与草案的差异：光照分组去掉恒为 `user_selected` 的 `source` 字段（只有一个取值，不承载信息）。
+- **2026-10-10 用户纠偏（不兼容变更）**：
+  - 「盆型」= 尺寸（上口/下底/高度 + 排水），即 `measuredPot`，不是形状。删除 `potShape` 分组（`shape` 枚举与 `wallMaterial` 一并删除；盆壁材质另由待验证票 `z8v0kmvewm` 处理，不进档案）。
+  - 新版光照只收「朝向 + 城市」（城市在 `location`），外加植物位置的 Lux 实测（浇水建议请求 `lightReading`，不进档案）。`lighting` 分组只剩 `windowFacing`，删除 `glassLayers`、`distanceBand`、`obstruction`。
+  - 提交已删除的字段 → 400（未知键）。数据库不做 DDL：`pot_profile_json.potShapeProfile` 及 `light_environment_json` 中的旧键不再读写、不再公开。
 
 ## 2. 落库与版本
 
-- `nickname`、`measuredPot`、`potShape`、`substrate` → `user_plant_profiles`（`pot_profile_json` 中 `measuredPot` / `potShapeProfile` / `substrateProfile` 键；刻意不用裸名 `substrate`，避免与旧 JSON 同名历史键混淆）；
+- `nickname`、`measuredPot`、`substrate` → `user_plant_profiles`（`pot_profile_json` 中 `measuredPot` / `substrateProfile` 键；刻意不用裸名 `substrate`，避免与旧 JSON 同名历史键混淆）；
   `location` → `user_plant_care_contexts.location_json`，`lighting` → `light_environment_json`，`ventilation` → `ventilation_environment_json`。
   未设置的环境分组以 JSON `null` 存储；本合同不写 `cultivation_method`（固定占位 `unspecified`，不公开）。
 - 公开协议只使用聚合版本 `user_plants.version`；子表版本只在内部递增，不出现在请求或响应。
@@ -59,7 +56,7 @@ type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' |
 
 1. 每次保存后按已发布 `user-plant-profile/v1` 判定，五项全部满足即完整：
    - `identityStatus`：三态任一（允许暂未识别）；
-   - `pot`：已存 `measuredPot`，且 `drainageAvailable` 非空、三项尺寸至少一项非空；
+   - `pot`（盆型 = 尺寸）：已存 `measuredPot`，且 `drainageAvailable` 非空、三项尺寸至少一项非空；不要求任何形状或材质；
    - `location` / `lightingEnvironment` / `ventilationEnvironment`：对应分组已设置（非 null）。
 2. 某株**首次**变完整时写入 `profile_completed_at_ms`；之后**不覆盖、不清空**，即使用户再清除某项（用户审定：奖励发出后清空不收回）。
 3. 若该 `user_id` 此前没有任何一株（含已归档、删除中）完整档案，则同一事务写入一条 `user_plant_outbox` 事件 `user_plant.profile_completed.v1`：
@@ -70,7 +67,7 @@ type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' |
 
 ## 4. 公开读回
 
-单株读取、列表与本接口的成功响应中，`profile` 在 v1（`nickname`、可选 `measuredPot`）基础上增加已设置的 `potShape`、`substrate`、`location`、`lighting`、`ventilation`；
+单株读取、列表与本接口的成功响应中，`profile` 在 v1（`nickname`、可选 `measuredPot`）基础上增加已设置的 `substrate`、`location`、`lighting`、`ventilation`；
 未设置的分组省略（不返回 null）。不返回完整度版本、首次完成时间、子表版本、`cultivation_method` 或任何内部字段。
 有环境分组但没有档案行时，`profile.nickname` 为空字符串。
 

@@ -3,10 +3,10 @@ import type { MeasuredPotInput } from '../cultivation/derive-measured-pot.js'
 import { mvpSubstrateMaterials } from '../watering/estimate-mvp-water-amount.js'
 import type { MvpSoilObservation } from '../watering/map-mvp-soil-observation.js'
 
-/** 8 方位对应的中心方位角（正北顺时针，度）。 */
-const orientationAzimuth = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 } as const
-/** 每个方位扇区半宽（度）。 */
-const sectorHalfWidthDeg = 22.5
+/** 8 方位朝向（2026-10-10 用户纠偏：光照只收朝向 + 城市，删除指南针角度与玻璃层数）。 */
+const orientations = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
+/** 窗户朝向。 */
+export type WindowOrientation = (typeof orientations)[number]
 
 /** 结果归属：游客/登录用户临时案例或本人长期植物。 */
 export type WateringAdviceTarget =
@@ -30,8 +30,8 @@ export interface WateringAdviceCommand {
   /** Tropicals 目录引用；长期植物可由档案提供而为 null。 */
   readonly catalogTaxonRef: string | null
   /**
-   * 降到两位小数的地理坐标（度）。临时案例来自请求；长期植物解析后为 null，由服务端用档案城市中心坐标填充，
-   * 档案无城市时保持 null（不取室外辐射，2026-10-10 用户裁决）。
+   * 降到两位小数的地理坐标（度）。解析后一律为 null，由服务端用城市目录的城市中心坐标填充（临时案例按请求 cityCode，
+   * 长期植物按档案城市）；长期植物档案无城市时保持 null（不取室外辐射，2026-10-10 用户裁决）。
    */
   readonly location: {
     /** 纬度，两位小数。 */
@@ -39,14 +39,12 @@ export interface WateringAdviceCommand {
     /** 经度，两位小数。 */
     readonly longitude: number
   } | null
-  /** 长期植物坐标来源的城市代码；只由服务端填充，进入输入清单便于追溯。临时案例不出现。 */
-  readonly cityRef?: string | null
-  /** 极简光照的窗户信息。 */
+  /** 坐标来源的城市代码：临时案例来自请求 cityCode，长期植物由服务端填入档案城市；无城市为 null。进入输入清单便于追溯。 */
+  readonly cityRef: string | null
+  /** 极简光照的窗户信息：只有朝向（计算不消费，仅进入输入清单）。 */
   readonly window: {
-    /** 窗面方位角（正北顺时针，度）。 */
-    readonly azimuthDeg: number
-    /** 玻璃层数；none 为户外/开放阳台，null 为未知。 */
-    readonly glassLayers: 'single' | 'double' | 'none' | null
+    /** 主窗 8 方位朝向。 */
+    readonly orientation: WindowOrientation
   }
   /** 植物位置 Lux 读数；未测为 null。 */
   readonly lightReading: {
@@ -104,12 +102,9 @@ const schema = {
       { type: 'object', additionalProperties: false, required: ['kind', 'userPlantRef'], properties: { kind: { const: 'user_plant' }, userPlantRef: reference } },
     ] },
     catalogTaxonRef: reference,
-    location: { type: 'object', additionalProperties: false, required: ['latitude', 'longitude'],
-      properties: { latitude: { type: 'number', minimum: -90, maximum: 90 }, longitude: { type: 'number', minimum: -180, maximum: 180 } } },
-    window: { type: 'object', additionalProperties: false, required: ['orientation', 'glassLayers'], properties: {
-      orientation: { enum: Object.keys(orientationAzimuth) },
-      azimuthDeg: { type: 'number', minimum: 0, exclusiveMaximum: 360 },
-      glassLayers: { enum: ['single', 'double', 'none', null] },
+    cityCode: { type: 'string', pattern: '^[a-z0-9_-]{2,64}$' },
+    window: { type: 'object', additionalProperties: false, required: ['orientation'], properties: {
+      orientation: { enum: [...orientations] },
     } },
     lightReading: { type: ['object', 'null'], additionalProperties: false, required: ['lux', 'measuredAt', 'source'],
       properties: { lux: { type: 'number', minimum: 0 }, measuredAt: utc, source: { enum: ['meter', 'camera_estimate'] } } },
@@ -142,12 +137,6 @@ function parseUtc(value: string): number | null {
   return (value.includes('.') ? canonical : canonical.replace('.000Z', 'Z')) === value ? time : null
 }
 
-/** 角度是否落在方位扇区内（含环绕正北）。 */
-function withinSector(azimuth: number, center: number): boolean {
-  const difference = Math.abs(((azimuth - center + 540) % 360) - 180)
-  return difference <= sectorHalfWidthDeg
-}
-
 /** 两位小数（约 1km），不保存精确坐标；长期植物的城市中心坐标同样按此降精度。 */
 export const roundCoordinate = (value: number) => Math.round(value * 100) / 100
 
@@ -156,12 +145,9 @@ export function parseWateringAdviceRequest(body: unknown, now: number): Watering
   const invalid = { status: 'invalid' } as const
   if (!body || typeof body !== 'object' || Array.isArray(body) || !validate(body)) { return invalid }
   const request = body as Record<string, any>
-  if (request.target.kind === 'temporary_case' && (typeof request.catalogTaxonRef !== 'string' || request.location === undefined)) { return invalid }
-  // 长期植物坐标由服务端按档案城市提供（2026-10-10 用户裁决），请求不得携带。
-  if (request.target.kind === 'user_plant' && request.location !== undefined) { return invalid }
-  const center = orientationAzimuth[request.window.orientation as keyof typeof orientationAzimuth]
-  const azimuthDeg = request.window.azimuthDeg ?? center
-  if (!withinSector(azimuthDeg, center)) { return invalid }
+  if (request.target.kind === 'temporary_case' && (typeof request.catalogTaxonRef !== 'string' || typeof request.cityCode !== 'string')) { return invalid }
+  // 长期植物坐标由服务端按档案城市提供（2026-10-10 用户裁决），请求不得携带城市。
+  if (request.target.kind === 'user_plant' && request.cityCode !== undefined) { return invalid }
   const times: Record<string, number | null> = {}
   for (const [key, value] of [['light', request.lightReading?.measuredAt], ['soil', request.soil?.observedAt],
     ['watering', request.lastWatering?.wateredAt], ['climate', request.indoorClimate?.measuredAt]] as const) {
@@ -180,8 +166,9 @@ export function parseWateringAdviceRequest(body: unknown, now: number): Watering
       ? { kind: 'temporary_case', caseRef: request.target.caseRef }
       : { kind: 'user_plant', userPlantRef: request.target.userPlantRef },
     catalogTaxonRef: request.catalogTaxonRef ?? null,
-    location: request.location === undefined ? null : { latitude: roundCoordinate(request.location.latitude), longitude: roundCoordinate(request.location.longitude) },
-    window: { azimuthDeg, glassLayers: request.window.glassLayers },
+    cityRef: request.cityCode ?? null,
+    location: null,
+    window: { orientation: request.window.orientation },
     lightReading: request.lightReading ? { lux: request.lightReading.lux, measuredAtMs: times.light!, source: request.lightReading.source } : null,
     soil: request.soil ? { state: request.soil.state, scope: request.soil.scope, observedAt: times.soil! } : null,
     lastWateringAtMs: times.watering ?? null,

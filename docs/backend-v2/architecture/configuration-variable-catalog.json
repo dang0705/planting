@@ -892,7 +892,8 @@
       "owner": "user-plant",
       "sourceRefs": [
         "docs/backend-v2/contracts/care-points-and-ai-quota.md",
-        "docs/backend-v2/contracts/user-plant.md"
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/user-plant-environment-profile.md#3. 完整度与首株奖励事件"
       ],
       "consumers": [
         "user-plant",
@@ -902,7 +903,7 @@
       "fallback": "未冻结前不发首株有效档案积分",
       "phase": "P1",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
-      "expected": "服务端仅在合法身份状态、盆器、位置、光照环境、通风与空气环境全部具备时判定首次有效档案；每个 user_id 仅奖励一次",
+      "expected": "服务端仅在合法身份状态、盆器、位置、光照环境、通风与空气环境全部具备时判定首次有效档案；每个 user_id 仅奖励一次；2026-10-10 用户纠偏：pot（盆型）= 实测盆器尺寸（上口/下底/高度至少一项）+ 排水状态，不要求形状或材质；lightingEnvironment 只看朝向（windowFacing），城市属于 location",
       "decisionGroup": "userplant_limits",
       "runtimePublication": {
         "domainCode": "user-plant",
@@ -910,7 +911,92 @@
         "schemaVersion": "user-plant-profile/v1",
         "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
         "implementationTicket": "z8v0kmr9mj"
-      }
+      },
+      "decisionNote": "用户 2026-10-10 纠偏：删除 potShape 分组与光照的玻璃/距离/遮挡字段，requiredFields 不变、各项含义按 user-plant-environment-profile.md 修订"
+    },
+    {
+      "id": "user-plant.profile_progress.policy",
+      "chineseName": "长期植物档案完整度计分规则",
+      "domain": "user-plant",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "proposedValue": {
+        "ruleVersion": "user-plant-profile-progress/v1",
+        "weights": {
+          "catalog_binding": 30,
+          "measured_pot": 25,
+          "location": 20,
+          "substrate": 15,
+          "lighting": 5,
+          "ventilation": 5
+        },
+        "levels": {
+          "starter": 0,
+          "good": 50,
+          "great": 80,
+          "complete": 100
+        },
+        "carrier": "code_constant"
+      },
+      "owner": "user-plant",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md#2. 计分项与权重",
+        "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md#6. 版本化",
+        "docs/backend-v2/contracts/user-plant-environment-profile.md#3. 完整度与首株奖励事件"
+      ],
+      "consumers": [
+        "user-plant",
+        "care"
+      ],
+      "changePolicy": "不可变规则版本；读时现算不落库，换版本即时生效，回退到上一版本号",
+      "fallback": "未冻结前不返回 completeness / completenessPercent 字段",
+      "phase": "P2",
+      "ticketTitle": "[E03][P2] 长期植物档案完整度读取与激励",
+      "expected": "权重合计 100；percent 为已完成项权重之和；missingItems 按权重降序且每项含 reason/benefit/editTarget；nextRecommended 为最高权重缺失项；care profileReadiness 由同一评估器派生；响应不含规则版本与奖励状态",
+      "pendingReason": "草案待用户审（决策点 D1～D4、D6、D7）；子代理提交候选值，是否配置化及载体由主代理裁决",
+      "blockingScope": "单株/列表/档案保存响应中的完整度字段与 care profileReadiness 统一；不阻断首株有效档案奖励",
+      "decisionGroup": "userplant_limits",
+      "clickUpTicketId": "z8v0kmvfu1",
+      "decisionNote": "2026-10-10 user_plant_terra 起草，待用户审"
+    },
+    {
+      "id": "subscription.points.profile_milestones",
+      "chineseName": "档案完整度里程碑积分",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "积分",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "proposedValue": {
+        "milestones": [
+          60,
+          100
+        ],
+        "pointsPerMilestone": "待定",
+        "perUserPlantCap": "待定（推荐每用户前 N 株）"
+      },
+      "owner": "subscription",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md#5.2 里程碑 60% / 100%（只设计，不实现）",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "subscription"
+      ],
+      "changePolicy": "按事件 occurredAt 锁定不可变策略",
+      "fallback": "未冻结前不产生里程碑事件、不发积分",
+      "phase": "P3",
+      "ticketTitle": "[E03][P2] 长期植物档案完整度读取与激励",
+      "expected": "每株每档位终身一次；降回再升不重发；发出不收回；受每用户株数或每日上限约束",
+      "pendingReason": "积分值、防刷上限未定；需先修订 reward-events.md 新事件类型（决策点 D5）",
+      "blockingScope": "里程碑事件与积分；不阻断完整度读取与首株奖励",
+      "decisionGroup": "entitlements_cost_rewards",
+      "clickUpTicketId": "z8v0kmvfu1",
+      "decisionNote": "2026-10-10 user_plant_terra 起草，只设计不实现，待用户审"
     },
     {
       "id": "user-plant.assets.max_count_per_plant",
@@ -2079,10 +2165,10 @@
       "chineseName": "私有图片临时读取链接有效期",
       "domain": "storage",
       "layer": "domain_policy",
-      "valueType": "integer",
-      "unit": "秒",
+      "valueType": "string",
+      "unit": "无",
       "status": "confirmed",
-      "currentValue": 600,
+      "currentValue": "platform_default",
       "owner": "shared-storage",
       "sourceRefs": [
         "docs/backend-v2/contracts/user-plant-cover-asset.md#2. 上传流程：前端直传私有目录 + 服务端登记校验"
@@ -2090,14 +2176,14 @@
       "consumers": [
         "user-plant"
       ],
-      "changePolicy": "资产安全策略版本；只影响之后签发的链接",
-      "fallback": "策略不可用时不签发链接，封面字段省略",
-      "expected": "签发的 urlExpiresAt = 签发时刻 + 600 秒",
+      "changePolicy": "不指定有效期；如需固定时长须改用支持有效期参数的接口并重新评审",
+      "fallback": "Provider 不可用时单株读取 cover.url 为 null，登记接口 503",
+      "expected": "服务端不指定临时链接有效期；响应 urlExpiresAt 如实返回平台给出的到期时间，CloudBase 云存储 HTTP API 当前不返回，因此为 null",
       "phase": "P2",
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "retention_security",
-      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）"
+      "decisionNote": "用户 2026-10-10 裁决：不引入 SDK、用云存储 HTTP API，链接有效期改为以平台默认为准（原 600 秒作废）"
     },
     {
       "id": "storage.upload.credential_ttl_seconds",
@@ -6179,35 +6265,36 @@
         "PRIVATE_READ",
         "ASSET_DELETE"
       ],
-      "status": "pending",
-      "endpointProfile": "cloudbase_server_sdk",
-      "credentialRef": "P1_PENDING",
-      "connectTimeoutMs": "P1_PENDING",
-      "readTimeoutMs": "P1_PENDING",
-      "totalDeadlineMs": "P1_PENDING",
-      "maxAttempts": "P1_PENDING",
-      "backoffPolicy": "P1_PENDING",
-      "rateLimitPolicy": "P1_PENDING",
-      "circuitBreakerPolicy": "P1_PENDING",
-      "costPolicy": "P1_PENDING",
-      "monthlyBudgetCny": "P1_PENDING",
-      "warningThresholdCny": "P1_PENDING",
+      "status": "confirmed",
+      "endpointProfile": "cloudbase_storage_http_api_v1",
+      "credentialRef": "env:V2_CLOUDBASE_STORAGE_API_KEY",
+      "connectTimeoutMs": 2000,
+      "readTimeoutMs": 8000,
+      "totalDeadlineMs": 10000,
+      "maxAttempts": 1,
+      "backoffPolicy": "none",
+      "rateLimitPolicy": "platform_quota_only",
+      "circuitBreakerPolicy": "none_fail_closed",
+      "costPolicy": "cloudbase_storage_package",
+      "monthlyBudgetCny": 0,
+      "warningThresholdCny": 0,
       "fallbackChain": [],
-      "outputContractVersion": "asset-registry/v1_PENDING",
-      "auditRetentionDays": "P1_PENDING",
+      "outputContractVersion": "cloudbase-storage-download-info/v1",
+      "auditRetentionDays": 30,
       "accessMode": "private",
-      "fallback": "停止图像增强，禁止退回 Base64 或任意 URL 抓取",
-      "blockingScope": "真实图片上传、读取与删除",
+      "fallback": "未配置凭证或调用失败：封面登记返回 503 且不落库；单株读取 cover.url 为 null；禁止退回 Base64 或任意 URL 抓取",
+      "blockingScope": "真实封面登记与链接签发；本地假 Provider 合同与 MySQL 切片不受阻",
       "sourceRefs": [
-        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07",
-        "docs/backend-v2/implementation/storage-security.md"
+        "docs/backend-v2/contracts/user-plant-cover-asset.md#4. 部署前置条件",
+        ".codex/backend-v2/evidence/E03-cover-sdk-dependency-review-2026-10-10.md"
       ],
       "decisionGroup": "provider_runtime",
-      "releaseVersion": "P1_PENDING",
-      "releaseSha256": "P1_PENDING",
-      "effectiveAt": "P1_PENDING",
-      "expiresAt": "P1_PENDING",
-      "releaseStatus": "P1_PENDING"
+      "releaseVersion": "cloudbase-storage-http-runtime/v1",
+      "releaseSha256": "pending_runtime_release",
+      "effectiveAt": "2026-10-10T00:00:00+08:00",
+      "expiresAt": null,
+      "releaseStatus": "active",
+      "decisionNote": "用户 2026-10-10 裁决：不引入 @cloudbase/node-sdk，用 Node 22 原生 fetch 调云存储 HTTP API；API Key 由用户在控制台创建并写入环境变量，credentialRef 只引用变量名。时限值为代理推荐（同 open_meteo 量级，下载 5 MiB 放宽到 10 秒总时限），待主代理复核。"
     },
     {
       "providerCode": "cloudbase_cms",
@@ -6624,6 +6711,14 @@
     "[E03][P2] 用户植物核心实现": {
       "id": "z8v0kmr9mj",
       "url": "https://app.clickup.com/t/z8v0kmr9mj",
+      "agents": [
+        "user_plant_terra",
+        "root"
+      ]
+    },
+    "[E03][P2] 长期植物档案完整度读取与激励": {
+      "id": "z8v0kmvfu1",
+      "url": "https://app.clickup.com/t/z8v0kmvfu1",
       "agents": [
         "user_plant_terra",
         "root"

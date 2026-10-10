@@ -90,6 +90,8 @@ const requestSchemaRefByContract = {
   ConfirmUserPlantIdentityRequest: '#/components/schemas/ConfirmUserPlantIdentityRequest',
   /** 档案修改（profile-patch/v2，2026-10-10 冻结）。 */
   UpdateUserPlantRequest: '#/components/schemas/UpdateUserPlantRequest',
+  /** 封面登记（user-plant-cover-asset/v1，2026-10-10 冻结）。 */
+  BindUserPlantAssetRequest: '#/components/schemas/BindUserPlantAssetRequest',
 }
 
 const successSchemaRefByContract = {
@@ -112,6 +114,7 @@ const successSchemaRefByContract = {
   UserPlantDeletionResponse: '#/components/schemas/UserPlantDeletionSuccess',
   /** 时间线（user-plant-timeline/v1，2026-10-10 冻结）。 */
   TimelineResponse: '#/components/schemas/TimelineSuccess',
+  UserPlantAssetResponse: '#/components/schemas/UserPlantAssetSuccess',
 }
 
 /** 列表查询参数（user-plant.md「列表公开接口」）；分页默认/上限来自 hard_rule user-plant.list.page_size。 */
@@ -649,10 +652,29 @@ const openapi = {
           identityStatus: { enum: ['unidentified', 'candidate_pending', 'confirmed'] },
           confirmedIdentityRef: { type: 'string', pattern: '^pid_[A-Za-z0-9_-]{8,}$', description: '仅 confirmed 时存在。' },
           profile: { type: 'object', description: '公开档案投影，见 cloudfunctions-v2/models/user-plant/public-profile-contract.md。' },
+          cover: { type: 'object', description: '仅单株读取：{ assetRef, url（云存储不可用为 null）, urlExpiresAt（当前为 null）}。' },
+          hasCover: { type: 'boolean', description: '仅列表项：是否有有效封面。' },
           version: { type: 'integer', minimum: 1 },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
+      },
+      BindUserPlantAssetRequest: {
+        type: 'object', additionalProperties: false, required: ['purpose', 'fileId', 'contentSha256'],
+        properties: {
+          purpose: { const: 'profile' },
+          fileId: { type: 'string', minLength: 1, maxLength: 512, description: '本人封面目录 user-plant/{用户公开编号}/covers/ 下的云存储 fileID；只在服务端校验与落库。' },
+          contentSha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+        },
+      },
+      UserPlantAssetSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'object', additionalProperties: false, required: ['assetRef', 'purpose', 'url', 'urlExpiresAt', 'createdAt'], properties: {
+          assetRef: { type: 'string', pattern: '^ast_[A-Za-z0-9_-]{8,60}$' }, purpose: { const: 'profile' },
+          url: { type: 'string', description: '临时访问链接，有效期以平台默认为准。' },
+          urlExpiresAt: { type: ['string', 'null'], description: '平台给出的到期时间；当前 HTTP API 不返回，为 null。' },
+          createdAt: { type: 'string', format: 'date-time' },
+        } } },
       },
       TimelineSuccess: {
         type: 'object', additionalProperties: false, required: ['data'],
@@ -722,14 +744,11 @@ const openapi = {
             { type: 'object', additionalProperties: false, required: ['kind', 'userPlantRef'], properties: { kind: { const: 'user_plant' }, userPlantRef: { type: 'string', minLength: 1, maxLength: 512 } } },
           ] },
           catalogTaxonRef: { type: 'string', minLength: 1, maxLength: 512, description: '临时案例必填；读取 Tropicals 浇水基线。' },
-          location: { type: 'object', additionalProperties: false, required: ['latitude', 'longitude'],
-            properties: { latitude: { type: 'number', minimum: -90, maximum: 90 }, longitude: { type: 'number', minimum: -180, maximum: 180 } },
-            description: '临时案例必填，服务端保存前四舍五入到 0.01°；长期植物不得提交（提交 → 400），服务端用档案城市中心坐标，档案无城市时缺失码 plant_location（2026-10-10）。' },
-          window: { type: 'object', additionalProperties: false, required: ['orientation', 'glassLayers'], properties: {
+          cityCode: { type: 'string', pattern: '^[a-z0-9_-]{2,64}$',
+            description: '临时案例必填：城市目录内城市代码，服务端取城市中心坐标（0.01°），不在目录 → 400；长期植物不得提交（提交 → 400），服务端用档案城市中心坐标，档案无城市时缺失码 plant_location。不再接收经纬度（2026-10-10）。' },
+          window: { type: 'object', additionalProperties: false, required: ['orientation'], properties: {
             orientation: { enum: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] },
-            azimuthDeg: { type: 'number', minimum: 0, exclusiveMaximum: 360 },
-            glassLayers: { enum: ['single', 'double', 'none', null] },
-          } },
+          }, description: '只收 8 方位朝向（2026-10-10 删除 azimuthDeg、glassLayers；单通道 Lux 法不消费它们）。' },
           lightReading: { type: ['object', 'null'], additionalProperties: false, required: ['lux', 'measuredAt', 'source'],
             properties: { lux: { type: 'number', minimum: 0 }, measuredAt: { type: 'string', format: 'date-time' }, source: { enum: ['meter', 'camera_estimate'] } } },
           soil: { type: ['object', 'null'], additionalProperties: false, required: ['state', 'scope', 'observedAt'],

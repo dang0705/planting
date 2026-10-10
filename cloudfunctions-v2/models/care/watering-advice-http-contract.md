@@ -8,8 +8,8 @@
 |---|---|---|---|
 | `target` | `{ kind: 'temporary_case', caseRef }` 或 `{ kind: 'user_plant', userPlantRef }` | 是 | 结果归属；游客只能用临时案例，长期植物需登录且归属本人 |
 | `catalogTaxonRef` | string | 临时案例必填 | 读取 Tropicals 浇水基线；长期植物从档案取 |
-| `location` | `{ latitude, longitude }` | 临时案例必填；长期植物**不得提交**（提交 → 400） | 取太阳辐射；服务端保存前四舍五入到 0.01°（约 1km），不存精确坐标。MVP 重点覆盖腾讯云已存储气候档案的 20 个热门城市，其他位置不拒绝。长期植物改由服务端用档案城市的中心坐标（见下文「长期植物的坐标」，2026-10-10 用户裁决） |
-| `window` | `{ orientation: 'N'\|'NE'\|'E'\|'SE'\|'S'\|'SW'\|'W'\|'NW', azimuthDeg?: 0～359.99, glassLayers: 'single'\|'double'\|'none'\|null }` | 是 | 极简光照输入。8 方位必填；前端界面默认预选“南”，后端不设默认。可选 `azimuthDeg` 为手机指南针读数（正北顺时针），提供时优先于方位并须与方位扇区一致。`none` 表示户外/开放阳台，跳过玻璃衰减；`null` 为玻璃未知 |
+| `cityCode` | string（2–64 位小写字母、数字、`_`、`-`） | 临时案例必填；长期植物**不得提交**（提交 → 400） | 城市目录（`city_climate_profiles`，策略 `v0-city-outdoor`）中的城市代码；服务端取该城市中心坐标（降到 0.01°）取室外辐射。不在目录 → 400 `VALIDATION_FAILED`；城市目录读取失败 → 503。不再接收经纬度（2026-10-10 用户裁决）。长期植物用档案城市（见下文「长期植物的坐标」） |
+| `window` | `{ orientation: 'N'\|'NE'\|'E'\|'SE'\|'S'\|'SW'\|'W'\|'NW' }` | 是 | 极简光照输入：只收 8 方位朝向；前端界面默认预选“南”，后端不设默认。2026-10-10 用户裁决删除 `azimuthDeg` 与 `glassLayers`：单通道 Lux 法以植物位置实测 Lux 锚定（已含玻璃效应），计算从不消费这两项，删除后结果不变，只是输入清单不再记录 |
 | `lightReading` | `{ lux, measuredAt, source: 'meter'\|'camera_estimate' }` 或 null | 否 | 植物位置 Lux；缺失时植物位置光照为缺证据（窗口变宽或开放） |
 | `soil` | `{ state: 'wet'\|'moist'\|'dry'\|'uncertain', scope: 'surface'\|'root_zone', observedAt }` 或 null | 否 | 当前盆土观察；缺失时只能依赖已确认的浇水记录 |
 | `lastWatering` | `{ wateredAt }` 或 null | 否 | 可选“不知道”；不补今天 |
@@ -42,14 +42,14 @@
 
 ### 长期植物的坐标（2026-10-10 用户裁决）
 
-- `target.kind = 'user_plant'` 时，请求体不得携带 `location`（携带 → 400 `VALIDATION_FAILED`）。服务端读取该植物环境档案的 `location.cityRef`
+- `target.kind = 'user_plant'` 时，请求体不得携带 `cityCode`（携带 → 400 `VALIDATION_FAILED`）。服务端读取该植物环境档案的 `location.cityRef`
   （`user-plant-environment-profile/v1`），在 weather 城市目录（`city_climate_profiles`，策略 `v0-city-outdoor`）取该城市中心坐标 `lat/lon`，
   四舍五入到 0.01° 后用于取室外辐射；输入清单记录 `location`（城市中心坐标）与 `cityRef`。
 - 档案没有位置，或 `cityRef` 不在城市目录：不调用室外辐射 Provider；结果为 `insufficient_evidence` 时在 `details.missingEvidence` 追加缺失码
   **`plant_location`**（不追加 `outdoor_radiation`，因为并未尝试取辐射）；`plant_light` 规则不变。前端建议：提示“请先在植物档案里设置所在城市”。
   若盆土证据已足以给出安全结论（例如根区干 → 可以浇水），结果仍按原规则为 `ready`，不追加缺失码。
 - 城市目录读取失败 → 503 `SERVICE_UNAVAILABLE`。
-- 临时案例（`temporary_case`）不变：仍必须由请求提供 `location`。
+- 临时案例（`temporary_case`）：由请求提供 `cityCode`，服务端取城市中心坐标（2026-10-10 用户裁决，不再接收经纬度）；城市不在目录 → 400。
 
 | 缺失码 | 何时出现 | 前端建议 |
 |---|---|---|
@@ -63,6 +63,6 @@
 
 ## 已确认裁决（用户 2026-10-08）
 
-1. 坐标保存精度 0.01°；MVP 重点覆盖 20 个已存档城市，其他位置照常计算。
-2. 朝向 8 方位为必填，前端默认预选南向；用户不清楚时由前端用指南针取角度，作为可选 `azimuthDeg` 传入。
-3. 支持户外/开放阳台：`glassLayers: 'none'`。
+1. 坐标保存精度 0.01°（城市中心坐标同样降精度）；2026-10-10 起只接受城市目录内城市。
+2. 朝向 8 方位为必填，前端默认预选南向（2026-10-10 删除可选指南针角度 `azimuthDeg`）。
+3. （2026-10-10 删除）玻璃层数 `glassLayers` 不再收集：单通道 Lux 法不消费它。

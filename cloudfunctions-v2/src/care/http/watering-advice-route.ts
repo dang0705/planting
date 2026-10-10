@@ -56,6 +56,8 @@ export interface WateringAdviceRouteDependencies {
   readonly fetchRadiation: (query: OpenMeteoRadiationQuery) => Promise<NormalizedOutdoorRadiation | null>
   /** 事务化应用用例。 */
   readonly createWateringAdvice: (input: CreateWateringAdviceApplicationInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
+  /** weather 城市目录只读：城市代码 → 城市中心坐标（度）；不在目录返回 null，读取失败抛出（→ 503）。临时案例与长期植物共用。 */
+  readonly resolveCityCoordinates: (cityCode: string) => Promise<CityCoordinates | null>
   /** 长期植物分支（long-term-care/v1 §2）；未接入时长期植物目标返回 400。 */
   readonly userPlant?: UserPlantWateringAdviceDependencies
   /** 可选服务端引用生成器；缺省为 18 字节随机数 base64url。 */
@@ -74,8 +76,6 @@ export interface UserPlantWateringAdviceDependencies {
   readonly readLatestWateringFact: (scope: OwnedPlantScope) => Promise<WateringFactRow | null>
   /** 事务化长期浇水建议用例。 */
   readonly createAdvice: (input: CreateUserPlantWateringAdviceInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
-  /** weather 城市目录只读：城市代码 → 城市中心坐标（度）；不在目录返回 null，读取失败抛出（→ 503）。 */
-  readonly resolveCityCoordinates: (cityRef: string) => Promise<CityCoordinates | null>
 }
 
 /** 持久化分支：临时案例或长期植物。 */
@@ -253,6 +253,11 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
           if (target.kind === 'temporary_case') {
             owner = ownerOf(principal, target.caseRef)
             if (await dependencies.readOwnedCase({ owner, nowMs }) !== 'owned') { throw notFound() }
+            // 临时案例：请求只交城市代码，服务端取城市中心坐标（2026-10-10 用户纠偏）；不在目录 → 400，目录读取失败 → 503。
+            let center: CityCoordinates | null
+            try { center = await dependencies.resolveCityCoordinates(command.cityRef!) } catch { throw unavailable() }
+            if (center === null) { throw invalidRequest('城市不在支持列表') }
+            command = { ...command, location: { latitude: roundCoordinate(center.latitude), longitude: roundCoordinate(center.longitude) } }
           } else {
             // 长期植物只对登录用户开放（T8）；游客按请求不合法处理，不探测植物存在性。
             if (principal.principalType !== 'user' || dependencies.userPlant === undefined) { throw invalidRequest() }
@@ -269,7 +274,7 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
             // 长期植物坐标 = 档案城市中心坐标（降到 0.01°）；无城市或不在目录 → null，不取辐射（2026-10-10 用户裁决）。
             let center: CityCoordinates | null = null
             if (context.cityRef !== null) {
-              try { center = await dependencies.userPlant.resolveCityCoordinates(context.cityRef) } catch { throw unavailable() }
+              try { center = await dependencies.resolveCityCoordinates(context.cityRef) } catch { throw unavailable() }
             }
             command = { ...command, cityRef: center === null ? null : context.cityRef,
               location: center === null ? null : { latitude: roundCoordinate(center.latitude), longitude: roundCoordinate(center.longitude) } }

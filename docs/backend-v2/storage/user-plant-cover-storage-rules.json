@@ -1,0 +1,4 @@
+{
+  "read": false,
+  "write": "auth != null && auth.loginType != 'ANONYMOUS' && resource.openid == auth.openid && /^user-plant\\/usr_[A-Za-z0-9_-]{8,60}\\/covers\\/[A-Za-z0-9._-]{1,128}$/.test(resource.path)"
+}

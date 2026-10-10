@@ -17,6 +17,7 @@ import { createResolveUserPrincipalUseCase } from '../../src/identity/applicatio
 import { createMysqlGuestSessionRepository } from '../../src/identity/repository/mysql-guest-session-repository.js'
 import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '../../src/identity/repository/mysql-user-principal-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { cityProfilesSql } from './support/user-plant-mysql-harness.js'
 
 /**
  * unit_real_data：隔离 docker MySQL 8.4 + v2 schema manifest 全量 DDL（含 024 浇水基线表）+ v1 基线种子文件 +
@@ -65,8 +66,9 @@ const quote = (value: string) => `'${value.replaceAll("'", "''")}'`
 const requestBody = (caseRef: string, overrides: Record<string, unknown> = {}) => ({
   target: { kind: 'temporary_case', caseRef },
   catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-  location: { latitude: 31.230416, longitude: 121.473701 },
-  window: { orientation: 'S', glassLayers: 'double' },
+  // 2026-10-10 用户纠偏：临时案例只交城市代码（服务端取城市中心坐标），朝向只收 8 方位。
+  cityCode: 'shanghai',
+  window: { orientation: 'S' },
   lightReading: { lux: 2000, measuredAt: '2026-10-04T04:30:00.000Z', source: 'meter' },
   soil: { state: 'dry', scope: 'root_zone', observedAt: '2026-10-04T14:00:00.000Z' },
   pot: { isInnerPot: true, innerTopDiameterCm: 16, innerBottomDiameterCm: 12, innerHeightCm: 14, hasDrainageHole: true },
@@ -102,6 +104,7 @@ beforeAll(async () => {
   for (const entry of manifest.files) { sql(fs.readFileSync(path.join(schemaDirectory, entry.file), 'utf8')) }
   // watering_baseline_policy 由 manifest 中的真实 024 迁移建表，种子用 v1 种子文件（裁决 A2/A3）。
   sql(fs.readFileSync(path.join(schemaDirectory, 'seeds/watering_baseline_policy.v1.sql'), 'utf8'))
+  sql(cityProfilesSql([{ code: 'shanghai', lat: 31.230416, lon: 121.473701 }]))
   // tropicals_species_encyclopedia_ref 不属 v2 迁移（裁决 B）：读取桩只建 v2 读取器用到的列，类型照抄测试库 information_schema。
   sql(`CREATE TABLE tropicals_species_encyclopedia_ref (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, taxon_id VARCHAR(512) NOT NULL UNIQUE,
       water_frequency_tier VARCHAR(32) NULL, water_frequency_source_json JSON NULL);`)

@@ -83,7 +83,7 @@ test('异步占位期间修改调用者对象不改变保存事实，非法输�
  * Expected：user-plant-environment-profile/v1 §3（2026-10-10 用户审定）——五项齐全才算完整；首次完整写完成时间；
  * 同用户此前没有完整档案才写首株事件（终身一次）；已完成不再写；事件不带积分。层次：L1/unit_fake（替身端口）。
  */
-const environmentReady = { location: { cityRef: 'chongqing', placement: 'indoor' }, lighting: { windowFacing: 'S', glassLayers: 2, distanceBand: 'within_1m', obstruction: 'none' }, ventilation: { airExchange: 'frequent', localAirflow: 'none', directBlowing: false } }
+const environmentReady = { location: { cityRef: 'chongqing', placement: 'indoor' }, lighting: { windowFacing: 'S' }, ventilation: { airExchange: 'frequent', localAirflow: 'none', directBlowing: false } }
 const completeFixture = (evidence: { profileCompletedAtMs: number | null; userPreviouslyCompletedProfile: boolean }, context: Record<string, unknown> = environmentReady) => {
   const f = fixture()
   f.saveCareContext.mockResolvedValue(context)

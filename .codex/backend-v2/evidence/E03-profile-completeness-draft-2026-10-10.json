@@ -1,0 +1,66 @@
+{
+  "ticket": {
+    "id": "z8v0kmvfu1",
+    "title": "[E03][P2] 长期植物档案完整度读取与激励",
+    "url": "https://app.clickup.com/t/z8v0kmvfu1"
+  },
+  "date": "2026-10-10",
+  "agent": "user_plant_terra",
+  "kind": "design_draft",
+  "tdd": "未启动：本票本轮只出合同草案，不改产品行为，无 RED/GREEN",
+  "artifacts": {
+    "contractDraft": "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md",
+    "catalogEntries": [
+      "user-plant.profile_progress.policy",
+      "subscription.points.profile_milestones"
+    ],
+    "catalogTicketBinding": "[E03][P2] 长期植物档案完整度读取与激励 → z8v0kmvfu1"
+  },
+  "readOnlyResearch": {
+    "v1": [
+      "src/utils/plant-profile-completeness.js",
+      "src/pages/index/components/PlantProfileCompleteness.vue",
+      "src/pages/index/components/PlantCard.vue"
+    ],
+    "v1Findings": {
+      "weights": {
+        "identity": 10,
+        "careCity": 45,
+        "plantDate": 5,
+        "lightEnvironment": 10,
+        "airEnvironment": 15,
+        "potProfile": 15
+      },
+      "requiredItem": "careCity",
+      "levels": "≥90 完整 / ≥80 较完整 / ≥70 不完整 / 其余不合格",
+      "potRule": "上口>0、高度>0、基质非 unknown、排水 true/false"
+    },
+    "v2": [
+      "cloudfunctions-v2/src/care/application/assess-mvp-watering.ts（plant_baseline 缺失即 insufficient_evidence；基质缺失走回退存量）",
+      "cloudfunctions-v2/src/care/application/build-watering-advice.ts（plant_light / outdoor_radiation / plant_location）",
+      "cloudfunctions-v2/src/care/http/watering-advice-request.ts（Lux 为单次请求输入，档案不存）",
+      "cloudfunctions-v2/src/care/http/long-term-care-routes.ts（profileReadiness 现只看 measuredPot 行与 catalogTaxonRef）"
+    ]
+  },
+  "decisionPoints": [
+    "D1 权重口径",
+    "D2 接口形态",
+    "D3 Lux 是否计分",
+    "D4 hasMeasuredPot 口径收紧",
+    "D5 里程碑与防刷",
+    "D6 规则版本载体",
+    "D7 档位阈值"
+  ],
+  "notChanged": [
+    "src/**",
+    "OpenAPI / route-registry / contract-registry",
+    "DDL",
+    "ClickUp（只读）"
+  ],
+  "verification": {
+    "typecheck": "0 errors",
+    "lint": "oxlint src test：0 errors（既有 warnings）",
+    "vitest": "297 files / 3205 passed / 5 skipped / 0 failed（含配置目录 p1-configuration-architecture 结构、sourceRef 片段与 ticketBindings 校验）",
+    "mysql": "本轮未改 SQL/Repository，未复跑"
+  }
+}

@@ -13,11 +13,14 @@ import { findProjectRoot } from '../support/project-root.js'
 const root = findProjectRoot()
 const openapi = JSON.parse(fs.readFileSync(path.join(root, 'docs/backend-v2/api/openapi.p1.json'), 'utf8')) as { components: { schemas: Record<string, { required?: string[]; properties?: Record<string, { description?: string }> }> } }
 
-test('OpenAPI WateringAdviceRequest 顶层只要求 target 与 window；location 说明区分临时案例与长期植物', () => {
-  const schema = openapi.components.schemas.WateringAdviceRequest!
+test('OpenAPI WateringAdviceRequest（2026-10-10 用户纠偏）：顶层只要求 target 与 window；城市代码取代经纬度；window 只剩 orientation', () => {
+  const schema = openapi.components.schemas.WateringAdviceRequest! as { required?: string[]; properties?: Record<string, { description?: string; required?: string[]; properties?: Record<string, unknown> }> }
   expect(schema.required).toEqual(['target', 'window'])
-  expect(schema.properties!.location!.description).toMatch(/临时案例必填/u)
-  expect(schema.properties!.location!.description).toMatch(/长期植物不得提交/u)
+  expect(schema.properties).not.toHaveProperty('location')
+  expect(schema.properties!.cityCode!.description).toMatch(/临时案例必填/u)
+  expect(schema.properties!.cityCode!.description).toMatch(/长期植物不得提交/u)
+  expect(Object.keys(schema.properties!.window!.properties!)).toEqual(['orientation'])
+  expect(schema.properties!.window!.required).toEqual(['orientation'])
 })
 
 test('合同登记 plant_location 缺失码', () => {

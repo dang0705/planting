@@ -39,8 +39,8 @@ const radiation = normalizeOpenMeteoRadiation({ ...fixture, hourly: {
 const onlineBody = {
   target: { kind: 'temporary_case', caseRef: 'gpc_route_case_00001' },
   catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-  location: { latitude: 31.230416, longitude: 121.473701 },
-  window: { orientation: 'S', glassLayers: 'single' },
+  cityCode: 'shanghai',
+  window: { orientation: 'S' },
   lightReading: null, indoorClimate: null, lastWatering: null,
   soil: { state: 'moist', scope: 'root_zone', observedAt: new Date(now - 3_600_000).toISOString() },
   pot: { isInnerPot: true, innerTopDiameterCm: 15, innerBottomDiameterCm: 11, innerHeightCm: 13, hasDrainageHole: true },
@@ -59,6 +59,8 @@ async function post(value: unknown, overrides: Partial<WateringAdviceRouteDepend
     readOwnedCase: async () => 'owned',
     readWateringPolicy: async () => policy,
     readPlantBaseline: async () => ({ tier: 'regular', trigger: 'SURFACE_DRY', baselineDays: { min: 5, max: 8 } }),
+    // 2026-10-10 纠偏：城市代码由城市目录换中心坐标（测试替身只认识上海）。
+    resolveCityCoordinates: async (cityCode: string) => (cityCode === 'shanghai' ? { latitude: 31.230416, longitude: 121.473701 } : null),
     fetchRadiation: async () => radiation,
     createWateringAdvice: async input => ({ status: 200, body: { data: { resultRef: input.newResultRef, result: input.built.result } } }),
     createRef: kind => (kind === 'session' ? 'tcs_route_session_01' : 'cres_route_result_01'),

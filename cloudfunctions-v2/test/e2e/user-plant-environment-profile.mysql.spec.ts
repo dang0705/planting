@@ -14,9 +14,9 @@ const now = Date.UTC(2026, 9, 10, 10)
 const plants = { first: 'upl_env_first_000001', second: 'upl_env_second_00001', archived: 'upl_env_archived_0001', foreign: 'upl_env_foreign_00001', rollback: 'upl_env_rollback_0001' } as const
 const pot = { actualInnerPotConfirmed: true, drainageAvailable: true, potTopDiameterCm: 12, potBottomDiameterCm: 9, potHeightCm: 11 }
 const location = { cityRef: 'chongqing', placement: 'indoor' }
-const lighting = { windowFacing: 'S', glassLayers: 2, distanceBand: 'within_1m', obstruction: 'partial' }
+// 2026-10-10 用户纠偏：光照只收朝向（城市在 location）。
+const lighting = { windowFacing: 'S' }
 const ventilation = { airExchange: 'occasional', localAirflow: 'none', directBlowing: false }
-const potShape = { shape: 'round', wallMaterial: 'terracotta' }
 const substrate = { materials: ['general', 'perlite'], primaryMaterial: 'general' }
 let h: UserPlantMysqlHarness
 
@@ -47,16 +47,16 @@ describe('PATCH 环境档案（真实 MySQL）', () => {
   })
 
   test('补齐盆器与通风 → 首次完整：写首次完成时间与一条首株 outbox 事件（pending、无积分字段）', async () => {
-    const response = await patch(plants.first, { version: 2, measuredPot: pot, ventilation, potShape, substrate }, 'env-key-0000002')
+    const response = await patch(plants.first, { version: 2, measuredPot: pot, ventilation, substrate }, 'env-key-0000002')
     expect(response.status).toBe(200)
-    expect(response.json.data).toMatchObject({ version: 3, profile: { measuredPot: pot, location, lighting, ventilation, potShape, substrate } })
+    expect(response.json.data).toMatchObject({ version: 3, profile: { measuredPot: pot, location, lighting, ventilation, substrate } })
     expect(completedAt(plants.first)).toBe(String(now))
     expect(outbox()).toBe(`${harnessUsers.ownerRef}|${plants.first}|first_profile:${harnessUsers.ownerRef}|user_plant.profile_completed.v1|user-plant-profile/v1|pending|"user-plant-profile/v1"`)
     expect(h.sql('SELECT payload_json FROM user_plant_outbox;')).not.toMatch(/point|amount/iu)
   })
 
   test('同键同参重放原结果、不重复写 outbox；同键异参 409', async () => {
-    const replay = await patch(plants.first, { version: 2, measuredPot: pot, ventilation, potShape, substrate }, 'env-key-0000002')
+    const replay = await patch(plants.first, { version: 2, measuredPot: pot, ventilation, substrate }, 'env-key-0000002')
     expect(replay.status).toBe(200)
     expect(replay.json.data).toMatchObject({ version: 3 })
     expect((await patch(plants.first, { version: 2, ventilation: null }, 'env-key-0000002')).json.error?.type).toBe('IDEMPOTENCY_CONFLICT')
@@ -78,8 +78,9 @@ describe('PATCH 环境档案（真实 MySQL）', () => {
     expect(outbox().split('\n')).toHaveLength(1)
   })
 
-  test('省略分组保留原值；盆型与基质 null 清除且保留实测盆器', async () => {
-    const response = await patch(plants.second, { version: 2, potShape: null, substrate: null, nickname: '二号' }, 'env-key-0000005')
+  test('省略分组保留原值；基质 null 清除且保留实测盆器；已删除的 potShape 分组 → 400', async () => {
+    expect((await patch(plants.second, { version: 2, potShape: null }, 'env-key-0000005a')).status).toBe(400)
+    const response = await patch(plants.second, { version: 2, substrate: null, nickname: '二号' }, 'env-key-0000005')
     expect(response.json.data?.profile).toEqual({ nickname: '二号', measuredPot: pot, location, lighting, ventilation })
   })
 
@@ -99,7 +100,8 @@ describe('PATCH 环境档案（真实 MySQL）', () => {
   test('列表项与单株读取带同一份环境档案', async () => {
     const listed = (await h.call('GET', '/api/v2/user-plants')).json.data as { items: Array<Record<string, unknown>> }
     const single = await h.call('GET', `/api/v2/user-plants/${plants.second}`)
-    expect(listed.items.find(item => item.user_plant_id === plants.second)).toEqual(single.json.data)
+    // 封面合同（2026-10-10）：列表项额外带 hasCover，其余与单株读取一致。
+    expect(listed.items.find(item => item.user_plant_id === plants.second)).toEqual({ ...single.json.data, hasCover: false })
   })
 
   test('事务失败回滚：outbox 写入失败时档案、环境、版本、完成时间与幂等记录都不落库', async () => {

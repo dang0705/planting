@@ -17,6 +17,18 @@ import { createMysqlCapabilitySnapshotReader } from '../subscription/repository/
 import { createUserPlantServer } from '../user-plant/http/server.js'
 import { createMysqlPublishedProfileWritePolicyReader, createMysqlPublishedHttpWritePolicyReader } from '../user-plant/repository/mysql-published-profile-write-policy-reader.js'
 import { createMysqlUserPlantLimitsPolicyReader } from '../user-plant/repository/mysql-user-plant-limits-policy-reader.js'
+import { createCloudbaseStorageHttpAdapter } from '../foundation/storage/cloudbase-storage-http-adapter.js'
+
+/**
+ * 配置目录 Provider `cloudbase_storage`：credentialRef = env:V2_CLOUDBASE_STORAGE_API_KEY（只引用变量名，值在调用时读取、绝不记录），
+ * 网关环境 = V2_CLOUDBASE_ENV_ID，totalDeadlineMs = 10000。缺少环境 ID 时不创建 Provider（封面登记 503）。
+ */
+const storageCredentialEnvName = 'V2_CLOUDBASE_STORAGE_API_KEY'
+const storageTotalDeadlineMs = 10_000
+const storageEnvId = process.env.V2_CLOUDBASE_ENV_ID
+const storage = storageEnvId
+  ? createCloudbaseStorageHttpAdapter({ fetch: globalThis.fetch, envId: storageEnvId, readApiKey: () => process.env[storageCredentialEnvName], totalDeadlineMs: storageTotalDeadlineMs })
+  : undefined
 
 /** CloudBase HTTP 云函数固定监听端口。 */
 const servicePort = 9000
@@ -54,6 +66,7 @@ const resolveGuestOrUserPrincipal = createResolveGuestOrUserPrincipal({
 
 const server = createUserPlantServer({
   connectionSource,
+  ...(storage === undefined ? {} : { storage }),
   now,
   readProfileWriteSnapshot: () => profileWritePolicyReader.read(now()),
   readBindingHttpSnapshot: () => bindingHttpPolicyReader.read(now()),

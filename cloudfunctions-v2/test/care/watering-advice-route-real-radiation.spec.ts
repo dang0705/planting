@@ -40,6 +40,7 @@ async function post(potKey: keyof typeof pots) {
   const dependencies: WateringAdviceRouteDependencies = {
     resolvePrincipal: async () => guest, readOwnedCase: async () => 'owned', readWateringPolicy: async () => policy,
     readPlantBaseline: async () => ({ tier: 'regular', trigger: 'SURFACE_DRY', baselineDays: { min: 5, max: 8 } }), fetchRadiation,
+    resolveCityCoordinates: async (cityCode: string) => (cityCode === 'shanghai' ? { latitude: 31.230416, longitude: 121.473701 } : null),
     createWateringAdvice: async input => ({ status: 200, body: { data: { resultRef: input.newResultRef, result: input.built.result } } }),
     createRef: kind => (kind === 'session' ? 'tcs_route_session_01' : 'cres_route_result_01'), now: () => now, writeAudit: () => undefined,
   }
@@ -51,7 +52,7 @@ async function post(potKey: keyof typeof pots) {
   const primary = 'primary' in pots[potKey] ? (pots[potKey] as { primary: string }).primary : null
   const body = {
     target: { kind: 'temporary_case', caseRef: 'gpc_route_case_00001' }, catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-    location: { latitude: 31.230416, longitude: 121.473701 }, window: { orientation: 'S', glassLayers: 'single' },
+    cityCode: 'shanghai', window: { orientation: 'S' },
     lightReading: { lux: 2000, measuredAt: new Date(now - 5 * 60_000).toISOString(), source: 'meter' }, indoorClimate: null, lastWatering: null,
     soil: { state: 'moist', scope: 'root_zone', observedAt: new Date(now - 60_000).toISOString() },
     pot: { isInnerPot: true, innerTopDiameterCm: pot[0], innerBottomDiameterCm: pot[1], innerHeightCm: pot[2], hasDrainageHole: true },

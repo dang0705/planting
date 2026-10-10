@@ -26,8 +26,8 @@ const baseline = { tier: 'regular', trigger: 'SURFACE_DRY', baselineDays: { min:
 const body = {
   target: { kind: 'temporary_case', caseRef: 'gpc_build_case_00001' },
   catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-  location: { latitude: 31.230416, longitude: 121.473701 },
-  window: { orientation: 'S', glassLayers: 'double' },
+  cityCode: 'shanghai',
+  window: { orientation: 'S' },
   lightReading: { lux: 2000, measuredAt: '2026-10-04T04:30:00.000Z', source: 'meter' },
   soil: { state: 'dry', scope: 'root_zone', observedAt: '2026-10-04T14:00:00.000Z' },
   pot: { isInnerPot: true, innerTopDiameterCm: 16, innerBottomDiameterCm: 12, innerHeightCm: 14, hasDrainageHole: true },
@@ -36,7 +36,8 @@ const body = {
 function command(overrides: Record<string, unknown> = {}): WateringAdviceCommand {
   const parsed = parseWateringAdviceRequest({ ...body, ...overrides }, now)
   if (parsed.status !== 'ok') { throw new Error('夹具请求必须合法') }
-  return parsed.command
+  // 路由在调用 buildWateringAdvice 前用城市目录把城市代码换成中心坐标（降到 0.01°）；纯计算测试直接给出该结果。
+  return { ...parsed.command, location: { latitude: 31.23, longitude: 121.47 } }
 }
 
 describe('浇水建议组装', () => {

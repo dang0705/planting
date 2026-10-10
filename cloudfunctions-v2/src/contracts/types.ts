@@ -170,6 +170,10 @@ type UserPlantBaseDto = {
   updatedAt: string;
   /** 已保存档案的严格公开子集；没有档案时省略，不透传存储JSON。 */
   profile?: UserPlantProfileDto;
+  /** 单株读取时的当前封面（user-plant-cover-asset/v1）；无封面省略；Provider 不可用时 url 为 null。 */
+  cover?: import('./user-plant-cover-asset-contract.js').PublicCoverDto;
+  /** 仅列表项：是否有有效封面（列表不逐项签链接）。 */
+  hasCover?: boolean;
 };
 
 /** 当前允许公开的档案事实；其余专业参数必须留在服务端。 */
@@ -177,7 +181,6 @@ export type UserPlantProfileDto = {
   /** 昵称原文，空字符串为已清除，不暴露任何内部状态。 */ nickname: string;
   /** 存在且通过冻结Schema的实测事实；不存在时省略，不补造全null。 */
   measuredPot?: import('../user-plant/domain/measured-pot-profile.js').MeasuredPotProfile;
-  /** 已设置的盆型与盆壁材质（user-plant-environment-profile/v1）；未设置时省略。 */ potShape?: import('../user-plant/domain/environment-profile.js').PotShapeProfile;
   /** 已设置的基质组分；未设置时省略。 */ substrate?: import('../user-plant/domain/environment-profile.js').SubstrateProfile;
   /** 已设置的城市级位置（不含经纬度）；未设置时省略。 */ location?: import('../user-plant/domain/environment-profile.js').LocationProfile;
   /** 已设置的光照选项；未设置时省略。 */ lighting?: import('../user-plant/domain/environment-profile.js').LightingProfile;

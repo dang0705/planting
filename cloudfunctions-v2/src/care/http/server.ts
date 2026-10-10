@@ -116,13 +116,13 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
         userPlant: {
           readPlantContext: query => plantContextReader.read(query),
           readLatestWateringFact: scope => careReads.latestWateringFact(scope),
-          createAdvice: createUserPlantWateringAdviceApplicationService(idempotentWrite),
-          // care → weather 只读适配：城市目录（策略 v0-city-outdoor）的中心坐标。
-          resolveCityCoordinates: async cityRef => {
-            const profile = await withReadConnection(dependencies.connectionSource, connection =>
-              createMysqlCityClimateFitRepository({ query: (sql, parameters) => connection.query(sql, toSqlParameters(parameters)) }).getProfile(cityRef))
-            return profile === null ? null : { latitude: profile.lat, longitude: profile.lon }
-          }
+          createAdvice: createUserPlantWateringAdviceApplicationService(idempotentWrite)
+        },
+        // care → weather 只读适配：城市目录（策略 v0-city-outdoor）的中心坐标；临时案例与长期植物共用。
+        resolveCityCoordinates: async cityCode => {
+          const profile = await withReadConnection(dependencies.connectionSource, connection =>
+            createMysqlCityClimateFitRepository({ query: (sql, parameters) => connection.query(sql, toSqlParameters(parameters)) }).getProfile(cityCode))
+          return profile === null ? null : { latitude: profile.lat, longitude: profile.lon }
         },
         now: dependencies.now,
         writeAudit: dependencies.writeAudit

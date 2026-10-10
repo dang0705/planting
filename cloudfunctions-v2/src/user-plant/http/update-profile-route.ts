@@ -28,7 +28,7 @@ import type {
 } from '../application/get-user-plant.js'
 import type { MeasuredProfileApplicationInput } from '../application/save-measured-profile.js'
 import { lockUserPlantProfilePatch, type UserPlantProfilePatch } from '../domain/profile-patch.js'
-import { ENVIRONMENT_GROUP_KEYS, type PotShapeProfile, type SubstrateProfile } from '../domain/environment-profile.js'
+import { ENVIRONMENT_GROUP_KEYS, type SubstrateProfile } from '../domain/environment-profile.js'
 import type { CareContextGroupPatch } from '../repository/mysql-user-plant-environment-repository.js'
 import type { UserPlantProfileCompletenessPolicy } from '../domain/evaluate-profile-completeness.js'
 
@@ -324,7 +324,6 @@ export function createUpdateProfileRouteHandler(
               expectedVersion: dto.patch.version,
               ...('nickname' in dto.patch ? { nickname: dto.patch.nickname } : {}),
               ...('measuredPot' in dto.patch ? { measuredPot: dto.patch.measuredPot } : {}),
-              ...('potShape' in groups ? { potShape: groups.potShape as PotShapeProfile | null } : {}),
               ...('substrate' in groups ? { substrate: groups.substrate as SubstrateProfile | null } : {}),
               profileVersion: policy.profileVersion,
               occurredAtMs: now

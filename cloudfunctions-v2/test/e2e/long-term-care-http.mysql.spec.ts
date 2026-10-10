@@ -63,7 +63,7 @@ const carePath = (ref: string, suffix: string) => `/api/v2/care/user-plants/${re
 // 档案 JSON 与 user-plant 写入路径一致：实测盆器存于 measuredPot 键（measured-profile-persistence-contract）。
 const advice = (plantRef: string, key: string, extra: Record<string, unknown> = {}, bearer = ownerBearer) => call(careUrl, 'POST', '/api/v2/care/watering-advice', {
   // 2026-10-10 用户裁决：长期植物不再提交坐标，服务端用档案城市中心坐标。
-  target: { kind: 'user_plant', userPlantRef: plantRef }, window: { orientation: 'S', glassLayers: 'double' },
+  target: { kind: 'user_plant', userPlantRef: plantRef }, window: { orientation: 'S' },
   soil: { state: 'dry', scope: 'root_zone', observedAt: new Date(now - hour).toISOString() }, substrateMaterials: ['peat', 'perlite'], ...extra
 }, key, bearer)
 const bind = (plantRef: string, key: string, ref = taxon, bearer = ownerBearer) => call(plantUrl, 'PUT', plantPath(plantRef, '/catalog-binding'), { catalogTaxonRef: ref }, key, bearer)
@@ -210,8 +210,9 @@ describe('长期浇水建议', () => {
     expect(radiationRequests).toEqual([])
     expect(response.body.data?.result.details.missingEvidence).toContain('plant_location')
   })
-  test('长期植物提交 location → 400，零写入', async () => {
-    const response = await advice('upl_ltc_active_0001', 'advice-key-city004', { location: { latitude: 31.23, longitude: 121.47 } })
+  test('长期植物提交 cityCode 或旧 location → 400，零写入', async () => {
+    expect((await advice('upl_ltc_active_0001', 'advice-key-city005', { location: { latitude: 31.23, longitude: 121.47 } })).status).toBe(400)
+    const response = await advice('upl_ltc_active_0001', 'advice-key-city004', { cityCode: 'chongqing' })
     expect(response.status).toBe(400)
     expect(sql('SELECT COUNT(*) FROM care_capability_results;')).toBe('0')
   })

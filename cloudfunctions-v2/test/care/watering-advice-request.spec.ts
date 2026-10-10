@@ -10,8 +10,9 @@ const iso = (ms: number) => new Date(ms).toISOString()
 const full = () => ({
   target: { kind: 'temporary_case', caseRef: 'case_abc123' },
   catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-  location: { latitude: 31.23456, longitude: 121.47321 },
-  window: { orientation: 'S', glassLayers: 'none' },
+  // 2026-10-10 用户纠偏：临时案例改交城市代码（服务端取城市中心坐标），朝向只收 8 方位。
+  cityCode: 'shanghai',
+  window: { orientation: 'S' },
   lightReading: { lux: 1200, measuredAt: iso(now - 60_000), source: 'camera_estimate' },
   soil: { state: 'moist', scope: 'root_zone', observedAt: iso(now - 120_000) },
   lastWatering: { wateredAt: iso(now - 3 * 86_400_000) },
@@ -23,12 +24,12 @@ const parse = (body: unknown) => parseWateringAdviceRequest(body, now)
 const invalid = { status: 'invalid' }
 
 describe('watering-advice 请求校验｜L1 unit_fake', () => {
-  it('Happy：完整请求映射为命令，坐标两位小数、南向 180°、时间转毫秒', () => {
+  it('Happy：完整请求映射为命令；城市代码待服务端换坐标（location 先为 null），朝向原样保留，时间转毫秒', () => {
     expect(parse(full())).toEqual({ status: 'ok', command: {
       target: { kind: 'temporary_case', caseRef: 'case_abc123' },
       catalogTaxonRef: 'https://tropicals.cn/species/epipremnum-aureum',
-      location: { latitude: 31.23, longitude: 121.47 },
-      window: { azimuthDeg: 180, glassLayers: 'none' },
+      cityRef: 'shanghai', location: null,
+      window: { orientation: 'S' },
       lightReading: { lux: 1200, measuredAtMs: now - 60_000, source: 'camera_estimate' },
       soil: { state: 'moist', scope: 'root_zone', observedAt: now - 120_000 },
       lastWateringAtMs: now - 3 * 86_400_000,
@@ -37,20 +38,18 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
       indoorClimate: { temperatureC: 23.5, relativeHumidityPercent: 45, measuredAtMs: now - 60_000 },
     } })
   })
-  it('U2：指南针 359.9° 配北向时采用角度；纬度 ±90、经度 ±180 接受', () => {
-    const body = { ...full(), window: { orientation: 'N', azimuthDeg: 359.9, glassLayers: 'double' }, location: { latitude: -90, longitude: 180 } }
-    const result = parse(body)
-    expect(result.status).toBe('ok')
-    if (result.status !== 'ok') { throw new Error('unreachable') }
-    expect(result.command.window).toEqual({ azimuthDeg: 359.9, glassLayers: 'double' })
-    expect(result.command.location).toEqual({ latitude: -90, longitude: 180 })
+  it('朝向 8 方位都接受；已删除的 azimuthDeg、glassLayers、latitude/longitude 一律拒绝（2026-10-10 用户纠偏）', () => {
+    for (const orientation of ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']) { expect(parse({ ...full(), window: { orientation } }).status).toBe('ok') }
+    expect(parse({ ...full(), window: { orientation: 'N', azimuthDeg: 359.9 } })).toEqual(invalid)
+    expect(parse({ ...full(), window: { orientation: 'S', glassLayers: 'double' } })).toEqual(invalid)
+    expect(parse({ ...full(), location: { latitude: 31.23, longitude: 121.47 } })).toEqual(invalid)
   })
   it('U1：只填必填项时可选项为 null，不补默认', () => {
     // 2026-10-10 用户裁决：长期植物不再接收前端坐标（由服务端用档案城市中心坐标），命令中 location 为 null 待服务端填充。
-    const result = parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, window: { orientation: 'E', glassLayers: null } })
+    const result = parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, window: { orientation: 'E' } })
     expect(result).toEqual({ status: 'ok', command: {
       target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, catalogTaxonRef: null,
-      location: null, window: { azimuthDeg: 90, glassLayers: null },
+      cityRef: null, location: null, window: { orientation: 'E' },
       lightReading: null, soil: null, lastWateringAtMs: null,
       pot: { actualInnerPotConfirmed: null, drainageAvailable: null, potTopDiameterCm: null, potBottomDiameterCm: null, potHeightCm: null },
       materials: [], primaryMaterial: null, indoorClimate: null,
@@ -58,16 +57,17 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
   })
   it.each([
     ['缺 target', (b: Record<string, any>) => { delete b.target }],
-    ['缺 location', (b: Record<string, any>) => { delete b.location }],
-    ['缺朝向', (b: Record<string, any>) => { b.window = { glassLayers: 'single' } }],
+    ['临时案例缺城市代码', (b: Record<string, any>) => { delete b.cityCode }],
+    ['城市代码含大写', (b: Record<string, any>) => { b.cityCode = 'ShangHai' }],
+    ['缺朝向', (b: Record<string, any>) => { b.window = {} }],
     ['临时案例缺品种', (b: Record<string, any>) => { delete b.catalogTaxonRef }],
   ])('U1：%s → 校验失败', (_name, change) => {
     const body = full() as Record<string, any>; change(body)
     expect(parse(body)).toEqual(invalid)
   })
-  it('长期植物提交 location → 校验失败（坐标由服务端按档案城市取，2026-10-10 用户裁决）', () => {
-    expect(parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, location: { latitude: 39.9, longitude: 116.4 },
-      window: { orientation: 'E', glassLayers: null } })).toEqual(invalid)
+  it('长期植物提交 cityCode → 校验失败（坐标由服务端按档案城市取，2026-10-10 用户裁决）', () => {
+    expect(parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, cityCode: 'beijing',
+      window: { orientation: 'E' } })).toEqual(invalid)
   })
   it('U1 元素洞：材料列表含 null 在边界拒绝', () => {
     expect(parse({ ...full(), substrateMaterials: [null, 'peat'] })).toEqual(invalid)
@@ -78,8 +78,7 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
     ['Lux 为负', (b: Record<string, any>) => { b.lightReading.lux = -1 }],
     ['非 UTC 时间', (b: Record<string, any>) => { b.soil.observedAt = '2026-10-08 10:00' }],
     ['观察晚于 now', (b: Record<string, any>) => { b.soil.observedAt = iso(now + 1000) }],
-    ['指南针与方位不一致', (b: Record<string, any>) => { b.window = { orientation: 'N', azimuthDeg: 180, glassLayers: null } }],
-    ['纬度越界', (b: Record<string, any>) => { b.location.latitude = 90.5 }],
+    ['未知朝向', (b: Record<string, any>) => { b.window = { orientation: 'up' } }],
     ['非对象请求体', () => { /* 由下方单独断言 */ }],
   ])('U3：%s → 校验失败', (name, change) => {
     if (name === '非对象请求体') { expect(parse('not-json')).toEqual(invalid); expect(parse(null)).toEqual(invalid); return }

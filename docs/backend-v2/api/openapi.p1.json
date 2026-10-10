@@ -1104,7 +1104,10 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
-          "IDEMPOTENCY_CONFLICT"
+          "IDEMPOTENCY_CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -1127,7 +1130,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/UserPlantAssetSuccess"
                 }
               }
             }
@@ -1148,8 +1151,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/BindUserPlantAssetRequest"
               }
             }
           }
@@ -5255,7 +5257,7 @@
           "version"
         ],
         "minProperties": 2,
-        "description": "user-plant-environment-profile/v1：v1 的昵称与实测盆器语义不变；新增盆型材质、基质、位置、光照、通风五个分组，省略保留、null 清除。不接受任何派生值。",
+        "description": "user-plant-environment-profile/v1：v1 的昵称与实测盆器（盆型 = 尺寸 + 排水）语义不变；新增基质、位置、光照（只收朝向）、通风四个分组，省略保留、null 清除。不接受任何派生值。2026-10-10 删除 potShape 分组与光照的玻璃/距离/遮挡字段。",
         "properties": {
           "version": {
             "type": "integer",
@@ -5318,44 +5320,6 @@
                 "description": "容器内深，厘米，不是植物高度，有限正数或明确未知null。"
               }
             }
-          },
-          "potShape": {
-            "description": "盆型与盆壁材质；null 清除。",
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "shape",
-                  "wallMaterial"
-                ],
-                "properties": {
-                  "shape": {
-                    "enum": [
-                      "round",
-                      "square",
-                      "hanging",
-                      "other",
-                      null
-                    ]
-                  },
-                  "wallMaterial": {
-                    "enum": [
-                      "plastic",
-                      "glazed_ceramic",
-                      "terracotta",
-                      "cement",
-                      "fabric",
-                      "other",
-                      null
-                    ]
-                  }
-                }
-              }
-            ]
           },
           "substrate": {
             "description": "基质组分；primaryMaterial 必须属于 materials（由领域代码复核）；null 清除。",
@@ -5439,7 +5403,7 @@
             ]
           },
           "lighting": {
-            "description": "用户可理解的光照选项；null 清除。",
+            "description": "光照只收朝向（2026-10-10 用户纠偏：城市在 location，植物位置 Lux 由浇水建议请求实测，不进档案）；null 清除。",
             "oneOf": [
               {
                 "type": "null"
@@ -5448,10 +5412,7 @@
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
-                  "windowFacing",
-                  "glassLayers",
-                  "distanceBand",
-                  "obstruction"
+                  "windowFacing"
                 ],
                 "properties": {
                   "windowFacing": {
@@ -5465,29 +5426,6 @@
                       "W",
                       "NW",
                       "none"
-                    ]
-                  },
-                  "glassLayers": {
-                    "enum": [
-                      0,
-                      1,
-                      2,
-                      3
-                    ]
-                  },
-                  "distanceBand": {
-                    "enum": [
-                      "on_sill",
-                      "within_1m",
-                      "one_to_three_m",
-                      "beyond_3m"
-                    ]
-                  },
-                  "obstruction": {
-                    "enum": [
-                      "none",
-                      "partial",
-                      "heavy"
                     ]
                   }
                 }
@@ -5607,6 +5545,14 @@
             "type": "object",
             "description": "公开档案投影，见 cloudfunctions-v2/models/user-plant/public-profile-contract.md。"
           },
+          "cover": {
+            "type": "object",
+            "description": "仅单株读取：{ assetRef, url（云存储不可用为 null）, urlExpiresAt（当前为 null）}。"
+          },
+          "hasCover": {
+            "type": "boolean",
+            "description": "仅列表项：是否有有效封面。"
+          },
           "version": {
             "type": "integer",
             "minimum": 1
@@ -5618,6 +5564,74 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BindUserPlantAssetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "purpose",
+          "fileId",
+          "contentSha256"
+        ],
+        "properties": {
+          "purpose": {
+            "const": "profile"
+          },
+          "fileId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "本人封面目录 user-plant/{用户公开编号}/covers/ 下的云存储 fileID；只在服务端校验与落库。"
+          },
+          "contentSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "UserPlantAssetSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "assetRef",
+              "purpose",
+              "url",
+              "urlExpiresAt",
+              "createdAt"
+            ],
+            "properties": {
+              "assetRef": {
+                "type": "string",
+                "pattern": "^ast_[A-Za-z0-9_-]{8,60}$"
+              },
+              "purpose": {
+                "const": "profile"
+              },
+              "url": {
+                "type": "string",
+                "description": "临时访问链接，有效期以平台默认为准。"
+              },
+              "urlExpiresAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "平台给出的到期时间；当前 HTTP API 不返回，为 null。"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         }
       },
@@ -5901,33 +5915,16 @@
             "maxLength": 512,
             "description": "临时案例必填；读取 Tropicals 浇水基线。"
           },
-          "location": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "latitude",
-              "longitude"
-            ],
-            "properties": {
-              "latitude": {
-                "type": "number",
-                "minimum": -90,
-                "maximum": 90
-              },
-              "longitude": {
-                "type": "number",
-                "minimum": -180,
-                "maximum": 180
-              }
-            },
-            "description": "临时案例必填，服务端保存前四舍五入到 0.01°；长期植物不得提交（提交 → 400），服务端用档案城市中心坐标，档案无城市时缺失码 plant_location（2026-10-10）。"
+          "cityCode": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{2,64}$",
+            "description": "临时案例必填：城市目录内城市代码，服务端取城市中心坐标（0.01°），不在目录 → 400；长期植物不得提交（提交 → 400），服务端用档案城市中心坐标，档案无城市时缺失码 plant_location。不再接收经纬度（2026-10-10）。"
           },
           "window": {
             "type": "object",
             "additionalProperties": false,
             "required": [
-              "orientation",
-              "glassLayers"
+              "orientation"
             ],
             "properties": {
               "orientation": {
@@ -5941,21 +5938,9 @@
                   "W",
                   "NW"
                 ]
-              },
-              "azimuthDeg": {
-                "type": "number",
-                "minimum": 0,
-                "exclusiveMaximum": 360
-              },
-              "glassLayers": {
-                "enum": [
-                  "single",
-                  "double",
-                  "none",
-                  null
-                ]
               }
-            }
+            },
+            "description": "只收 8 方位朝向（2026-10-10 删除 azimuthDeg、glassLayers；单通道 Lux 法不消费它们）。"
           },
           "lightReading": {
             "type": [

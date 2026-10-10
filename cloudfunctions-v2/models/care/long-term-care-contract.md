@@ -30,7 +30,7 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 ## 2. 长期浇水建议 `POST /api/v2/care/watering-advice`（`target.kind='user_plant'`）
 
 - 仅登录用户；游客传 user_plant → 400；用例内强制登录主体（T8）。
-- 请求：沿用 `WateringAdviceRequest`；对长期植物 `catalogTaxonRef`、`pot`、`lastWatering` **不得提交**（提交 → 400）。`location` **也不得提交**（2026-10-10 用户裁决，提交 → 400）：服务端用环境档案 `location.cityRef` 对应城市目录的中心坐标取室外辐射；档案无城市或城市不在目录时不取辐射，结果为 `insufficient_evidence` 时缺失码追加 `plant_location`（详见 watering-advice-http-contract.md「长期植物的坐标」）。`window`、`lightReading`、`substrateMaterials`、`primarySubstrateMaterial`（2026-10-10 增补）、`indoorClimate`、`soil` 仍由请求提供（U2；前端可记住上次输入）。
+- 请求：沿用 `WateringAdviceRequest`；对长期植物 `catalogTaxonRef`、`pot`、`lastWatering` **不得提交**（提交 → 400）。`cityCode` **也不得提交**（2026-10-10 用户裁决，提交 → 400）：服务端用环境档案 `location.cityRef` 对应城市目录的中心坐标取室外辐射；档案无城市或城市不在目录时不取辐射，结果为 `insufficient_evidence` 时缺失码追加 `plant_location`（详见 watering-advice-http-contract.md「长期植物的坐标」）。`window`、`lightReading`、`substrateMaterials`、`primarySubstrateMaterial`（2026-10-10 增补）、`indoorClimate`、`soil` 仍由请求提供（U2；前端可记住上次输入）。
 - 服务端取：品种 = 最新绑定（无绑定 → 结果 `insufficient_evidence`，缺 `plant_baseline`）；盆器 = 档案 `measuredPot`（无 → 缺证据）；上次浇水 = 最近一条 `watering` 事实。
 - 盆土证据有效期（U6，`care-watering-mvp/v2`，临时案例同规则）见 §8。
 - 响应：`{ data: { resultRef: 'cres_…', proposalRef: 'cpr_…' | null, result } }`；`proposalRef` 仅在 `result.status='ready'` 且行动可确认（`water_allowed`、`check_later`、`check_now`、`priority_check`）时出现。

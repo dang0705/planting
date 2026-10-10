@@ -148,7 +148,10 @@ describe('GET /api/v2/user-plants（真实 MySQL）', () => {
     const items = (await list()).json.data?.items ?? []
     for (const item of items) {
       const single = await call('GET', `/api/v2/user-plants/${String(item.user_plant_id)}`)
-      expect(single.json.data).toEqual(item)
+      // 封面合同（2026-10-10）：列表项额外带 hasCover；其余字段与单株读取完全一致。
+      const { hasCover, ...rest } = item
+      expect(hasCover).toBe(false)
+      expect(single.json.data).toEqual(rest)
     }
   })
 

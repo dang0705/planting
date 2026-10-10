@@ -74,6 +74,11 @@ import type { UserPlantReadProjectionSqlRow } from '../repository/mysql-user-pla
 import { createListUserPlantsRouteHandler, listUserPlantsRoute } from './list-user-plants-route.js'
 import { createDeleteUserPlantRouteHandler, deleteUserPlantRoute } from './delete-user-plant-route.js'
 import { createListUserPlantTimelineApplicationService } from '../application/list-user-plant-timeline.js'
+import type { PrivateObjectStorage } from '../../foundation/storage/cloudbase-storage-http-adapter.js'
+import { createBindUserPlantCoverApplicationService } from '../application/bind-user-plant-cover.js'
+import { withCoverLink } from '../application/get-user-plant-cover.js'
+import { createMysqlActiveCoverReader } from '../repository/mysql-user-plant-asset-repository.js'
+import { bindUserPlantCoverRoute, createBindUserPlantCoverRouteHandler } from './bind-user-plant-cover-route.js'
 import { createListUserPlantTimelineRouteHandler, listUserPlantTimelineRoute } from './list-user-plant-timeline-route.js'
 import { createConfirmUserPlantIdentityApplicationService } from '../application/confirm-user-plant-identity.js'
 import { confirmUserPlantIdentityRoute, createConfirmUserPlantIdentityRouteHandler } from './confirm-user-plant-identity-route.js'
@@ -107,6 +112,8 @@ export type UserPlantServerDependencies = {
   readonly resolveGuestOrUserPrincipal?: (command: ResolveUserPrincipalCommand) => Promise<UserPrincipalDto | GuestPrincipalDto>
   /** 已发布 userplant_limits 策略读取；未接入或无发布时临时案例路由返回 503，不补默认值。 */
   readonly readUserPlantLimitsPolicy?: (capturedAt: string) => Promise<Readonly<UserPlantLimitsPolicySnapshot> | null>
+  /** 云存储 Provider（user-plant-cover-asset/v1）；未配置时封面登记 503、单株读取 cover.url 为 null。 */
+  readonly storage?: PrivateObjectStorage
 }
 
 const okStatus = 200
@@ -261,6 +268,11 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
       handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, listUserPlants })
     },
     {
+      route: bindUserPlantCoverRoute,
+      handler: createBindUserPlantCoverRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
+        storage: dependencies.storage, bindCover: createBindUserPlantCoverApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository }) })
+    },
+    {
       route: listUserPlantTimelineRoute,
       handler: createListUserPlantTimelineRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
         listTimeline: createListUserPlantTimelineApplicationService({ driver }) })
@@ -348,7 +360,8 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
       route: getUserPlantRoute,
       handler: createGetUserPlantRouteHandler({
         resolvePrincipal,
-        getUserPlant,
+        // 单株读取在有封面时现场换链接；档案修改的归属读取仍用不带封面的原用例（不触发外部调用）。
+        getUserPlant: withCoverLink({ getUserPlant, readActiveCover: createMysqlActiveCoverReader(dependencies.connectionSource), storage: dependencies.storage }),
         now: dependencies.now,
         writeAudit: dependencies.writeAudit
       })

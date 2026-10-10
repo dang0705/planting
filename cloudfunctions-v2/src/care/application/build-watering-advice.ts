@@ -77,7 +77,7 @@ function withLightMissing(result: WateringCapabilityResult, codes: readonly Ligh
 
 /**
  * 命令 + 策略 + 基线 + 辐射 → 公开结果与留存正文（纯计算，不访问网络或数据库）。
- * 单通道 Lux 法已包含玻璃效应，故不读取玻璃策略；glassLayers 只进入输入清单。
+ * 单通道 Lux 法已包含玻璃效应，故不读取玻璃策略；2026-10-10 起请求不再收集玻璃层数与指南针角度，朝向只进入输入清单。
  * 用户自报的盆土观察以 reliable=true 进入映射（HTTP 请求无来源字段，见测试矩阵解释性约定）。
  */
 export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWateringAdvice {
@@ -104,9 +104,9 @@ export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWater
     contractVersion: inputManifestVersion,
     catalogTaxonRef: command.catalogTaxonRef,
     location: command.location === null ? null : { latitude: command.location.latitude, longitude: command.location.longitude },
-    // 只在长期植物由档案城市取坐标时记录城市代码，临时案例的输入清单与哈希保持不变。
-    ...(command.cityRef === undefined ? {} : { cityRef: command.cityRef }),
-    window: { azimuthDeg: command.window.azimuthDeg, glassLayers: command.window.glassLayers },
+    // 坐标来源城市（临时案例的请求城市或长期植物的档案城市），无城市为 null。
+    cityRef: command.cityRef,
+    window: { orientation: command.window.orientation },
     lightReading: command.lightReading === null ? null : { ...command.lightReading },
     soil: command.soil === null ? null : { ...command.soil },
     lastWateringAtMs: command.lastWateringAtMs,
