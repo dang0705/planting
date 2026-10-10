@@ -1,0 +1,966 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="guest_claim_definitions" targetNamespace="http://bpmn.io/schema/bpmn" exporter="qinghuazhi-model-layout" exporterVersion="1.0.0">
+  <bpmn:error id="gc_error_503_guest_issue_unavailable" name="GUEST_ISSUE_UNAVAILABLE" errorCode="503" />
+  <bpmn:error id="gc_error_429_rate_limited" name="RATE_LIMITED" errorCode="429" />
+  <bpmn:error id="gc_error_503_service_unavailable" name="SERVICE_UNAVAILABLE" errorCode="503" />
+  <bpmn:error id="gc_error_401_principal_invalid" name="PRINCIPAL_INVALID" errorCode="401" />
+  <bpmn:error id="gc_error_409_temporary_case_limit_reached" name="TEMPORARY_CASE_LIMIT_REACHED" errorCode="409" />
+  <bpmn:error id="gc_error_401_login_principal_invalid" name="LOGIN_PRINCIPAL_INVALID" errorCode="401" />
+  <bpmn:error id="gc_error_503_login_service_unavailable" name="LOGIN_SERVICE_UNAVAILABLE" errorCode="503" />
+  <bpmn:error id="gc_error_401_claim_request_rejected" name="CLAIM_REQUEST_REJECTED" errorCode="401" />
+  <bpmn:error id="gc_error_409_idempotency_conflict" name="IDEMPOTENCY_CONFLICT" errorCode="409" />
+  <bpmn:error id="gc_error_409_guest_session_not_claimable" name="GUEST_SESSION_NOT_CLAIMABLE" errorCode="409" />
+  <bpmn:error id="gc_error_410_guest_session_expired" name="GUEST_SESSION_EXPIRED" errorCode="410" />
+  <bpmn:error id="gc_error_503_claim_processing" name="CLAIM_PROCESSING" errorCode="503" />
+  <bpmn:error id="gc_error_409_guest_session_not_claimable_failed" name="GUEST_SESSION_NOT_CLAIMABLE_FAILED" errorCode="409" />
+  <bpmn:error id="gc_error_409_claim_completion_rejected" name="CLAIM_COMPLETION_REJECTED" errorCode="409" />
+  <bpmn:error id="gc_error_410_guest_session_expired_completion" name="GUEST_SESSION_EXPIRED_COMPLETION" errorCode="410" />
+  <bpmn:collaboration id="guest_claim_collaboration">
+    <bpmn:participant id="guest_claim_participant" name="游客 → 临时案例 → 登录 → 认领" processRef="guest_claim_process" />
+  </bpmn:collaboration>
+  <bpmn:process id="guest_claim_process" name="游客临时案例与登录认领（guest-session-claim/v1）" isExecutable="false">
+    <bpmn:documentation>反映 createGuestSessionRouteHandler、createTemporaryCaseApplicationService、登录会话签发、createClaimGuestPlantCaseApplicationService 与 decideGuestClaimLease。认领状态机 requested → processing → completed；处理租约 30 秒（硬规则 user-plant.guest_claim.processing_lease_seconds）。</bpmn:documentation>
+    <bpmn:laneSet id="guest_claim_lanes">
+      <bpmn:lane id="gc_lane_user" name="用户 / 小程序">
+        <bpmn:flowNodeRef>gc_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_create_case_req</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_login_req</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_claim_req</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_ok</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="gc_lane_identity" name="identity 域">
+        <bpmn:flowNodeRef>gc_guest_policy</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_guest_policy</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_guest_policy</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_douyin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_douyin_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_issue_guest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_issue</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_issue_429</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_issue_503</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_login_input</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_issue_session</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_login</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_login_401</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_login_503</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="gc_lane_user_plant" name="user-plant 域">
+        <bpmn:flowNodeRef>gc_lock_session</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_case</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_case_401</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_case_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_insert_case</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_claim_input</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_claim_input</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_claim_input</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_target</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_target_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_receipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_receipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_receipt_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_register</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_register</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_register_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_register_410</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_lease</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_lease_503</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_terminal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_failed_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_recheck_receipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_complete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_complete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_complete_reject</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_end_complete_410</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_gw_success_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_object_kinds</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="gc_lane_subscription" name="subscription 域">
+        <bpmn:flowNodeRef>gc_capability</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="gc_lane_provider" name="外部 Provider">
+        <bpmn:flowNodeRef>gc_douyin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gc_verify_code</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="gc_start" name="未登录进入小程序">
+      <bpmn:outgoing>gc_f01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="gc_guest_policy" name="游客签发：DTO、锁定游客策略与摘要子密钥">
+      <bpmn:documentation>POST /api/v2/identity/guest-sessions；不读取任何 IP 请求头。DTO 不合法 400。</bpmn:documentation>
+      <bpmn:incoming>gc_f01</bpmn:incoming>
+      <bpmn:outgoing>gc_f02</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_guest_policy" name="可签发？">
+      <bpmn:incoming>gc_f02</bpmn:incoming>
+      <bpmn:outgoing>gc_f03</bpmn:outgoing>
+      <bpmn:outgoing>gc_f04</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_guest_policy" name="400 / 503">
+      <bpmn:documentation>DTO 不合法 400；无可信策略或子密钥 503（失败关闭）。</bpmn:documentation>
+      <bpmn:incoming>gc_f03</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_guest_policy_error_def" errorRef="gc_error_503_guest_issue_unavailable" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gc_gw_douyin" name="抖音且带 anonymousCode 且开关开启？">
+      <bpmn:incoming>gc_f04</bpmn:incoming>
+      <bpmn:outgoing>gc_f05</bpmn:outgoing>
+      <bpmn:outgoing>gc_f07</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="gc_douyin" name="换取 anonymous_openid（失败按无信号）">
+      <bpmn:documentation>只取 HMAC 摘要；anonymousCode 与匿名 openid 不进入日志、审计或响应。</bpmn:documentation>
+      <bpmn:incoming>gc_f05</bpmn:incoming>
+      <bpmn:outgoing>gc_f06</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="gc_gw_douyin_merge" name="">
+      <bpmn:incoming>gc_f06</bpmn:incoming>
+      <bpmn:incoming>gc_f07</bpmn:incoming>
+      <bpmn:outgoing>gc_f08</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="gc_issue_guest" name="按匿名信号限流并签发游客会话">
+      <bpmn:documentation>issueGuestSession；令牌只在成功响应出现一次。</bpmn:documentation>
+      <bpmn:incoming>gc_f08</bpmn:incoming>
+      <bpmn:outgoing>gc_f09</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_issue" name="签发结果？">
+      <bpmn:incoming>gc_f09</bpmn:incoming>
+      <bpmn:outgoing>gc_f10</bpmn:outgoing>
+      <bpmn:outgoing>gc_f11</bpmn:outgoing>
+      <bpmn:outgoing>gc_f12</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_issue_429" name="429 RATE_LIMITED">
+      <bpmn:incoming>gc_f10</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_issue_429_error_def" errorRef="gc_error_429_rate_limited" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="gc_end_issue_503" name="503 SERVICE_UNAVAILABLE">
+      <bpmn:incoming>gc_f11</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_issue_503_error_def" errorRef="gc_error_503_service_unavailable" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="gc_create_case_req" name="保存 guestToken，提交创建临时案例">
+      <bpmn:documentation>POST /api/v2/user-plants/temporary-cases（游客 Bearer + Idempotency-Key）。</bpmn:documentation>
+      <bpmn:incoming>gc_f12</bpmn:incoming>
+      <bpmn:outgoing>gc_f13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:task id="gc_lock_session" name="事务：幂等占位 → 锁游客会话并计数有效案例">
+      <bpmn:incoming>gc_f13</bpmn:incoming>
+      <bpmn:outgoing>gc_f14</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_case" name="可创建？">
+      <bpmn:incoming>gc_f14</bpmn:incoming>
+      <bpmn:outgoing>gc_f15</bpmn:outgoing>
+      <bpmn:outgoing>gc_f16</bpmn:outgoing>
+      <bpmn:outgoing>gc_f17</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_case_401" name="401 PRINCIPAL_INVALID">
+      <bpmn:incoming>gc_f15</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_case_401_error_def" errorRef="gc_error_401_principal_invalid" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="gc_end_case_409" name="409 TEMPORARY_CASE_LIMIT_REACHED">
+      <bpmn:incoming>gc_f16</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_case_409_error_def" errorRef="gc_error_409_temporary_case_limit_reached" />
+    </bpmn:endEvent>
+    <bpmn:task id="gc_insert_case" name="写入案例 gpc_（失效＝游客会话失效）并读回">
+      <bpmn:documentation>decideGuestTemporaryCase；游客没有独立案例有效期配置。确定拒绝也记为幂等首次结果。</bpmn:documentation>
+      <bpmn:incoming>gc_f17</bpmn:incoming>
+      <bpmn:outgoing>gc_f18</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:userTask id="gc_login_req" name="使用临时案例后选择登录">
+      <bpmn:documentation>临时案例可用于浇水建议（流程①临时案例分支）。登录：POST /api/v2/identity/sessions（一次性平台 code，不要求 Idempotency-Key）。</bpmn:documentation>
+      <bpmn:incoming>gc_f18</bpmn:incoming>
+      <bpmn:outgoing>gc_f19</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:task id="gc_login_input" name="登录请求校验">
+      <bpmn:incoming>gc_f19</bpmn:incoming>
+      <bpmn:outgoing>gc_f20</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:serviceTask id="gc_verify_code" name="验真一次性平台 code">
+      <bpmn:documentation>微信/抖音/小红书受控 Provider；未配置平台失败关闭。同一 code 重试拒绝。</bpmn:documentation>
+      <bpmn:incoming>gc_f20</bpmn:incoming>
+      <bpmn:outgoing>gc_f21</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:task id="gc_issue_session" name="解析或创建统一 user_id，签发 Bearer 会话">
+      <bpmn:documentation>(platform, platform_subject_id) 唯一约束保证不重复创建用户或绑定。</bpmn:documentation>
+      <bpmn:incoming>gc_f21</bpmn:incoming>
+      <bpmn:outgoing>gc_f22</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_login" name="登录成功？">
+      <bpmn:incoming>gc_f22</bpmn:incoming>
+      <bpmn:outgoing>gc_f23</bpmn:outgoing>
+      <bpmn:outgoing>gc_f24</bpmn:outgoing>
+      <bpmn:outgoing>gc_f25</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_login_401" name="400 / 401 凭证无效">
+      <bpmn:documentation>输入不合法 400；平台凭证无效或已消费 401。</bpmn:documentation>
+      <bpmn:incoming>gc_f23</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_login_401_error_def" errorRef="gc_error_401_login_principal_invalid" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="gc_end_login_503" name="503 SERVICE_UNAVAILABLE">
+      <bpmn:incoming>gc_f24</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_login_503_error_def" errorRef="gc_error_503_login_service_unavailable" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="gc_claim_req" name="提交认领（登录 Bearer＋guestToken＋案例＋目标）">
+      <bpmn:documentation>POST /api/v2/user-plants/claims；目标为 existing_user_plant 或 new_user_plant。</bpmn:documentation>
+      <bpmn:incoming>gc_f25</bpmn:incoming>
+      <bpmn:outgoing>gc_f26</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:task id="gc_claim_input" name="请求限制、登录主体、DTO 与幂等键">
+      <bpmn:incoming>gc_f26</bpmn:incoming>
+      <bpmn:outgoing>gc_f27</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_claim_input" name="请求合法？">
+      <bpmn:incoming>gc_f27</bpmn:incoming>
+      <bpmn:outgoing>gc_f28</bpmn:outgoing>
+      <bpmn:outgoing>gc_f29</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_claim_input" name="401 / 400 / 413 / 415">
+      <bpmn:incoming>gc_f28</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_claim_input_error_def" errorRef="gc_error_401_claim_request_rejected" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gc_gw_target" name="新建植物？">
+      <bpmn:incoming>gc_f29</bpmn:incoming>
+      <bpmn:outgoing>gc_f30</bpmn:outgoing>
+      <bpmn:outgoing>gc_f32</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="gc_capability" name="读取能力快照（失败为 null）">
+      <bpmn:documentation>缺能力不猜测授权，由完成事务判定。</bpmn:documentation>
+      <bpmn:incoming>gc_f30</bpmn:incoming>
+      <bpmn:outgoing>gc_f31</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="gc_gw_target_merge" name="">
+      <bpmn:incoming>gc_f31</bpmn:incoming>
+      <bpmn:incoming>gc_f32</bpmn:incoming>
+      <bpmn:outgoing>gc_f33</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="gc_receipt" name="读取原成功收据（新连接只读）">
+      <bpmn:incoming>gc_f33</bpmn:incoming>
+      <bpmn:outgoing>gc_f34</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_receipt" name="已有收据？">
+      <bpmn:incoming>gc_f34</bpmn:incoming>
+      <bpmn:outgoing>gc_f35</bpmn:outgoing>
+      <bpmn:outgoing>gc_f36</bpmn:outgoing>
+      <bpmn:outgoing>gc_f37</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_receipt_409" name="409 IDEMPOTENCY_CONFLICT">
+      <bpmn:incoming>gc_f35</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_receipt_409_error_def" errorRef="gc_error_409_idempotency_conflict" />
+    </bpmn:endEvent>
+    <bpmn:task id="gc_register" name="事务一：登记命令 requested → 取得处理租约">
+      <bpmn:documentation>register + leaseRepository.acquire 同一事务；登记或租约阶段异常回滚并返回 503。</bpmn:documentation>
+      <bpmn:incoming>gc_f36</bpmn:incoming>
+      <bpmn:outgoing>gc_f38</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_register" name="登记结果？">
+      <bpmn:incoming>gc_f38</bpmn:incoming>
+      <bpmn:outgoing>gc_f39</bpmn:outgoing>
+      <bpmn:outgoing>gc_f40</bpmn:outgoing>
+      <bpmn:outgoing>gc_f41</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_register_409" name="409 / 401 / 503">
+      <bpmn:documentation>不可认领或幂等冲突 409；主体无效 401；存储不可用 503。</bpmn:documentation>
+      <bpmn:incoming>gc_f39</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_register_409_error_def" errorRef="gc_error_409_guest_session_not_claimable" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="gc_end_register_410" name="410 GUEST_SESSION_EXPIRED">
+      <bpmn:incoming>gc_f40</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_register_410_error_def" errorRef="gc_error_410_guest_session_expired" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gc_gw_lease" name="租约裁决？">
+      <bpmn:incoming>gc_f41</bpmn:incoming>
+      <bpmn:outgoing>gc_f42</bpmn:outgoing>
+      <bpmn:outgoing>gc_f43</bpmn:outgoing>
+      <bpmn:outgoing>gc_f44</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_lease_503" name="503 处理中（同键重试）">
+      <bpmn:documentation>他人持有未过期租约（now &lt; leaseExpiresAt），不接管。</bpmn:documentation>
+      <bpmn:incoming>gc_f42</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_lease_503_error_def" errorRef="gc_error_503_claim_processing" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gc_gw_terminal" name="命令终态？">
+      <bpmn:incoming>gc_f43</bpmn:incoming>
+      <bpmn:outgoing>gc_f45</bpmn:outgoing>
+      <bpmn:outgoing>gc_f46</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_failed_409" name="409 GUEST_SESSION_NOT_CLAIMABLE">
+      <bpmn:incoming>gc_f45</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_failed_409_error_def" errorRef="gc_error_409_guest_session_not_claimable_failed" />
+    </bpmn:endEvent>
+    <bpmn:task id="gc_recheck_receipt" name="只读核对原收据">
+      <bpmn:documentation>核对不到为 503。</bpmn:documentation>
+      <bpmn:incoming>gc_f46</bpmn:incoming>
+      <bpmn:outgoing>gc_f47</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="gc_complete" name="事务二：完成认领（持有者匹配且租约未过期才写）">
+      <bpmn:documentation>取得 = 首次（attempt=1）、过期接管（attempt+1，换持有者）或本人已持有；新建植物校验能力快照；提交未知时只读核对。</bpmn:documentation>
+      <bpmn:incoming>gc_f44</bpmn:incoming>
+      <bpmn:outgoing>gc_f48</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gc_gw_complete" name="完成结果？">
+      <bpmn:incoming>gc_f48</bpmn:incoming>
+      <bpmn:outgoing>gc_f49</bpmn:outgoing>
+      <bpmn:outgoing>gc_f50</bpmn:outgoing>
+      <bpmn:outgoing>gc_f51</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="gc_end_complete_reject" name="409 / 401 / 403 / 503">
+      <bpmn:documentation>not_claimable 409、capability_snapshot_expired 409、principal_invalid 401、capability_denied 403、unavailable 503。</bpmn:documentation>
+      <bpmn:incoming>gc_f49</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_complete_reject_error_def" errorRef="gc_error_409_claim_completion_rejected" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="gc_end_complete_410" name="410 GUEST_SESSION_EXPIRED">
+      <bpmn:incoming>gc_f50</bpmn:incoming>
+      <bpmn:errorEventDefinition id="gc_end_complete_410_error_def" errorRef="gc_error_410_guest_session_expired_completion" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gc_gw_success_merge" name="">
+      <bpmn:incoming>gc_f37</bpmn:incoming>
+      <bpmn:incoming>gc_f47</bpmn:incoming>
+      <bpmn:incoming>gc_f51</bpmn:incoming>
+      <bpmn:outgoing>gc_f52</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="gc_object_kinds" name="读取已认领对象类别">
+      <bpmn:documentation>读取失败 503；replayed = 结果 claimRef ≠ 本次候选。</bpmn:documentation>
+      <bpmn:incoming>gc_f52</bpmn:incoming>
+      <bpmn:outgoing>gc_f53</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="gc_end_ok" name="200 认领成功（userPlantId）">
+      <bpmn:incoming>gc_f53</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="gc_f01" sourceRef="gc_start" targetRef="gc_guest_policy" />
+    <bpmn:sequenceFlow id="gc_f02" sourceRef="gc_guest_policy" targetRef="gc_gw_guest_policy" />
+    <bpmn:sequenceFlow id="gc_f03" name="否" sourceRef="gc_gw_guest_policy" targetRef="gc_end_guest_policy" />
+    <bpmn:sequenceFlow id="gc_f04" name="是" sourceRef="gc_gw_guest_policy" targetRef="gc_gw_douyin" />
+    <bpmn:sequenceFlow id="gc_f05" name="是" sourceRef="gc_gw_douyin" targetRef="gc_douyin" />
+    <bpmn:sequenceFlow id="gc_f06" sourceRef="gc_douyin" targetRef="gc_gw_douyin_merge" />
+    <bpmn:sequenceFlow id="gc_f07" name="否" sourceRef="gc_gw_douyin" targetRef="gc_gw_douyin_merge" />
+    <bpmn:sequenceFlow id="gc_f08" sourceRef="gc_gw_douyin_merge" targetRef="gc_issue_guest" />
+    <bpmn:sequenceFlow id="gc_f09" sourceRef="gc_issue_guest" targetRef="gc_gw_issue" />
+    <bpmn:sequenceFlow id="gc_f10" name="限流" sourceRef="gc_gw_issue" targetRef="gc_end_issue_429" />
+    <bpmn:sequenceFlow id="gc_f11" name="不可用" sourceRef="gc_gw_issue" targetRef="gc_end_issue_503" />
+    <bpmn:sequenceFlow id="gc_f12" name="200" sourceRef="gc_gw_issue" targetRef="gc_create_case_req" />
+    <bpmn:sequenceFlow id="gc_f13" sourceRef="gc_create_case_req" targetRef="gc_lock_session" />
+    <bpmn:sequenceFlow id="gc_f14" sourceRef="gc_lock_session" targetRef="gc_gw_case" />
+    <bpmn:sequenceFlow id="gc_f15" name="会话无效" sourceRef="gc_gw_case" targetRef="gc_end_case_401" />
+    <bpmn:sequenceFlow id="gc_f16" name="达上限" sourceRef="gc_gw_case" targetRef="gc_end_case_409" />
+    <bpmn:sequenceFlow id="gc_f17" name="可创建" sourceRef="gc_gw_case" targetRef="gc_insert_case" />
+    <bpmn:sequenceFlow id="gc_f18" sourceRef="gc_insert_case" targetRef="gc_login_req" />
+    <bpmn:sequenceFlow id="gc_f19" sourceRef="gc_login_req" targetRef="gc_login_input" />
+    <bpmn:sequenceFlow id="gc_f20" sourceRef="gc_login_input" targetRef="gc_verify_code" />
+    <bpmn:sequenceFlow id="gc_f21" sourceRef="gc_verify_code" targetRef="gc_issue_session" />
+    <bpmn:sequenceFlow id="gc_f22" sourceRef="gc_issue_session" targetRef="gc_gw_login" />
+    <bpmn:sequenceFlow id="gc_f23" name="凭证无效" sourceRef="gc_gw_login" targetRef="gc_end_login_401" />
+    <bpmn:sequenceFlow id="gc_f24" name="不可用" sourceRef="gc_gw_login" targetRef="gc_end_login_503" />
+    <bpmn:sequenceFlow id="gc_f25" name="成功" sourceRef="gc_gw_login" targetRef="gc_claim_req" />
+    <bpmn:sequenceFlow id="gc_f26" sourceRef="gc_claim_req" targetRef="gc_claim_input" />
+    <bpmn:sequenceFlow id="gc_f27" sourceRef="gc_claim_input" targetRef="gc_gw_claim_input" />
+    <bpmn:sequenceFlow id="gc_f28" name="否" sourceRef="gc_gw_claim_input" targetRef="gc_end_claim_input" />
+    <bpmn:sequenceFlow id="gc_f29" name="是" sourceRef="gc_gw_claim_input" targetRef="gc_gw_target" />
+    <bpmn:sequenceFlow id="gc_f30" name="是" sourceRef="gc_gw_target" targetRef="gc_capability" />
+    <bpmn:sequenceFlow id="gc_f31" sourceRef="gc_capability" targetRef="gc_gw_target_merge" />
+    <bpmn:sequenceFlow id="gc_f32" name="否" sourceRef="gc_gw_target" targetRef="gc_gw_target_merge" />
+    <bpmn:sequenceFlow id="gc_f33" sourceRef="gc_gw_target_merge" targetRef="gc_receipt" />
+    <bpmn:sequenceFlow id="gc_f34" sourceRef="gc_receipt" targetRef="gc_gw_receipt" />
+    <bpmn:sequenceFlow id="gc_f35" name="幂等冲突" sourceRef="gc_gw_receipt" targetRef="gc_end_receipt_409" />
+    <bpmn:sequenceFlow id="gc_f36" name="无" sourceRef="gc_gw_receipt" targetRef="gc_register" />
+    <bpmn:sequenceFlow id="gc_f37" name="已完成" sourceRef="gc_gw_receipt" targetRef="gc_gw_success_merge" />
+    <bpmn:sequenceFlow id="gc_f38" sourceRef="gc_register" targetRef="gc_gw_register" />
+    <bpmn:sequenceFlow id="gc_f39" name="拒绝" sourceRef="gc_gw_register" targetRef="gc_end_register_409" />
+    <bpmn:sequenceFlow id="gc_f40" name="已过期" sourceRef="gc_gw_register" targetRef="gc_end_register_410" />
+    <bpmn:sequenceFlow id="gc_f41" name="已登记" sourceRef="gc_gw_register" targetRef="gc_gw_lease" />
+    <bpmn:sequenceFlow id="gc_f42" name="他人持有" sourceRef="gc_gw_lease" targetRef="gc_end_lease_503" />
+    <bpmn:sequenceFlow id="gc_f43" name="终态" sourceRef="gc_gw_lease" targetRef="gc_gw_terminal" />
+    <bpmn:sequenceFlow id="gc_f44" name="取得" sourceRef="gc_gw_lease" targetRef="gc_complete" />
+    <bpmn:sequenceFlow id="gc_f45" name="已失败" sourceRef="gc_gw_terminal" targetRef="gc_end_failed_409" />
+    <bpmn:sequenceFlow id="gc_f46" name="已完成" sourceRef="gc_gw_terminal" targetRef="gc_recheck_receipt" />
+    <bpmn:sequenceFlow id="gc_f47" sourceRef="gc_recheck_receipt" targetRef="gc_gw_success_merge" />
+    <bpmn:sequenceFlow id="gc_f48" sourceRef="gc_complete" targetRef="gc_gw_complete" />
+    <bpmn:sequenceFlow id="gc_f49" name="拒绝" sourceRef="gc_gw_complete" targetRef="gc_end_complete_reject" />
+    <bpmn:sequenceFlow id="gc_f50" name="已过期" sourceRef="gc_gw_complete" targetRef="gc_end_complete_410" />
+    <bpmn:sequenceFlow id="gc_f51" name="已完成" sourceRef="gc_gw_complete" targetRef="gc_gw_success_merge" />
+    <bpmn:sequenceFlow id="gc_f52" sourceRef="gc_gw_success_merge" targetRef="gc_object_kinds" />
+    <bpmn:sequenceFlow id="gc_f53" sourceRef="gc_object_kinds" targetRef="gc_end_ok" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="guest_claim_diagram">
+    <bpmndi:BPMNPlane id="guest_claim_plane" bpmnElement="guest_claim_collaboration">
+      <bpmndi:BPMNShape id="guest_claim_participant_di" bpmnElement="guest_claim_participant" isHorizontal="true">
+        <dc:Bounds x="100" y="80" width="7028" height="1650" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_lane_user_di" bpmnElement="gc_lane_user" isHorizontal="true">
+        <dc:Bounds x="130" y="80" width="6998" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_lane_identity_di" bpmnElement="gc_lane_identity" isHorizontal="true">
+        <dc:Bounds x="130" y="280" width="6998" height="460" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_lane_user_plant_di" bpmnElement="gc_lane_user_plant" isHorizontal="true">
+        <dc:Bounds x="130" y="740" width="6998" height="590" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_lane_subscription_di" bpmnElement="gc_lane_subscription" isHorizontal="true">
+        <dc:Bounds x="130" y="1330" width="6998" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_lane_provider_di" bpmnElement="gc_lane_provider" isHorizontal="true">
+        <dc:Bounds x="130" y="1530" width="6998" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_start_di" bpmnElement="gc_start">
+        <dc:Bounds x="272" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="248" y="204" width="85" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_guest_policy_di" bpmnElement="gc_guest_policy">
+        <dc:Bounds x="425" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_guest_policy_di" bpmnElement="gc_gw_guest_policy" isMarkerVisible="true">
+        <dc:Bounds x="685" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="685" y="541" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_guest_policy_di" bpmnElement="gc_end_guest_policy">
+        <dc:Bounds x="692" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="680" y="342" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_douyin_di" bpmnElement="gc_gw_douyin" isMarkerVisible="true">
+        <dc:Bounds x="895" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="873" y="437" width="94" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_douyin_di" bpmnElement="gc_douyin">
+        <dc:Bounds x="1055" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_douyin_merge_di" bpmnElement="gc_gw_douyin_merge" isMarkerVisible="true">
+        <dc:Bounds x="1315" y="485" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_issue_guest_di" bpmnElement="gc_issue_guest">
+        <dc:Bounds x="1475" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_issue_di" bpmnElement="gc_gw_issue" isMarkerVisible="true">
+        <dc:Bounds x="1735" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1665" y="469" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_issue_429_di" bpmnElement="gc_end_issue_429">
+        <dc:Bounds x="1742" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1715" y="328" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_issue_503_di" bpmnElement="gc_end_issue_503">
+        <dc:Bounds x="1742" y="622" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1715" y="664" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_create_case_req_di" bpmnElement="gc_create_case_req">
+        <dc:Bounds x="1895" y="140" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_lock_session_di" bpmnElement="gc_lock_session">
+        <dc:Bounds x="2105" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_case_di" bpmnElement="gc_gw_case" isMarkerVisible="true">
+        <dc:Bounds x="2365" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2307" y="929" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_case_401_di" bpmnElement="gc_end_case_401">
+        <dc:Bounds x="2372" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2345" y="788" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_case_409_di" bpmnElement="gc_end_case_409">
+        <dc:Bounds x="2372" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2345" y="1124" width="91" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_insert_case_di" bpmnElement="gc_insert_case">
+        <dc:Bounds x="2525" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_login_req_di" bpmnElement="gc_login_req">
+        <dc:Bounds x="2735" y="140" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_login_input_di" bpmnElement="gc_login_input">
+        <dc:Bounds x="2945" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_verify_code_di" bpmnElement="gc_verify_code">
+        <dc:Bounds x="3155" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_issue_session_di" bpmnElement="gc_issue_session">
+        <dc:Bounds x="3365" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_login_di" bpmnElement="gc_gw_login" isMarkerVisible="true">
+        <dc:Bounds x="3625" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3555" y="469" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_login_401_di" bpmnElement="gc_end_login_401">
+        <dc:Bounds x="3632" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3605" y="328" width="90" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_login_503_di" bpmnElement="gc_end_login_503">
+        <dc:Bounds x="3632" y="622" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3605" y="664" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_claim_req_di" bpmnElement="gc_claim_req">
+        <dc:Bounds x="3785" y="140" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_claim_input_di" bpmnElement="gc_claim_input">
+        <dc:Bounds x="3995" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_claim_input_di" bpmnElement="gc_gw_claim_input" isMarkerVisible="true">
+        <dc:Bounds x="4255" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4249" y="1001" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_claim_input_di" bpmnElement="gc_end_claim_input">
+        <dc:Bounds x="4262" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4235" y="788" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_target_di" bpmnElement="gc_gw_target" isMarkerVisible="true">
+        <dc:Bounds x="4465" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4459" y="925" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_capability_di" bpmnElement="gc_capability">
+        <dc:Bounds x="4625" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_target_merge_di" bpmnElement="gc_gw_target_merge" isMarkerVisible="true">
+        <dc:Bounds x="4885" y="945" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_receipt_di" bpmnElement="gc_receipt">
+        <dc:Bounds x="5045" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_receipt_di" bpmnElement="gc_gw_receipt" isMarkerVisible="true">
+        <dc:Bounds x="5305" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5235" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_receipt_409_di" bpmnElement="gc_end_receipt_409">
+        <dc:Bounds x="5312" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5285" y="1124" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_register_di" bpmnElement="gc_register">
+        <dc:Bounds x="5465" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_register_di" bpmnElement="gc_gw_register" isMarkerVisible="true">
+        <dc:Bounds x="5725" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5655" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_register_409_di" bpmnElement="gc_end_register_409">
+        <dc:Bounds x="5732" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5705" y="778" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_register_410_di" bpmnElement="gc_end_register_410">
+        <dc:Bounds x="5732" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5705" y="1124" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_lease_di" bpmnElement="gc_gw_lease" isMarkerVisible="true">
+        <dc:Bounds x="5935" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5865" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_lease_503_di" bpmnElement="gc_end_lease_503">
+        <dc:Bounds x="5942" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5917" y="778" width="87" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_terminal_di" bpmnElement="gc_gw_terminal" isMarkerVisible="true">
+        <dc:Bounds x="5935" y="1075" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5865" y="1059" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_failed_409_di" bpmnElement="gc_end_failed_409">
+        <dc:Bounds x="5942" y="1212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5915" y="1254" width="91" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_recheck_receipt_di" bpmnElement="gc_recheck_receipt">
+        <dc:Bounds x="6095" y="1060" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_complete_di" bpmnElement="gc_complete">
+        <dc:Bounds x="6095" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_complete_di" bpmnElement="gc_gw_complete" isMarkerVisible="true">
+        <dc:Bounds x="6355" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6285" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_complete_reject_di" bpmnElement="gc_end_complete_reject">
+        <dc:Bounds x="6362" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6335" y="778" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_complete_410_di" bpmnElement="gc_end_complete_410">
+        <dc:Bounds x="6362" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6335" y="1134" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_gw_success_merge_di" bpmnElement="gc_gw_success_merge" isMarkerVisible="true">
+        <dc:Bounds x="6565" y="945" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_object_kinds_di" bpmnElement="gc_object_kinds">
+        <dc:Bounds x="6725" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gc_end_ok_di" bpmnElement="gc_end_ok">
+        <dc:Bounds x="6992" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6964" y="128" width="93" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="gc_f01_di" bpmnElement="gc_f01">
+        <di:waypoint x="308" y="180" />
+        <di:waypoint x="440" y="180" />
+        <di:waypoint x="440" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f02_di" bpmnElement="gc_f02">
+        <di:waypoint x="575" y="510" />
+        <di:waypoint x="685" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f03_di" bpmnElement="gc_f03">
+        <di:waypoint x="710" y="485" />
+        <di:waypoint x="710" y="398" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="716" y="468" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f04_di" bpmnElement="gc_f04">
+        <di:waypoint x="735" y="510" />
+        <di:waypoint x="895" y="510" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="741" y="492" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f05_di" bpmnElement="gc_f05">
+        <di:waypoint x="920" y="535" />
+        <di:waypoint x="920" y="1610" />
+        <di:waypoint x="1055" y="1610" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="926" y="539" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f06_di" bpmnElement="gc_f06">
+        <di:waypoint x="1205" y="1610" />
+        <di:waypoint x="1340" y="1610" />
+        <di:waypoint x="1340" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f07_di" bpmnElement="gc_f07">
+        <di:waypoint x="945" y="510" />
+        <di:waypoint x="1315" y="510" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="951" y="492" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f08_di" bpmnElement="gc_f08">
+        <di:waypoint x="1365" y="510" />
+        <di:waypoint x="1475" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f09_di" bpmnElement="gc_f09">
+        <di:waypoint x="1625" y="510" />
+        <di:waypoint x="1735" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f10_di" bpmnElement="gc_f10">
+        <di:waypoint x="1760" y="485" />
+        <di:waypoint x="1760" y="398" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1766" y="468" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f11_di" bpmnElement="gc_f11">
+        <di:waypoint x="1760" y="535" />
+        <di:waypoint x="1760" y="622" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1766" y="539" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f12_di" bpmnElement="gc_f12">
+        <di:waypoint x="1785" y="510" />
+        <di:waypoint x="1910" y="510" />
+        <di:waypoint x="1910" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1791" y="492" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f13_di" bpmnElement="gc_f13">
+        <di:waypoint x="2045" y="200" />
+        <di:waypoint x="2080" y="200" />
+        <di:waypoint x="2080" y="950" />
+        <di:waypoint x="2105" y="950" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f14_di" bpmnElement="gc_f14">
+        <di:waypoint x="2255" y="970" />
+        <di:waypoint x="2365" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f15_di" bpmnElement="gc_f15">
+        <di:waypoint x="2390" y="945" />
+        <di:waypoint x="2390" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2396" y="928" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f16_di" bpmnElement="gc_f16">
+        <di:waypoint x="2390" y="995" />
+        <di:waypoint x="2390" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2396" y="999" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f17_di" bpmnElement="gc_f17">
+        <di:waypoint x="2415" y="970" />
+        <di:waypoint x="2525" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2421" y="952" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f18_di" bpmnElement="gc_f18">
+        <di:waypoint x="2675" y="950" />
+        <di:waypoint x="2710" y="950" />
+        <di:waypoint x="2710" y="200" />
+        <di:waypoint x="2735" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f19_di" bpmnElement="gc_f19">
+        <di:waypoint x="2885" y="200" />
+        <di:waypoint x="2960" y="200" />
+        <di:waypoint x="2960" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f20_di" bpmnElement="gc_f20">
+        <di:waypoint x="3095" y="530" />
+        <di:waypoint x="3170" y="530" />
+        <di:waypoint x="3170" y="1590" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f21_di" bpmnElement="gc_f21">
+        <di:waypoint x="3305" y="1610" />
+        <di:waypoint x="3340" y="1610" />
+        <di:waypoint x="3340" y="530" />
+        <di:waypoint x="3365" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f22_di" bpmnElement="gc_f22">
+        <di:waypoint x="3515" y="510" />
+        <di:waypoint x="3625" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f23_di" bpmnElement="gc_f23">
+        <di:waypoint x="3650" y="485" />
+        <di:waypoint x="3650" y="398" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3656" y="468" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f24_di" bpmnElement="gc_f24">
+        <di:waypoint x="3650" y="535" />
+        <di:waypoint x="3650" y="622" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3656" y="539" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f25_di" bpmnElement="gc_f25">
+        <di:waypoint x="3675" y="510" />
+        <di:waypoint x="3800" y="510" />
+        <di:waypoint x="3800" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3681" y="492" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f26_di" bpmnElement="gc_f26">
+        <di:waypoint x="3935" y="200" />
+        <di:waypoint x="3970" y="200" />
+        <di:waypoint x="3970" y="950" />
+        <di:waypoint x="3995" y="950" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f27_di" bpmnElement="gc_f27">
+        <di:waypoint x="4145" y="970" />
+        <di:waypoint x="4255" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f28_di" bpmnElement="gc_f28">
+        <di:waypoint x="4280" y="945" />
+        <di:waypoint x="4280" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4286" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f29_di" bpmnElement="gc_f29">
+        <di:waypoint x="4305" y="970" />
+        <di:waypoint x="4465" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4311" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f30_di" bpmnElement="gc_f30">
+        <di:waypoint x="4490" y="995" />
+        <di:waypoint x="4490" y="1410" />
+        <di:waypoint x="4625" y="1410" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4496" y="999" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f31_di" bpmnElement="gc_f31">
+        <di:waypoint x="4775" y="1410" />
+        <di:waypoint x="4910" y="1410" />
+        <di:waypoint x="4910" y="995" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f32_di" bpmnElement="gc_f32">
+        <di:waypoint x="4515" y="970" />
+        <di:waypoint x="4885" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4521" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f33_di" bpmnElement="gc_f33">
+        <di:waypoint x="4935" y="970" />
+        <di:waypoint x="5045" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f34_di" bpmnElement="gc_f34">
+        <di:waypoint x="5195" y="970" />
+        <di:waypoint x="5305" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f35_di" bpmnElement="gc_f35">
+        <di:waypoint x="5330" y="995" />
+        <di:waypoint x="5330" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5336" y="999" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f36_di" bpmnElement="gc_f36">
+        <di:waypoint x="5355" y="970" />
+        <di:waypoint x="5465" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5361" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f37_di" bpmnElement="gc_f37">
+        <di:waypoint x="5330" y="945" />
+        <di:waypoint x="5330" y="810" />
+        <di:waypoint x="6590" y="810" />
+        <di:waypoint x="6590" y="945" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5336" y="928" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f38_di" bpmnElement="gc_f38">
+        <di:waypoint x="5615" y="970" />
+        <di:waypoint x="5725" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f39_di" bpmnElement="gc_f39">
+        <di:waypoint x="5750" y="945" />
+        <di:waypoint x="5750" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5756" y="928" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f40_di" bpmnElement="gc_f40">
+        <di:waypoint x="5750" y="995" />
+        <di:waypoint x="5750" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5756" y="999" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f41_di" bpmnElement="gc_f41">
+        <di:waypoint x="5775" y="970" />
+        <di:waypoint x="5935" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5781" y="952" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f42_di" bpmnElement="gc_f42">
+        <di:waypoint x="5960" y="945" />
+        <di:waypoint x="5960" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5966" y="928" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f43_di" bpmnElement="gc_f43">
+        <di:waypoint x="5960" y="995" />
+        <di:waypoint x="5960" y="1075" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5966" y="999" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f44_di" bpmnElement="gc_f44">
+        <di:waypoint x="5985" y="970" />
+        <di:waypoint x="6095" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5991" y="952" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f45_di" bpmnElement="gc_f45">
+        <di:waypoint x="5960" y="1125" />
+        <di:waypoint x="5960" y="1212" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5966" y="1129" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f46_di" bpmnElement="gc_f46">
+        <di:waypoint x="5985" y="1100" />
+        <di:waypoint x="6095" y="1100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5991" y="1082" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f47_di" bpmnElement="gc_f47">
+        <di:waypoint x="6245" y="1120" />
+        <di:waypoint x="6350" y="1120" />
+        <di:waypoint x="6350" y="1130" />
+        <di:waypoint x="6590" y="1130" />
+        <di:waypoint x="6590" y="995" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f48_di" bpmnElement="gc_f48">
+        <di:waypoint x="6245" y="970" />
+        <di:waypoint x="6355" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f49_di" bpmnElement="gc_f49">
+        <di:waypoint x="6380" y="945" />
+        <di:waypoint x="6380" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6386" y="928" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f50_di" bpmnElement="gc_f50">
+        <di:waypoint x="6380" y="995" />
+        <di:waypoint x="6380" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6386" y="999" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f51_di" bpmnElement="gc_f51">
+        <di:waypoint x="6405" y="970" />
+        <di:waypoint x="6565" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6411" y="952" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f52_di" bpmnElement="gc_f52">
+        <di:waypoint x="6615" y="970" />
+        <di:waypoint x="6725" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gc_f53_di" bpmnElement="gc_f53">
+        <di:waypoint x="6875" y="950" />
+        <di:waypoint x="7010" y="950" />
+        <di:waypoint x="7010" y="198" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

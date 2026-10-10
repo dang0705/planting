@@ -156,8 +156,8 @@
     },
     {
       "file": "watering.dmn",
-      "sha256": "1eb43545c2d92d713dd29be80635ee01888293c451bb5b2b4a602491b0fbdff4",
-      "ids": 206,
+      "sha256": "63e79f9932e4a66391af19713c293d7f0ed83e4beff63e2ebc67aea8db467dbb",
+      "ids": 218,
       "decisions": [
         {
           "id": "watering_decision_soil_safety_gate",
@@ -246,8 +246,8 @@
   ],
   "composite": {
     "file": "care-models.dmn",
-    "sha256": "da089b2acbe4059f393b66f231e2e005aff428c738edc4f551d4f6e210f7eddc",
-    "ids": 442,
+    "sha256": "b343c8b47adf24088c57381cb9fc4108ee441fda540b274343422518d4e3cae7",
+    "ids": 454,
     "decisions": 15
   },
   "validation": {

@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-04T14:51:53.831662+00:00",
+  "verifiedAt": "2026-10-09T15:00:56.474385+00:00",
   "tool": "dmnlint",
   "version": "1.0.0",
   "nodeRequirement": ">=24",
@@ -9,27 +9,32 @@
     {
       "file": "light.dmn",
       "exitCode": 0,
-      "output": "\n"
+      "output": "\n",
+      "sha256": "660aaeb2fd5c23d827f1b2243b12bb916e5634bdc127de4b3d8fc56b5af9cf14"
     },
     {
       "file": "pot.dmn",
       "exitCode": 0,
-      "output": "\n"
+      "output": "\n",
+      "sha256": "75e59054b584b2d843ebbeb3784ca1b3529e717368fec317fa2affb8bf1a1b26"
     },
     {
       "file": "dry-cycle.dmn",
       "exitCode": 0,
-      "output": "\n"
+      "output": "\n",
+      "sha256": "46213f0815f534e830b5d8be89dcd6ffafe7be8265651ccc5969a75021aa57f5"
     },
     {
       "file": "watering.dmn",
       "exitCode": 0,
-      "output": "\n"
+      "output": "\n",
+      "sha256": "63e79f9932e4a66391af19713c293d7f0ed83e4beff63e2ebc67aea8db467dbb"
     },
     {
       "file": "care-models.dmn",
       "exitCode": 0,
-      "output": "\n"
+      "output": "\n",
+      "sha256": "b343c8b47adf24088c57381cb9fc4108ee441fda540b274343422518d4e3cae7"
     }
   ],
   "lockSha256": "40d2a3ef75500d08409a2d7880a2fe373e969852b20b2caa9ba5cb1ca45278fa",
@@ -60,5 +65,20 @@
     "命中策略覆盖与冲突",
     "Desktop Modeler保存与重开",
     "DMN/TypeScript完整同场景一致性"
-  ]
+  ],
+  "camundaVisualizationFiles": [
+    {
+      "file": "camunda/mvp-watering-decisions.dmn",
+      "exitCode": 0,
+      "output": "\n",
+      "sha256": "6e95bdf224e884c5dc4009ce63104f3bd0bf8645dd6b189bac5dc2fa3694617b"
+    },
+    {
+      "file": "camunda/long-term-care-rules.dmn",
+      "exitCode": 0,
+      "output": "\n",
+      "sha256": "08105f8fb5b49a652da6def3efd7a819b7ee0375bea285c7b0870c027ef09318"
+    }
+  ],
+  "rerunReason": "2026-10-09：watering.dmn 最终浇水建议表按 evaluateWateringDecision 修正（review_drainage、check_later、priority_check、check_now、盆器证据不足），合成器重生成 care-models.dmn，哈希变化后重跑；另记录新增只读可视化 DMN 两个文件的结构校验"
 }

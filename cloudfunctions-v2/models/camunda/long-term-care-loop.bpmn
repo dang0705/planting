@@ -1,0 +1,1319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="long_term_care_loop_definitions" targetNamespace="http://bpmn.io/schema/bpmn" exporter="qinghuazhi-model-layout" exporterVersion="1.0.0">
+  <bpmn:error id="ltc_error_401_principal_invalid_or_validation_failed" name="PRINCIPAL_INVALID_OR_VALIDATION_FAILED" errorCode="401" />
+  <bpmn:error id="ltc_error_404_user_plant_not_found" name="USER_PLANT_NOT_FOUND" errorCode="404" />
+  <bpmn:error id="ltc_error_409_user_plant_archived" name="USER_PLANT_ARCHIVED" errorCode="409" />
+  <bpmn:error id="ltc_error_503_service_unavailable_retry" name="SERVICE_UNAVAILABLE_RETRY" errorCode="503" />
+  <bpmn:error id="ltc_error_409_care_proposal_not_confirmable" name="CARE_PROPOSAL_NOT_CONFIRMABLE" errorCode="409" />
+  <bpmn:error id="ltc_error_400_validation_failed_schedule" name="VALIDATION_FAILED_SCHEDULE" errorCode="400" />
+  <bpmn:error id="ltc_error_400_validation_failed_occurred_at" name="VALIDATION_FAILED_OCCURRED_AT" errorCode="400" />
+  <bpmn:error id="ltc_error_404_user_plant_not_found_plan" name="USER_PLANT_NOT_FOUND_PLAN" errorCode="404" />
+  <bpmn:error id="ltc_error_409_care_plan_expired" name="CARE_PLAN_EXPIRED" errorCode="409" />
+  <bpmn:error id="ltc_error_409_care_plan_version_conflict" name="CARE_PLAN_VERSION_CONFLICT" errorCode="409" />
+  <bpmn:collaboration id="long_term_care_loop_collaboration">
+    <bpmn:participant id="long_term_care_loop_participant" name="长期养护：建议 → 确认 → 检查计划 → 完成" processRef="long_term_care_loop_process" />
+  </bpmn:collaboration>
+  <bpmn:process id="long_term_care_loop_process" name="长期养护闭环（long-term-care/v1）" isExecutable="false">
+    <bpmn:documentation>反映 createUserPlantWateringAdviceApplicationService、createLongTermCareCommands（confirmProposal、completePlan）与 long-term-care-routes。所有写接口走 runIdempotentWrite：同键同体重放首次结果、同键异体 409 IDEMPOTENCY_CONFLICT、处理中 503。诊断与建议不自动写事实；只有用户确认才写计划或事实，不写提醒任务。代码中长期养护没有 410 分支：过期建议返回 409 CARE_PROPOSAL_NOT_CONFIRMABLE，过期计划返回 409 CARE_PLAN_EXPIRED。计划过期（§12）由独立的每小时定时事件函数 care-plan-expiry 写入，与用户完成请求以 status=planned 条件互斥。</bpmn:documentation>
+    <bpmn:laneSet id="long_term_care_loop_lanes">
+      <bpmn:lane id="ltc_lane_user" name="用户 / 小程序">
+        <bpmn:flowNodeRef>ltc_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_decide</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_done</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="ltc_lane_identity" name="identity 域">
+        <bpmn:flowNodeRef>ltc_auth1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_auth1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_auth1_401</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_auth2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_auth2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_auth2_401</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="ltc_lane_care" name="care 云函数">
+        <bpmn:flowNodeRef>ltc_advice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_proposal_rule</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_proposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_no_proposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_lock_plant1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_plant1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_plant1_404</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_plant1_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_fingerprint</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_fingerprint</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_fingerprint_503</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_lock_proposal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_confirmable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_not_confirmable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_decision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_dismiss</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_dismissed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_schedule_rule</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_schedule</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_schedule_400</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_write_plan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_occurred_rule1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_occurred1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_occurred1_400</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_write_fact1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_fact1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_lock_plant2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_plant2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_plant2_404</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_plant2_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_lock_plan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_plan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_plan_404</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_expired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_plan_expired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_version</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_version_409</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_outcome</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_cancel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_watering</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_occurred_rule2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_occurred2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_occurred2_400</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_write_fact2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_watering_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_soil</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_write_soil</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_soil_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_complete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_outcome_merge</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="ltc_lane_user_plant" name="user-plant 域">
+        <bpmn:flowNodeRef>ltc_context</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_context</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_context_404</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="ltc_lane_expiry" name="care-plan-expiry 事件函数">
+        <bpmn:flowNodeRef>ltc_expiry_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_expiry_deadline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_expiry_timeout</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_expiry_not_started</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_expiry_batches</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_gw_expiry_outcome</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_expiry_deadline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_expiry_failed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ltc_end_expiry_drained</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="ltc_start" name="请求长期植物浇水建议">
+      <bpmn:outgoing>ltc_f01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:callActivity id="ltc_advice" name="生成浇水建议（流程①长期植物分支）" calledElement="watering_advice_request_process">
+      <bpmn:incoming>ltc_f01</bpmn:incoming>
+      <bpmn:outgoing>ltc_f02</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:businessRuleTask id="ltc_proposal_rule" name="判定是否生成可确认建议" camunda:decisionRef="ltc_decision_proposal">
+      <bpmn:documentation>isConfirmableWateringResult：ready 且 action ∈ {water_allowed, check_later, check_now, priority_check}；有效期 = 窗口最晚端或生成时刻 + 24h。与结果同事务写入。</bpmn:documentation>
+      <bpmn:incoming>ltc_f02</bpmn:incoming>
+      <bpmn:outgoing>ltc_f03</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="ltc_gw_proposal" name="有 proposalRef？">
+      <bpmn:incoming>ltc_f03</bpmn:incoming>
+      <bpmn:outgoing>ltc_f04</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f05</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_no_proposal" name="仅展示结果（无建议）">
+      <bpmn:incoming>ltc_f04</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="ltc_decide" name="选择：安排检查 / 记录浇水 / 忽略">
+      <bpmn:documentation>POST /api/v2/care/user-plants/{userPlantRef}/proposals/{proposalRef}/confirmations，严格三选一。</bpmn:documentation>
+      <bpmn:incoming>ltc_f05</bpmn:incoming>
+      <bpmn:outgoing>ltc_f06</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:task id="ltc_auth1" name="解析登录主体">
+      <bpmn:incoming>ltc_f06</bpmn:incoming>
+      <bpmn:outgoing>ltc_f07</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_auth1" name="主体有效？">
+      <bpmn:incoming>ltc_f07</bpmn:incoming>
+      <bpmn:outgoing>ltc_f08</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f09</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_auth1_401" name="401 / 400">
+      <bpmn:documentation>主体无效 401；路径引用或正文不合法 400。</bpmn:documentation>
+      <bpmn:incoming>ltc_f08</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_auth1_401_error_def" errorRef="ltc_error_401_principal_invalid_or_validation_failed" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_context" name="读取档案上下文与日历名称（事务前）">
+      <bpmn:documentation>readPlantContext（昵称、档案版本、品种绑定）；无昵称时读品种中文名。读取失败 503。</bpmn:documentation>
+      <bpmn:incoming>ltc_f09</bpmn:incoming>
+      <bpmn:outgoing>ltc_f10</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_context" name="植物存在？">
+      <bpmn:incoming>ltc_f10</bpmn:incoming>
+      <bpmn:outgoing>ltc_f11</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f12</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_context_404" name="404 USER_PLANT_NOT_FOUND">
+      <bpmn:incoming>ltc_f11</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_context_404_error_def" errorRef="ltc_error_404_user_plant_not_found" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_lock_plant1" name="事务：幂等占位 → 锁本人植物">
+      <bpmn:incoming>ltc_f12</bpmn:incoming>
+      <bpmn:outgoing>ltc_f13</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_plant1" name="植物可写？">
+      <bpmn:incoming>ltc_f13</bpmn:incoming>
+      <bpmn:outgoing>ltc_f14</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f15</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f16</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_plant1_404" name="404 USER_PLANT_NOT_FOUND">
+      <bpmn:incoming>ltc_f14</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_plant1_404_error_def" errorRef="ltc_error_404_user_plant_not_found" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="ltc_end_plant1_409" name="409 USER_PLANT_ARCHIVED">
+      <bpmn:incoming>ltc_f15</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_plant1_409_error_def" errorRef="ltc_error_409_user_plant_archived" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_fingerprint" name="复核档案版本与品种绑定">
+      <bpmn:incoming>ltc_f16</bpmn:incoming>
+      <bpmn:outgoing>ltc_f17</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_fingerprint" name="读取后未变化？">
+      <bpmn:incoming>ltc_f17</bpmn:incoming>
+      <bpmn:outgoing>ltc_f18</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f19</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_fingerprint_503" name="503 回滚，同键重试">
+      <bpmn:incoming>ltc_f18</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_fingerprint_503_error_def" errorRef="ltc_error_503_service_unavailable_retry" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_lock_proposal" name="锁定建议">
+      <bpmn:incoming>ltc_f19</bpmn:incoming>
+      <bpmn:outgoing>ltc_f20</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_confirmable" name="proposed 且未过期？">
+      <bpmn:incoming>ltc_f20</bpmn:incoming>
+      <bpmn:outgoing>ltc_f21</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f22</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_not_confirmable" name="409 CARE_PROPOSAL_NOT_CONFIRMABLE">
+      <bpmn:documentation>已确认、已忽略、已过期或不存在；没有 410。</bpmn:documentation>
+      <bpmn:incoming>ltc_f21</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_not_confirmable_error_def" errorRef="ltc_error_409_care_proposal_not_confirmable" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="ltc_gw_decision" name="决定类型？">
+      <bpmn:incoming>ltc_f22</bpmn:incoming>
+      <bpmn:outgoing>ltc_f23</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f25</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f29</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="ltc_dismiss" name="建议置 dismissed">
+      <bpmn:incoming>ltc_f23</bpmn:incoming>
+      <bpmn:outgoing>ltc_f24</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="ltc_end_dismissed" name="200 已忽略">
+      <bpmn:incoming>ltc_f24</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:businessRuleTask id="ltc_schedule_rule" name="计算检查计划时刻" camunda:decisionRef="ltc_decision_check_schedule">
+      <bpmn:incoming>ltc_f25</bpmn:incoming>
+      <bpmn:outgoing>ltc_f26</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="ltc_gw_schedule" name="时刻合法？">
+      <bpmn:incoming>ltc_f26</bpmn:incoming>
+      <bpmn:outgoing>ltc_f27</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f28</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_schedule_400" name="400 时刻超出窗口">
+      <bpmn:incoming>ltc_f27</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_schedule_400_error_def" errorRef="ltc_error_400_validation_failed_schedule" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_write_plan" name="写检查计划 check_soil（planned）＋日历；建议 confirmed">
+      <bpmn:documentation>buildCareCalendar：标题“检查{名称}盆土”，时长 30 分钟；一个建议至多一个计划；不写 reminder_jobs。</bpmn:documentation>
+      <bpmn:incoming>ltc_f28</bpmn:incoming>
+      <bpmn:outgoing>ltc_f34</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:businessRuleTask id="ltc_occurred_rule1" name="校验浇水时刻" camunda:decisionRef="ltc_decision_watering_occurred_at">
+      <bpmn:incoming>ltc_f29</bpmn:incoming>
+      <bpmn:outgoing>ltc_f30</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="ltc_gw_occurred1" name="时刻合法？">
+      <bpmn:incoming>ltc_f30</bpmn:incoming>
+      <bpmn:outgoing>ltc_f31</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f32</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_occurred1_400" name="400 浇水时间不合法">
+      <bpmn:incoming>ltc_f31</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_occurred1_400_error_def" errorRef="ltc_error_400_validation_failed_occurred_at" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_write_fact1" name="写浇水事实；建议 confirmed">
+      <bpmn:incoming>ltc_f32</bpmn:incoming>
+      <bpmn:outgoing>ltc_f33</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="ltc_end_fact1" name="200 已记录浇水">
+      <bpmn:incoming>ltc_f33</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="ltc_check" name="到期检查盆土并提交完成（done / skipped，带 version）">
+      <bpmn:documentation>POST .../plans/{planRef}/completions；skipped 不得带 soil/watering。</bpmn:documentation>
+      <bpmn:incoming>ltc_f34</bpmn:incoming>
+      <bpmn:outgoing>ltc_f35</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:task id="ltc_auth2" name="解析登录主体">
+      <bpmn:incoming>ltc_f35</bpmn:incoming>
+      <bpmn:outgoing>ltc_f36</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_auth2" name="主体有效？">
+      <bpmn:incoming>ltc_f36</bpmn:incoming>
+      <bpmn:outgoing>ltc_f37</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f38</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_auth2_401" name="401 / 400">
+      <bpmn:incoming>ltc_f37</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_auth2_401_error_def" errorRef="ltc_error_401_principal_invalid_or_validation_failed" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_lock_plant2" name="事务：幂等占位 → 锁本人植物">
+      <bpmn:incoming>ltc_f38</bpmn:incoming>
+      <bpmn:outgoing>ltc_f39</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_plant2" name="植物可写？">
+      <bpmn:incoming>ltc_f39</bpmn:incoming>
+      <bpmn:outgoing>ltc_f40</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f41</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f42</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_plant2_404" name="404 USER_PLANT_NOT_FOUND">
+      <bpmn:incoming>ltc_f40</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_plant2_404_error_def" errorRef="ltc_error_404_user_plant_not_found" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="ltc_end_plant2_409" name="409 USER_PLANT_ARCHIVED">
+      <bpmn:incoming>ltc_f41</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_plant2_409_error_def" errorRef="ltc_error_409_user_plant_archived" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_lock_plan" name="锁定计划">
+      <bpmn:incoming>ltc_f42</bpmn:incoming>
+      <bpmn:outgoing>ltc_f43</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_plan" name="计划存在？">
+      <bpmn:incoming>ltc_f43</bpmn:incoming>
+      <bpmn:outgoing>ltc_f44</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f45</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_plan_404" name="404 计划不存在">
+      <bpmn:incoming>ltc_f44</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_plan_404_error_def" errorRef="ltc_error_404_user_plant_not_found_plan" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="ltc_gw_expired" name="计划已过期？">
+      <bpmn:incoming>ltc_f45</bpmn:incoming>
+      <bpmn:outgoing>ltc_f64</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f65</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_plan_expired" name="409 CARE_PLAN_EXPIRED">
+      <bpmn:documentation>计划状态为 expired：无论 version 是否匹配、done 还是 skipped，判定先于版本比对；不写事实、观察，不改计划（§12.3）。</bpmn:documentation>
+      <bpmn:incoming>ltc_f64</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_plan_expired_error_def" errorRef="ltc_error_409_care_plan_expired" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="ltc_gw_version" name="planned 且 version 一致？">
+      <bpmn:incoming>ltc_f65</bpmn:incoming>
+      <bpmn:outgoing>ltc_f46</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f47</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_version_409" name="409 CARE_PLAN_VERSION_CONFLICT">
+      <bpmn:incoming>ltc_f46</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_version_409_error_def" errorRef="ltc_error_409_care_plan_version_conflict" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="ltc_gw_outcome" name="完成结果？">
+      <bpmn:incoming>ltc_f47</bpmn:incoming>
+      <bpmn:outgoing>ltc_f48</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f49</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="ltc_cancel" name="计划 cancelled，version+1">
+      <bpmn:incoming>ltc_f48</bpmn:incoming>
+      <bpmn:outgoing>ltc_f61</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_watering" name="附带浇水？">
+      <bpmn:incoming>ltc_f49</bpmn:incoming>
+      <bpmn:outgoing>ltc_f50</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f55</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:businessRuleTask id="ltc_occurred_rule2" name="校验浇水时刻" camunda:decisionRef="ltc_decision_watering_occurred_at">
+      <bpmn:incoming>ltc_f50</bpmn:incoming>
+      <bpmn:outgoing>ltc_f51</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="ltc_gw_occurred2" name="时刻合法？">
+      <bpmn:incoming>ltc_f51</bpmn:incoming>
+      <bpmn:outgoing>ltc_f52</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f53</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_occurred2_400" name="400 浇水时间不合法">
+      <bpmn:incoming>ltc_f52</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ltc_end_occurred2_400_error_def" errorRef="ltc_error_400_validation_failed_occurred_at" />
+    </bpmn:endEvent>
+    <bpmn:task id="ltc_write_fact2" name="写浇水事实">
+      <bpmn:incoming>ltc_f53</bpmn:incoming>
+      <bpmn:outgoing>ltc_f54</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_watering_merge" name="">
+      <bpmn:incoming>ltc_f54</bpmn:incoming>
+      <bpmn:incoming>ltc_f55</bpmn:incoming>
+      <bpmn:outgoing>ltc_f56</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="ltc_gw_soil" name="附带盆土观察？">
+      <bpmn:incoming>ltc_f56</bpmn:incoming>
+      <bpmn:outgoing>ltc_f57</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f59</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="ltc_write_soil" name="写盆土观察（user_context，低置信）">
+      <bpmn:documentation>care_environment_observations：factor_type=soil_surface，观察时刻=服务端当前时刻（Q2）。</bpmn:documentation>
+      <bpmn:incoming>ltc_f57</bpmn:incoming>
+      <bpmn:outgoing>ltc_f58</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_soil_merge" name="">
+      <bpmn:incoming>ltc_f58</bpmn:incoming>
+      <bpmn:incoming>ltc_f59</bpmn:incoming>
+      <bpmn:outgoing>ltc_f60</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="ltc_complete" name="计划 completed，version+1">
+      <bpmn:incoming>ltc_f60</bpmn:incoming>
+      <bpmn:outgoing>ltc_f62</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_outcome_merge" name="">
+      <bpmn:incoming>ltc_f61</bpmn:incoming>
+      <bpmn:incoming>ltc_f62</bpmn:incoming>
+      <bpmn:outgoing>ltc_f63</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:startEvent id="ltc_expiry_start" name="每小时定时触发">
+      <bpmn:documentation>CloudBase 定时触发器 7 段 cron「0 0 * * * * *」挂在普通（事件型）云函数 care-plan-expiry 上（§12.5、§12.7）。</bpmn:documentation>
+      <bpmn:outgoing>ltc_f66</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="ltc_expiry_start_timer_def">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/PT1H</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:task id="ltc_expiry_deadline" name="锁定截止：cutoff=开始时刻−72h；时长上限=开始+函数超时/2">
+      <bpmn:documentation>resolveExpiryRunDeadlineMs；单次运行内所有批次使用同一截止时刻。</bpmn:documentation>
+      <bpmn:incoming>ltc_f66</bpmn:incoming>
+      <bpmn:outgoing>ltc_f67</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="ltc_gw_expiry_timeout" name="取到函数超时？">
+      <bpmn:incoming>ltc_f67</bpmn:incoming>
+      <bpmn:outgoing>ltc_f68</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f69</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_expiry_not_started" name="not_started（不猜默认值）">
+      <bpmn:documentation>写 care_plan_expiry_run 日志（outcome=not_started）。</bpmn:documentation>
+      <bpmn:incoming>ltc_f68</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:businessRuleTask id="ltc_expiry_batches" name="分批条件更新：planned 且已过期 → expired，version+1" camunda:decisionRef="ltc_decision_plan_expired">
+      <bpmn:documentation>UPDATE care_plans SET status=expired, version=version+1 WHERE status=planned AND scheduled_at_ms &lt; cutoff ORDER BY scheduled_at_ms, id LIMIT 500；每批独立短事务。status=planned 条件是并发闸门：用户先完成的计划不会被覆盖。循环直到某批影响行数 &lt; 500、到达时长上限或某批失败。不写事实、观察、提醒，不改来源建议。</bpmn:documentation>
+      <bpmn:incoming>ltc_f69</bpmn:incoming>
+      <bpmn:outgoing>ltc_f70</bpmn:outgoing>
+      <bpmn:standardLoopCharacteristics id="ltc_expiry_batches_loop" />
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="ltc_gw_expiry_outcome" name="运行结果？">
+      <bpmn:incoming>ltc_f70</bpmn:incoming>
+      <bpmn:outgoing>ltc_f71</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f72</bpmn:outgoing>
+      <bpmn:outgoing>ltc_f73</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="ltc_end_expiry_deadline" name="deadline_reached（剩余下次处理）">
+      <bpmn:documentation>已开启的批次跑完，不再开启新批次。</bpmn:documentation>
+      <bpmn:incoming>ltc_f71</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="ltc_end_expiry_failed" name="failed（该批回滚，下次收敛）">
+      <bpmn:documentation>已提交批次保留；另写 care_plan_expiry_batch_failed（只含错误类名）。提交结果未知同样停止。</bpmn:documentation>
+      <bpmn:incoming>ltc_f72</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="ltc_end_expiry_drained" name="drained（已清空）">
+      <bpmn:documentation>写 care_plan_expiry_run：outcome、expiredCount、batchCount、cutoffAt、durationMs，不含任何内部主键或公开引用。</bpmn:documentation>
+      <bpmn:incoming>ltc_f73</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="ltc_end_done" name="200 计划闭环">
+      <bpmn:incoming>ltc_f63</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="ltc_f01" sourceRef="ltc_start" targetRef="ltc_advice" />
+    <bpmn:sequenceFlow id="ltc_f02" sourceRef="ltc_advice" targetRef="ltc_proposal_rule" />
+    <bpmn:sequenceFlow id="ltc_f03" sourceRef="ltc_proposal_rule" targetRef="ltc_gw_proposal" />
+    <bpmn:sequenceFlow id="ltc_f04" name="否" sourceRef="ltc_gw_proposal" targetRef="ltc_end_no_proposal" />
+    <bpmn:sequenceFlow id="ltc_f05" name="是" sourceRef="ltc_gw_proposal" targetRef="ltc_decide" />
+    <bpmn:sequenceFlow id="ltc_f06" sourceRef="ltc_decide" targetRef="ltc_auth1" />
+    <bpmn:sequenceFlow id="ltc_f07" sourceRef="ltc_auth1" targetRef="ltc_gw_auth1" />
+    <bpmn:sequenceFlow id="ltc_f08" name="否" sourceRef="ltc_gw_auth1" targetRef="ltc_end_auth1_401" />
+    <bpmn:sequenceFlow id="ltc_f09" name="是" sourceRef="ltc_gw_auth1" targetRef="ltc_context" />
+    <bpmn:sequenceFlow id="ltc_f10" sourceRef="ltc_context" targetRef="ltc_gw_context" />
+    <bpmn:sequenceFlow id="ltc_f11" name="否" sourceRef="ltc_gw_context" targetRef="ltc_end_context_404" />
+    <bpmn:sequenceFlow id="ltc_f12" name="是" sourceRef="ltc_gw_context" targetRef="ltc_lock_plant1" />
+    <bpmn:sequenceFlow id="ltc_f13" sourceRef="ltc_lock_plant1" targetRef="ltc_gw_plant1" />
+    <bpmn:sequenceFlow id="ltc_f14" name="不存在" sourceRef="ltc_gw_plant1" targetRef="ltc_end_plant1_404" />
+    <bpmn:sequenceFlow id="ltc_f15" name="已归档" sourceRef="ltc_gw_plant1" targetRef="ltc_end_plant1_409" />
+    <bpmn:sequenceFlow id="ltc_f16" name="可写" sourceRef="ltc_gw_plant1" targetRef="ltc_fingerprint" />
+    <bpmn:sequenceFlow id="ltc_f17" sourceRef="ltc_fingerprint" targetRef="ltc_gw_fingerprint" />
+    <bpmn:sequenceFlow id="ltc_f18" name="已变化" sourceRef="ltc_gw_fingerprint" targetRef="ltc_end_fingerprint_503" />
+    <bpmn:sequenceFlow id="ltc_f19" name="未变化" sourceRef="ltc_gw_fingerprint" targetRef="ltc_lock_proposal" />
+    <bpmn:sequenceFlow id="ltc_f20" sourceRef="ltc_lock_proposal" targetRef="ltc_gw_confirmable" />
+    <bpmn:sequenceFlow id="ltc_f21" name="否" sourceRef="ltc_gw_confirmable" targetRef="ltc_end_not_confirmable" />
+    <bpmn:sequenceFlow id="ltc_f22" name="是" sourceRef="ltc_gw_confirmable" targetRef="ltc_gw_decision" />
+    <bpmn:sequenceFlow id="ltc_f23" name="dismiss" sourceRef="ltc_gw_decision" targetRef="ltc_dismiss" />
+    <bpmn:sequenceFlow id="ltc_f24" sourceRef="ltc_dismiss" targetRef="ltc_end_dismissed" />
+    <bpmn:sequenceFlow id="ltc_f25" name="schedule_check" sourceRef="ltc_gw_decision" targetRef="ltc_schedule_rule" />
+    <bpmn:sequenceFlow id="ltc_f26" sourceRef="ltc_schedule_rule" targetRef="ltc_gw_schedule" />
+    <bpmn:sequenceFlow id="ltc_f27" name="否" sourceRef="ltc_gw_schedule" targetRef="ltc_end_schedule_400" />
+    <bpmn:sequenceFlow id="ltc_f28" name="是" sourceRef="ltc_gw_schedule" targetRef="ltc_write_plan" />
+    <bpmn:sequenceFlow id="ltc_f29" name="record_watering" sourceRef="ltc_gw_decision" targetRef="ltc_occurred_rule1" />
+    <bpmn:sequenceFlow id="ltc_f30" sourceRef="ltc_occurred_rule1" targetRef="ltc_gw_occurred1" />
+    <bpmn:sequenceFlow id="ltc_f31" name="否" sourceRef="ltc_gw_occurred1" targetRef="ltc_end_occurred1_400" />
+    <bpmn:sequenceFlow id="ltc_f32" name="是" sourceRef="ltc_gw_occurred1" targetRef="ltc_write_fact1" />
+    <bpmn:sequenceFlow id="ltc_f33" sourceRef="ltc_write_fact1" targetRef="ltc_end_fact1" />
+    <bpmn:sequenceFlow id="ltc_f34" sourceRef="ltc_write_plan" targetRef="ltc_check" />
+    <bpmn:sequenceFlow id="ltc_f35" sourceRef="ltc_check" targetRef="ltc_auth2" />
+    <bpmn:sequenceFlow id="ltc_f36" sourceRef="ltc_auth2" targetRef="ltc_gw_auth2" />
+    <bpmn:sequenceFlow id="ltc_f37" name="否" sourceRef="ltc_gw_auth2" targetRef="ltc_end_auth2_401" />
+    <bpmn:sequenceFlow id="ltc_f38" name="是" sourceRef="ltc_gw_auth2" targetRef="ltc_lock_plant2" />
+    <bpmn:sequenceFlow id="ltc_f39" sourceRef="ltc_lock_plant2" targetRef="ltc_gw_plant2" />
+    <bpmn:sequenceFlow id="ltc_f40" name="不存在" sourceRef="ltc_gw_plant2" targetRef="ltc_end_plant2_404" />
+    <bpmn:sequenceFlow id="ltc_f41" name="已归档" sourceRef="ltc_gw_plant2" targetRef="ltc_end_plant2_409" />
+    <bpmn:sequenceFlow id="ltc_f42" name="可写" sourceRef="ltc_gw_plant2" targetRef="ltc_lock_plan" />
+    <bpmn:sequenceFlow id="ltc_f43" sourceRef="ltc_lock_plan" targetRef="ltc_gw_plan" />
+    <bpmn:sequenceFlow id="ltc_f44" name="否" sourceRef="ltc_gw_plan" targetRef="ltc_end_plan_404" />
+    <bpmn:sequenceFlow id="ltc_f45" name="是" sourceRef="ltc_gw_plan" targetRef="ltc_gw_expired" />
+    <bpmn:sequenceFlow id="ltc_f64" name="是" sourceRef="ltc_gw_expired" targetRef="ltc_end_plan_expired" />
+    <bpmn:sequenceFlow id="ltc_f65" name="否" sourceRef="ltc_gw_expired" targetRef="ltc_gw_version" />
+    <bpmn:sequenceFlow id="ltc_f46" name="否" sourceRef="ltc_gw_version" targetRef="ltc_end_version_409" />
+    <bpmn:sequenceFlow id="ltc_f47" name="是" sourceRef="ltc_gw_version" targetRef="ltc_gw_outcome" />
+    <bpmn:sequenceFlow id="ltc_f48" name="skipped" sourceRef="ltc_gw_outcome" targetRef="ltc_cancel" />
+    <bpmn:sequenceFlow id="ltc_f49" name="done" sourceRef="ltc_gw_outcome" targetRef="ltc_gw_watering" />
+    <bpmn:sequenceFlow id="ltc_f50" name="是" sourceRef="ltc_gw_watering" targetRef="ltc_occurred_rule2" />
+    <bpmn:sequenceFlow id="ltc_f51" sourceRef="ltc_occurred_rule2" targetRef="ltc_gw_occurred2" />
+    <bpmn:sequenceFlow id="ltc_f52" name="否" sourceRef="ltc_gw_occurred2" targetRef="ltc_end_occurred2_400" />
+    <bpmn:sequenceFlow id="ltc_f53" name="是" sourceRef="ltc_gw_occurred2" targetRef="ltc_write_fact2" />
+    <bpmn:sequenceFlow id="ltc_f54" sourceRef="ltc_write_fact2" targetRef="ltc_gw_watering_merge" />
+    <bpmn:sequenceFlow id="ltc_f55" name="否" sourceRef="ltc_gw_watering" targetRef="ltc_gw_watering_merge" />
+    <bpmn:sequenceFlow id="ltc_f56" sourceRef="ltc_gw_watering_merge" targetRef="ltc_gw_soil" />
+    <bpmn:sequenceFlow id="ltc_f57" name="是" sourceRef="ltc_gw_soil" targetRef="ltc_write_soil" />
+    <bpmn:sequenceFlow id="ltc_f58" sourceRef="ltc_write_soil" targetRef="ltc_gw_soil_merge" />
+    <bpmn:sequenceFlow id="ltc_f59" name="否" sourceRef="ltc_gw_soil" targetRef="ltc_gw_soil_merge" />
+    <bpmn:sequenceFlow id="ltc_f60" sourceRef="ltc_gw_soil_merge" targetRef="ltc_complete" />
+    <bpmn:sequenceFlow id="ltc_f61" sourceRef="ltc_cancel" targetRef="ltc_gw_outcome_merge" />
+    <bpmn:sequenceFlow id="ltc_f62" sourceRef="ltc_complete" targetRef="ltc_gw_outcome_merge" />
+    <bpmn:sequenceFlow id="ltc_f63" sourceRef="ltc_gw_outcome_merge" targetRef="ltc_end_done" />
+    <bpmn:sequenceFlow id="ltc_f66" sourceRef="ltc_expiry_start" targetRef="ltc_expiry_deadline" />
+    <bpmn:sequenceFlow id="ltc_f67" sourceRef="ltc_expiry_deadline" targetRef="ltc_gw_expiry_timeout" />
+    <bpmn:sequenceFlow id="ltc_f68" name="否" sourceRef="ltc_gw_expiry_timeout" targetRef="ltc_end_expiry_not_started" />
+    <bpmn:sequenceFlow id="ltc_f69" name="是" sourceRef="ltc_gw_expiry_timeout" targetRef="ltc_expiry_batches" />
+    <bpmn:sequenceFlow id="ltc_f70" sourceRef="ltc_expiry_batches" targetRef="ltc_gw_expiry_outcome" />
+    <bpmn:sequenceFlow id="ltc_f71" name="到时长上限" sourceRef="ltc_gw_expiry_outcome" targetRef="ltc_end_expiry_deadline" />
+    <bpmn:sequenceFlow id="ltc_f72" name="批次失败" sourceRef="ltc_gw_expiry_outcome" targetRef="ltc_end_expiry_failed" />
+    <bpmn:sequenceFlow id="ltc_f73" name="批次&lt;500" sourceRef="ltc_gw_expiry_outcome" targetRef="ltc_end_expiry_drained" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="long_term_care_loop_diagram">
+    <bpmndi:BPMNPlane id="long_term_care_loop_plane" bpmnElement="long_term_care_loop_collaboration">
+      <bpmndi:BPMNShape id="long_term_care_loop_participant_di" bpmnElement="long_term_care_loop_participant" isHorizontal="true">
+        <dc:Bounds x="100" y="80" width="8498" height="2170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lane_user_di" bpmnElement="ltc_lane_user" isHorizontal="true">
+        <dc:Bounds x="130" y="80" width="8468" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lane_identity_di" bpmnElement="ltc_lane_identity" isHorizontal="true">
+        <dc:Bounds x="130" y="280" width="8468" height="330" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lane_care_di" bpmnElement="ltc_lane_care" isHorizontal="true">
+        <dc:Bounds x="130" y="610" width="8468" height="850" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lane_user_plant_di" bpmnElement="ltc_lane_user_plant" isHorizontal="true">
+        <dc:Bounds x="130" y="1460" width="8468" height="330" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lane_expiry_di" bpmnElement="ltc_lane_expiry" isHorizontal="true">
+        <dc:Bounds x="130" y="1790" width="8468" height="460" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_start_di" bpmnElement="ltc_start">
+        <dc:Bounds x="272" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="248" y="204" width="85" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_advice_di" bpmnElement="ltc_advice">
+        <dc:Bounds x="425" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_proposal_rule_di" bpmnElement="ltc_proposal_rule">
+        <dc:Bounds x="635" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_proposal_di" bpmnElement="ltc_gw_proposal" isMarkerVisible="true">
+        <dc:Bounds x="895" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="875" y="1001" width="90" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_no_proposal_di" bpmnElement="ltc_end_no_proposal">
+        <dc:Bounds x="902" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="878" y="788" width="85" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_decide_di" bpmnElement="ltc_decide">
+        <dc:Bounds x="1055" y="140" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_auth1_di" bpmnElement="ltc_auth1">
+        <dc:Bounds x="1265" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_auth1_di" bpmnElement="ltc_gw_auth1" isMarkerVisible="true">
+        <dc:Bounds x="1525" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1455" y="469" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_auth1_401_di" bpmnElement="ltc_end_auth1_401">
+        <dc:Bounds x="1532" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1520" y="342" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_context_di" bpmnElement="ltc_context">
+        <dc:Bounds x="1685" y="1520" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_context_di" bpmnElement="ltc_gw_context" isMarkerVisible="true">
+        <dc:Bounds x="1945" y="1535" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1875" y="1519" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_context_404_di" bpmnElement="ltc_end_context_404">
+        <dc:Bounds x="1952" y="1672" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1925" y="1714" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lock_plant1_di" bpmnElement="ltc_lock_plant1">
+        <dc:Bounds x="2105" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_plant1_di" bpmnElement="ltc_gw_plant1" isMarkerVisible="true">
+        <dc:Bounds x="2365" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2295" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_plant1_404_di" bpmnElement="ltc_end_plant1_404">
+        <dc:Bounds x="2372" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2345" y="788" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_plant1_409_di" bpmnElement="ltc_end_plant1_409">
+        <dc:Bounds x="2372" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2345" y="1124" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_fingerprint_di" bpmnElement="ltc_fingerprint">
+        <dc:Bounds x="2525" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_fingerprint_di" bpmnElement="ltc_gw_fingerprint" isMarkerVisible="true">
+        <dc:Bounds x="2785" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2768" y="925" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_fingerprint_503_di" bpmnElement="ltc_end_fingerprint_503">
+        <dc:Bounds x="2792" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2767" y="1124" width="87" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lock_proposal_di" bpmnElement="ltc_lock_proposal">
+        <dc:Bounds x="2945" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_confirmable_di" bpmnElement="ltc_gw_confirmable" isMarkerVisible="true">
+        <dc:Bounds x="3205" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3189" y="1001" width="83" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_not_confirmable_di" bpmnElement="ltc_end_not_confirmable">
+        <dc:Bounds x="3212" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3185" y="774" width="91" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_decision_di" bpmnElement="ltc_gw_decision" isMarkerVisible="true">
+        <dc:Bounds x="3415" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3345" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_dismiss_di" bpmnElement="ltc_dismiss">
+        <dc:Bounds x="3575" y="670" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_dismissed_di" bpmnElement="ltc_end_dismissed">
+        <dc:Bounds x="3842" y="692" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3828" y="734" width="64" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_schedule_rule_di" bpmnElement="ltc_schedule_rule">
+        <dc:Bounds x="3575" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_schedule_di" bpmnElement="ltc_gw_schedule" isMarkerVisible="true">
+        <dc:Bounds x="3835" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3829" y="1001" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_schedule_400_di" bpmnElement="ltc_end_schedule_400">
+        <dc:Bounds x="3842" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3817" y="788" width="87" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_write_plan_di" bpmnElement="ltc_write_plan">
+        <dc:Bounds x="3995" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_occurred_rule1_di" bpmnElement="ltc_occurred_rule1">
+        <dc:Bounds x="3575" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_occurred1_di" bpmnElement="ltc_gw_occurred1" isMarkerVisible="true">
+        <dc:Bounds x="3835" y="1205" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3829" y="1185" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_occurred1_400_di" bpmnElement="ltc_end_occurred1_400">
+        <dc:Bounds x="3842" y="1342" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3817" y="1384" width="87" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_write_fact1_di" bpmnElement="ltc_write_fact1">
+        <dc:Bounds x="3995" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_fact1_di" bpmnElement="ltc_end_fact1">
+        <dc:Bounds x="4262" y="1212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4237" y="1254" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_check_di" bpmnElement="ltc_check">
+        <dc:Bounds x="4205" y="140" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_auth2_di" bpmnElement="ltc_auth2">
+        <dc:Bounds x="4415" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_auth2_di" bpmnElement="ltc_gw_auth2" isMarkerVisible="true">
+        <dc:Bounds x="4675" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4605" y="469" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_auth2_401_di" bpmnElement="ltc_end_auth2_401">
+        <dc:Bounds x="4682" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4670" y="342" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lock_plant2_di" bpmnElement="ltc_lock_plant2">
+        <dc:Bounds x="4835" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_plant2_di" bpmnElement="ltc_gw_plant2" isMarkerVisible="true">
+        <dc:Bounds x="5095" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5025" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_plant2_404_di" bpmnElement="ltc_end_plant2_404">
+        <dc:Bounds x="5102" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5075" y="788" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_plant2_409_di" bpmnElement="ltc_end_plant2_409">
+        <dc:Bounds x="5102" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5075" y="1124" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_lock_plan_di" bpmnElement="ltc_lock_plan">
+        <dc:Bounds x="5255" y="930" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_plan_di" bpmnElement="ltc_gw_plan" isMarkerVisible="true">
+        <dc:Bounds x="5515" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5509" y="1001" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_plan_404_di" bpmnElement="ltc_end_plan_404">
+        <dc:Bounds x="5522" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5497" y="802" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_expired_di" bpmnElement="ltc_gw_expired" isMarkerVisible="true">
+        <dc:Bounds x="5725" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5714" y="1001" width="73" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_plan_expired_di" bpmnElement="ltc_end_plan_expired">
+        <dc:Bounds x="5732" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5705" y="788" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_version_di" bpmnElement="ltc_gw_version" isMarkerVisible="true">
+        <dc:Bounds x="5935" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5915" y="1001" width="90" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_version_409_di" bpmnElement="ltc_end_version_409">
+        <dc:Bounds x="5942" y="822" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5915" y="774" width="91" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_outcome_di" bpmnElement="ltc_gw_outcome" isMarkerVisible="true">
+        <dc:Bounds x="6145" y="945" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6075" y="929" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_cancel_di" bpmnElement="ltc_cancel">
+        <dc:Bounds x="6305" y="800" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_watering_di" bpmnElement="ltc_gw_watering" isMarkerVisible="true">
+        <dc:Bounds x="6355" y="1075" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6349" y="1131" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_occurred_rule2_di" bpmnElement="ltc_occurred_rule2">
+        <dc:Bounds x="6515" y="1060" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_occurred2_di" bpmnElement="ltc_gw_occurred2" isMarkerVisible="true">
+        <dc:Bounds x="6775" y="1075" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6769" y="1055" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_occurred2_400_di" bpmnElement="ltc_end_occurred2_400">
+        <dc:Bounds x="6782" y="1212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6757" y="1254" width="87" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_write_fact2_di" bpmnElement="ltc_write_fact2">
+        <dc:Bounds x="6935" y="1060" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_watering_merge_di" bpmnElement="ltc_gw_watering_merge" isMarkerVisible="true">
+        <dc:Bounds x="7195" y="1075" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_soil_di" bpmnElement="ltc_gw_soil" isMarkerVisible="true">
+        <dc:Bounds x="7405" y="1075" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="7388" y="1055" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_write_soil_di" bpmnElement="ltc_write_soil">
+        <dc:Bounds x="7565" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_soil_merge_di" bpmnElement="ltc_gw_soil_merge" isMarkerVisible="true">
+        <dc:Bounds x="7825" y="1075" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_complete_di" bpmnElement="ltc_complete">
+        <dc:Bounds x="7985" y="1060" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_outcome_merge_di" bpmnElement="ltc_gw_outcome_merge" isMarkerVisible="true">
+        <dc:Bounds x="8245" y="945" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_expiry_start_di" bpmnElement="ltc_expiry_start">
+        <dc:Bounds x="4472" y="2002" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4448" y="2044" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_expiry_deadline_di" bpmnElement="ltc_expiry_deadline">
+        <dc:Bounds x="4625" y="1980" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_expiry_timeout_di" bpmnElement="ltc_gw_expiry_timeout" isMarkerVisible="true">
+        <dc:Bounds x="4885" y="1995" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4868" y="2051" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_expiry_not_started_di" bpmnElement="ltc_end_expiry_not_started">
+        <dc:Bounds x="4892" y="1872" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4868" y="1838" width="84" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_expiry_batches_di" bpmnElement="ltc_expiry_batches">
+        <dc:Bounds x="5045" y="1980" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_gw_expiry_outcome_di" bpmnElement="ltc_gw_expiry_outcome" isMarkerVisible="true">
+        <dc:Bounds x="5305" y="1995" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5235" y="1979" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_expiry_deadline_di" bpmnElement="ltc_end_expiry_deadline">
+        <dc:Bounds x="5312" y="1872" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5285" y="1824" width="91" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_expiry_failed_di" bpmnElement="ltc_end_expiry_failed">
+        <dc:Bounds x="5312" y="2132" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5286" y="2174" width="88" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_expiry_drained_di" bpmnElement="ltc_end_expiry_drained">
+        <dc:Bounds x="5522" y="2002" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5493" y="2044" width="94" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ltc_end_done_di" bpmnElement="ltc_end_done">
+        <dc:Bounds x="8462" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8443" y="142" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ltc_f01_di" bpmnElement="ltc_f01">
+        <di:waypoint x="308" y="180" />
+        <di:waypoint x="440" y="180" />
+        <di:waypoint x="440" y="930" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f02_di" bpmnElement="ltc_f02">
+        <di:waypoint x="575" y="970" />
+        <di:waypoint x="635" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f03_di" bpmnElement="ltc_f03">
+        <di:waypoint x="785" y="970" />
+        <di:waypoint x="895" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f04_di" bpmnElement="ltc_f04">
+        <di:waypoint x="920" y="945" />
+        <di:waypoint x="920" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="926" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f05_di" bpmnElement="ltc_f05">
+        <di:waypoint x="945" y="970" />
+        <di:waypoint x="1030" y="970" />
+        <di:waypoint x="1030" y="200" />
+        <di:waypoint x="1055" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="951" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f06_di" bpmnElement="ltc_f06">
+        <di:waypoint x="1205" y="200" />
+        <di:waypoint x="1280" y="200" />
+        <di:waypoint x="1280" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f07_di" bpmnElement="ltc_f07">
+        <di:waypoint x="1415" y="510" />
+        <di:waypoint x="1525" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f08_di" bpmnElement="ltc_f08">
+        <di:waypoint x="1550" y="485" />
+        <di:waypoint x="1550" y="398" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1556" y="468" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f09_di" bpmnElement="ltc_f09">
+        <di:waypoint x="1550" y="535" />
+        <di:waypoint x="1550" y="1540" />
+        <di:waypoint x="1685" y="1540" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1556" y="539" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f10_di" bpmnElement="ltc_f10">
+        <di:waypoint x="1835" y="1560" />
+        <di:waypoint x="1945" y="1560" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f11_di" bpmnElement="ltc_f11">
+        <di:waypoint x="1970" y="1585" />
+        <di:waypoint x="1970" y="1672" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1976" y="1589" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f12_di" bpmnElement="ltc_f12">
+        <di:waypoint x="1970" y="1535" />
+        <di:waypoint x="1970" y="990" />
+        <di:waypoint x="2105" y="990" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1976" y="1516" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f13_di" bpmnElement="ltc_f13">
+        <di:waypoint x="2255" y="970" />
+        <di:waypoint x="2365" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f14_di" bpmnElement="ltc_f14">
+        <di:waypoint x="2390" y="945" />
+        <di:waypoint x="2390" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2396" y="928" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f15_di" bpmnElement="ltc_f15">
+        <di:waypoint x="2390" y="995" />
+        <di:waypoint x="2390" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2396" y="999" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f16_di" bpmnElement="ltc_f16">
+        <di:waypoint x="2415" y="970" />
+        <di:waypoint x="2525" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2421" y="952" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f17_di" bpmnElement="ltc_f17">
+        <di:waypoint x="2675" y="970" />
+        <di:waypoint x="2785" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f18_di" bpmnElement="ltc_f18">
+        <di:waypoint x="2810" y="995" />
+        <di:waypoint x="2810" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2816" y="999" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f19_di" bpmnElement="ltc_f19">
+        <di:waypoint x="2835" y="970" />
+        <di:waypoint x="2945" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2841" y="952" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f20_di" bpmnElement="ltc_f20">
+        <di:waypoint x="3095" y="970" />
+        <di:waypoint x="3205" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f21_di" bpmnElement="ltc_f21">
+        <di:waypoint x="3230" y="945" />
+        <di:waypoint x="3230" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3236" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f22_di" bpmnElement="ltc_f22">
+        <di:waypoint x="3255" y="970" />
+        <di:waypoint x="3415" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3261" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f23_di" bpmnElement="ltc_f23">
+        <di:waypoint x="3440" y="945" />
+        <di:waypoint x="3440" y="730" />
+        <di:waypoint x="3575" y="730" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3446" y="926" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f24_di" bpmnElement="ltc_f24">
+        <di:waypoint x="3725" y="710" />
+        <di:waypoint x="3842" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f25_di" bpmnElement="ltc_f25">
+        <di:waypoint x="3465" y="970" />
+        <di:waypoint x="3575" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3471" y="952" width="91" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f26_di" bpmnElement="ltc_f26">
+        <di:waypoint x="3725" y="970" />
+        <di:waypoint x="3835" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f27_di" bpmnElement="ltc_f27">
+        <di:waypoint x="3860" y="945" />
+        <di:waypoint x="3860" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3866" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f28_di" bpmnElement="ltc_f28">
+        <di:waypoint x="3885" y="970" />
+        <di:waypoint x="3995" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3891" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f29_di" bpmnElement="ltc_f29">
+        <di:waypoint x="3440" y="995" />
+        <di:waypoint x="3440" y="1210" />
+        <di:waypoint x="3575" y="1210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3446" y="999" width="91" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f30_di" bpmnElement="ltc_f30">
+        <di:waypoint x="3725" y="1230" />
+        <di:waypoint x="3835" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f31_di" bpmnElement="ltc_f31">
+        <di:waypoint x="3860" y="1255" />
+        <di:waypoint x="3860" y="1342" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3866" y="1259" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f32_di" bpmnElement="ltc_f32">
+        <di:waypoint x="3885" y="1230" />
+        <di:waypoint x="3995" y="1230" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3891" y="1212" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f33_di" bpmnElement="ltc_f33">
+        <di:waypoint x="4145" y="1230" />
+        <di:waypoint x="4262" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f34_di" bpmnElement="ltc_f34">
+        <di:waypoint x="4145" y="950" />
+        <di:waypoint x="4180" y="950" />
+        <di:waypoint x="4180" y="200" />
+        <di:waypoint x="4205" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f35_di" bpmnElement="ltc_f35">
+        <di:waypoint x="4355" y="200" />
+        <di:waypoint x="4430" y="200" />
+        <di:waypoint x="4430" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f36_di" bpmnElement="ltc_f36">
+        <di:waypoint x="4565" y="510" />
+        <di:waypoint x="4675" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f37_di" bpmnElement="ltc_f37">
+        <di:waypoint x="4700" y="485" />
+        <di:waypoint x="4700" y="398" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4706" y="468" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f38_di" bpmnElement="ltc_f38">
+        <di:waypoint x="4700" y="535" />
+        <di:waypoint x="4700" y="950" />
+        <di:waypoint x="4835" y="950" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4706" y="539" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f39_di" bpmnElement="ltc_f39">
+        <di:waypoint x="4985" y="970" />
+        <di:waypoint x="5095" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f40_di" bpmnElement="ltc_f40">
+        <di:waypoint x="5120" y="945" />
+        <di:waypoint x="5120" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5126" y="928" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f41_di" bpmnElement="ltc_f41">
+        <di:waypoint x="5120" y="995" />
+        <di:waypoint x="5120" y="1082" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5126" y="999" width="39" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f42_di" bpmnElement="ltc_f42">
+        <di:waypoint x="5145" y="970" />
+        <di:waypoint x="5255" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5151" y="952" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f43_di" bpmnElement="ltc_f43">
+        <di:waypoint x="5405" y="970" />
+        <di:waypoint x="5515" y="970" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f44_di" bpmnElement="ltc_f44">
+        <di:waypoint x="5540" y="945" />
+        <di:waypoint x="5540" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5546" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f45_di" bpmnElement="ltc_f45">
+        <di:waypoint x="5565" y="970" />
+        <di:waypoint x="5725" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5571" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f64_di" bpmnElement="ltc_f64">
+        <di:waypoint x="5750" y="945" />
+        <di:waypoint x="5750" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5756" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f65_di" bpmnElement="ltc_f65">
+        <di:waypoint x="5775" y="970" />
+        <di:waypoint x="5935" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5781" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f46_di" bpmnElement="ltc_f46">
+        <di:waypoint x="5960" y="945" />
+        <di:waypoint x="5960" y="858" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5966" y="928" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f47_di" bpmnElement="ltc_f47">
+        <di:waypoint x="5985" y="970" />
+        <di:waypoint x="6145" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5991" y="952" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f48_di" bpmnElement="ltc_f48">
+        <di:waypoint x="6170" y="945" />
+        <di:waypoint x="6170" y="860" />
+        <di:waypoint x="6305" y="860" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6176" y="924" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f49_di" bpmnElement="ltc_f49">
+        <di:waypoint x="6170" y="995" />
+        <di:waypoint x="6170" y="1100" />
+        <di:waypoint x="6355" y="1100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6176" y="999" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f50_di" bpmnElement="ltc_f50">
+        <di:waypoint x="6405" y="1100" />
+        <di:waypoint x="6515" y="1100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6411" y="1082" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f51_di" bpmnElement="ltc_f51">
+        <di:waypoint x="6665" y="1100" />
+        <di:waypoint x="6775" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f52_di" bpmnElement="ltc_f52">
+        <di:waypoint x="6800" y="1125" />
+        <di:waypoint x="6800" y="1212" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6806" y="1129" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f53_di" bpmnElement="ltc_f53">
+        <di:waypoint x="6825" y="1100" />
+        <di:waypoint x="6935" y="1100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6831" y="1082" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f54_di" bpmnElement="ltc_f54">
+        <di:waypoint x="7085" y="1100" />
+        <di:waypoint x="7195" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f55_di" bpmnElement="ltc_f55">
+        <di:waypoint x="6380" y="1075" />
+        <di:waypoint x="6380" y="1040" />
+        <di:waypoint x="7220" y="1040" />
+        <di:waypoint x="7220" y="1075" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6386" y="1056" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f56_di" bpmnElement="ltc_f56">
+        <di:waypoint x="7245" y="1100" />
+        <di:waypoint x="7405" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f57_di" bpmnElement="ltc_f57">
+        <di:waypoint x="7430" y="1125" />
+        <di:waypoint x="7430" y="1210" />
+        <di:waypoint x="7565" y="1210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="7436" y="1129" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f58_di" bpmnElement="ltc_f58">
+        <di:waypoint x="7715" y="1210" />
+        <di:waypoint x="7850" y="1210" />
+        <di:waypoint x="7850" y="1125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f59_di" bpmnElement="ltc_f59">
+        <di:waypoint x="7455" y="1100" />
+        <di:waypoint x="7825" y="1100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="7461" y="1082" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f60_di" bpmnElement="ltc_f60">
+        <di:waypoint x="7875" y="1100" />
+        <di:waypoint x="7985" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f61_di" bpmnElement="ltc_f61">
+        <di:waypoint x="6455" y="860" />
+        <di:waypoint x="8270" y="860" />
+        <di:waypoint x="8270" y="945" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f62_di" bpmnElement="ltc_f62">
+        <di:waypoint x="8135" y="1080" />
+        <di:waypoint x="8270" y="1080" />
+        <di:waypoint x="8270" y="995" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f63_di" bpmnElement="ltc_f63">
+        <di:waypoint x="8295" y="970" />
+        <di:waypoint x="8480" y="970" />
+        <di:waypoint x="8480" y="198" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f66_di" bpmnElement="ltc_f66">
+        <di:waypoint x="4508" y="2020" />
+        <di:waypoint x="4625" y="2020" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f67_di" bpmnElement="ltc_f67">
+        <di:waypoint x="4775" y="2020" />
+        <di:waypoint x="4885" y="2020" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f68_di" bpmnElement="ltc_f68">
+        <di:waypoint x="4910" y="1995" />
+        <di:waypoint x="4910" y="1908" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4916" y="1978" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f69_di" bpmnElement="ltc_f69">
+        <di:waypoint x="4935" y="2020" />
+        <di:waypoint x="5045" y="2020" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4941" y="2002" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f70_di" bpmnElement="ltc_f70">
+        <di:waypoint x="5195" y="2020" />
+        <di:waypoint x="5305" y="2020" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f71_di" bpmnElement="ltc_f71">
+        <di:waypoint x="5330" y="1995" />
+        <di:waypoint x="5330" y="1908" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5336" y="1978" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f72_di" bpmnElement="ltc_f72">
+        <di:waypoint x="5330" y="2045" />
+        <di:waypoint x="5330" y="2132" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5336" y="2049" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ltc_f73_di" bpmnElement="ltc_f73">
+        <di:waypoint x="5355" y="2020" />
+        <di:waypoint x="5522" y="2020" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5361" y="2002" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

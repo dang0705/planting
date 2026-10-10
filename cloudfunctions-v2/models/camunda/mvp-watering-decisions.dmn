@@ -1,0 +1,3569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="mvp_watering_decisions" name="MVP 浇水决策（care-watering-mvp/v3，兼容 v1/v2）" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>只读可视化：反映 cloudfunctions-v2/src/care 当前代码中的 MVP 浇水决策构成（assessMvpWatering 组合用例）。数值积分（环境需求、干燥进度、检查窗口时刻、装土体积）由 TypeScript 计算并作为输入数据进入；本文件未接入任何规则引擎，修改它不改变线上行为。参数取自已发布策略 care-watering-mvp/v3（mvp-watering-policy-release.v3.json）；v1/v2 的不同行为在各表规则行中单列。</description>
+  <inputData id="mvp_input_plant_baseline" name="植物名义基线（Tropicals）">
+    <description>readPlantBaseline 读取的 tier、trigger 与 baselineDays；缺失或不受支持为 null。基线天数在策略参考条件下解释为等效干燥单位（合同 §1）。</description>
+    <variable id="mvp_input_plant_baseline_variable" name="plant_baseline" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_soil_observation" name="盆土观察（四态＋范围＋时刻）">
+    <description>state ∈ wet|moist|dry|uncertain，scope ∈ surface|root_zone，observedAt ≤ now。HTTP 路径中 buildWateringAdvice 以 reliable=true 传入（请求无来源字段）。</description>
+    <variable id="mvp_input_soil_observation_variable" name="soil_observation" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_last_confirmed_watering" name="最近确认实际浇水时刻">
+    <description>临时案例来自请求 lastWatering；长期植物来自最近一条浇水事实。未知为 null，不补今天、不补零进度。</description>
+    <variable id="mvp_input_last_confirmed_watering_variable" name="last_confirmed_watering_at" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_policy_snapshot" name="活动浇水策略快照">
+    <description>readWateringPolicy 读取 business_policy_releases 中 care/mvp_watering 的活动发布；无可用发布为 null（结果为暂不可用，不是错误）。读取器接受 v1/v2/v3；v1/v2 不按盆伸缩、不补缺段、忽略主要材料。</description>
+    <variable id="mvp_input_policy_snapshot_variable" name="policy_published" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_measured_pot" name="实际种植内盆（确认、尺寸、排水）">
+    <description>actualInnerPotConfirmed、drainageAvailable、potTop/BottomDiameterCm、potHeightCm。deriveMeasuredPot：尺寸齐全且合法时 potGeometryValid=true，否则为 null（代码不产生 false）。长期植物取档案实测盆，客户端不得提交。</description>
+    <variable id="mvp_input_measured_pot_variable" name="measured_pot" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_substrate_materials" name="基质材料集合">
+    <description>9 类代码 general|coco|ceramsite|peat|perlite|bark|sphagnum|gritty|coarse_sand；按集合处理，重复不改变结果，null/undefined 空洞跳过；未知代码抛错。</description>
+    <variable id="mvp_input_substrate_materials_variable" name="substrate_materials" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_lux_reading" name="植物位置 Lux 读数">
+    <description>lux、measuredAtMs、source ∈ meter|camera_estimate；可缺失。</description>
+    <variable id="mvp_input_lux_reading_variable" name="lux_reading" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_outdoor_radiation" name="Open-Meteo 辐射序列（GHI）">
+    <description>fetchRadiation 标准化后的时段 GHI；Provider 不可用为 null（光照缺段，仍返回 200）。查询窗口：回看至最早证据（≤92 天），预报恒为 16 天。</description>
+    <variable id="mvp_input_outdoor_radiation_variable" name="outdoor_radiation" typeRef="Any" />
+  </inputData>
+  <inputData id="mvp_input_indoor_vpd" name="室内 VPD 区间（缺失时用策略兜底 0.7–2.2）">
+    <description>请求 indoorClimate（温度、相对湿度）经 Tetens 公式 0.6108·exp(17.27T/(T+237.3))·(1−RH/100) 得同刻点值，只用于测量后 24 小时内开始的时段；其余时段为 null，由 VPD 包络改用策略兜底区间 indoorVpdFallbackKpa 0.7～2.2kPa（estimate）。不使用室外 VPD，也不用未准入的室外→室内模型。</description>
+    <variable id="mvp_input_indoor_vpd_variable" name="indoor_vpd" typeRef="Any" />
+  </inputData>
+  <knowledgeSource id="mvp_knowledge_light_response" name="策略 v2/v3 §2 光响应参数">
+    <description>referencePpfd=50、lightHalfSaturationPpfd=75、validPpfd 0～1500（v2、v3 同值）。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_vpd" name="策略 v2/v3 §2 VPD 参数">
+    <description>referenceVpdKpa=1.4、vpdSensitivity=0.6、validVpdKpa 0.1～4、indoorVpdFallbackKpa 0.7～2.2（v2、v3 同值）。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_demand" name="策略 v2/v3 §2 蒸腾占比">
+    <description>transpirationShare=0.8（叶片蒸腾项权重；基质蒸发项权重 0.2）。</description>
+  </knowledgeSource>
+  <inputData id="mvp_input_primary_material" name="主要材料（体积占一半及以上，可缺失）">
+    <description>请求 primarySubstrateMaterial（2026-10-10 新增）：九类材料代码之一或 null；必须属于所选材料，否则 400 VALIDATION_FAILED（含未选材料却标主要材料）。只在 v3 策略下参与；v1/v2 忽略。</description>
+    <variable id="mvp_input_primary_material_variable" name="primary_material" typeRef="Any" />
+  </inputData>
+  <knowledgeSource id="mvp_knowledge_reference_pot" name="策略 v3 §8 参考盆与留空高度">
+    <description>referencePot：盆口内径 15、盆底内径 11、内深 13cm（约 1.7L，不透气、有排水孔）；headspaceCm 1～3（两端点分别计算）。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_cultivation" name="策略 v3 §8 参考物性与兜底存量比">
+    <description>referenceAvailableWater=0.30（参考泥炭类可用水 AW，Bilderback 2005 口径 CC−θ(1500kPa)，定义锚点用点值）；plantDemandVolumeExponent b=[0, 0.52]（Poorter 2012：盆容积翻倍生物量 +43%）；cultivationRetention 0.8～1.25 在 v3 中语义收窄为“缺几何或缺基质时的兜底存量比”。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_gap_fill" name="缺段补齐硬规则 6h">
+    <description>MVP_DRYING_GAP_FILL_MAX_HOURS=6（配置目录 care.watering.drying_gap_fill_max_hours，hard_rule，合同 §8.11）：证据连续性的准入边界，不随策略发布调整。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_soil_fraction" name="策略 v2/v3 §3 盆土剩余比例">
+    <description>remainingFraction：wet 0.6～1.0、moist 0.25～0.6、surfaceDryOnly 0～0.5（v2、v3 同值）。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_soil_validity" name="策略 v2/v3 §3a 盆土有效期">
+    <description>soilEvidenceFallbackHours=24、soilEvidenceMaxHours=72（用户 2026-10-09 裁决 U6）；v1 为固定 soilEvidenceTtlHours。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_light" name="策略 v2/v3 §2a 光照锚点参数">
+    <description>luxPerPpfd 50～58、luxAnchorMinGhiWm2=50、luxUncertainty meter 0.1 / camera_estimate 0.3、luxAnchorMaxAgeDays=30；PPFD/GHI 上限 2.3 为代码常量。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_substrates" name="策略 v2/v3 §4 基质物性">
+    <description>各材料容器持水量 containerCapacity 与可用水 availableWater 区间（v2、v3 同值）。</description>
+  </knowledgeSource>
+  <knowledgeSource id="mvp_knowledge_amount" name="策略 v2/v3 §4 水量参数">
+    <description>depletion：keep_moist 0.15～0.25、surface_dry 0.25～0.35、dry_wet 0.45～0.55、full_dry 0.7～0.85；headspaceCm 1～3；leachingFraction 0.1～0.2。</description>
+  </knowledgeSource>
+  <decision id="mvp_decision_moisture_group" name="湿度分组">
+    <description>resolveMvpMoistureGroup：Tropicals tier＋trigger → 四类“浇水前允许干到什么程度”。无基线时 assessMvpWatering 直接返回 insufficient_evidence（plant_baseline）。未知 tier/trigger 抛 TypeError（无匹配规则）。合同 §3 已于 2026-10-09 按用户裁决与代码对齐：DROUGHT_SIGNAL 归 full_dry（必须干透）；TIER_DEFAULT 按来源 tier 映射，occasional/drought_tolerant 需看根区。§4 消耗比例按本决策输出的湿度分组查。</description>
+    <informationRequirement id="mvp_decision_moisture_group_req_0">
+      <requiredInput href="#mvp_input_plant_baseline" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_moisture_group_table" hitPolicy="UNIQUE">
+      <input id="mvp_decision_moisture_group_in_0" label="有基线">
+        <inputExpression id="mvp_decision_moisture_group_in_0_expr" typeRef="boolean">
+          <text>plant_baseline != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_moisture_group_in_1" label="来源 tier">
+        <inputExpression id="mvp_decision_moisture_group_in_1_expr" typeRef="string">
+          <text>plant_baseline.tier</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_moisture_group_in_2" label="触发语义 trigger">
+        <inputExpression id="mvp_decision_moisture_group_in_2_expr" typeRef="string">
+          <text>plant_baseline.trigger</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_moisture_group_out_0" name="moisture_group" label="湿度分组" typeRef="string" />
+      <output id="mvp_decision_moisture_group_out_1" name="surface_sufficient" label="表土即可判定目标" typeRef="boolean" />
+      <rule id="mvp_decision_moisture_group_rule_0">
+        <description>无基线：不解析分组，整体结果 insufficient_evidence</description>
+        <inputEntry id="mvp_decision_moisture_group_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_0_out_0">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_1">
+        <description>明确触发语义优先</description>
+        <inputEntry id="mvp_decision_moisture_group_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_1_in_1">
+          <text>&quot;constant_moisture&quot;,&quot;regular&quot;,&quot;occasional&quot;,&quot;drought_tolerant&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_1_in_2">
+          <text>&quot;KEEP_WET&quot;,&quot;KEEP_MOIST&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_1_out_0">
+          <text>&quot;keep_moist&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_1_out_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_2">
+        <inputEntry id="mvp_decision_moisture_group_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_2_in_1">
+          <text>&quot;constant_moisture&quot;,&quot;regular&quot;,&quot;occasional&quot;,&quot;drought_tolerant&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_2_in_2">
+          <text>&quot;SURFACE_DRY&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_2_out_0">
+          <text>&quot;surface_dry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_2_out_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_3">
+        <inputEntry id="mvp_decision_moisture_group_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_3_in_1">
+          <text>&quot;constant_moisture&quot;,&quot;regular&quot;,&quot;occasional&quot;,&quot;drought_tolerant&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_3_in_2">
+          <text>&quot;DRY_WET&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_3_out_0">
+          <text>&quot;dry_wet&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_3_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_4">
+        <inputEntry id="mvp_decision_moisture_group_rule_4_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_4_in_1">
+          <text>&quot;constant_moisture&quot;,&quot;regular&quot;,&quot;occasional&quot;,&quot;drought_tolerant&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_4_in_2">
+          <text>&quot;FULL_DRY&quot;,&quot;VERY_DRY&quot;,&quot;DROUGHT_SIGNAL&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_4_out_0">
+          <text>&quot;full_dry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_4_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_5">
+        <description>TIER_DEFAULT 按来源 tier 保守对应</description>
+        <inputEntry id="mvp_decision_moisture_group_rule_5_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_5_in_1">
+          <text>&quot;constant_moisture&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_5_in_2">
+          <text>&quot;TIER_DEFAULT&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_5_out_0">
+          <text>&quot;keep_moist&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_5_out_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_6">
+        <inputEntry id="mvp_decision_moisture_group_rule_6_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_6_in_1">
+          <text>&quot;regular&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_6_in_2">
+          <text>&quot;TIER_DEFAULT&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_6_out_0">
+          <text>&quot;surface_dry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_6_out_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_7">
+        <inputEntry id="mvp_decision_moisture_group_rule_7_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_7_in_1">
+          <text>&quot;occasional&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_7_in_2">
+          <text>&quot;TIER_DEFAULT&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_7_out_0">
+          <text>&quot;dry_wet&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_7_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_moisture_group_rule_8">
+        <inputEntry id="mvp_decision_moisture_group_rule_8_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_8_in_1">
+          <text>&quot;drought_tolerant&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_moisture_group_rule_8_in_2">
+          <text>&quot;TIER_DEFAULT&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_8_out_0">
+          <text>&quot;full_dry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_moisture_group_rule_8_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_light_response" name="光响应">
+    <description>由 TypeScript 逐时段计算（assessMvpWatering.lightResponse）：L(q)=q/(q+k)，k=75；相对参考 L_rel=L(q)/L(qref)，qref=50 → L(qref)=0.4。夜间 q=0 时叶片项为 0。超出有效域的时段为缺段，不钳制。</description>
+    <informationRequirement id="mvp_decision_light_response_req_0">
+      <requiredDecision href="#mvp_decision_plant_light_anchor" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_light_response_req_1">
+      <requiredAuthority href="#mvp_knowledge_light_response" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_light_response_table" hitPolicy="FIRST">
+      <input id="mvp_decision_light_response_in_0" label="时段 PPFD 有值">
+        <inputExpression id="mvp_decision_light_response_in_0_expr" typeRef="boolean">
+          <text>segment.ppfd != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_light_response_in_1" label="PPFD 在 0～1500 内">
+        <inputExpression id="mvp_decision_light_response_in_1_expr" typeRef="boolean">
+          <text>segment.ppfd.min &gt;= 0 and segment.ppfd.max &lt;= 1500</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_light_response_out_0" name="light_segment_status" label="时段状态" typeRef="string" />
+      <output id="mvp_decision_light_response_out_1" name="light_response_rule" label="光响应（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_light_response_rule_0">
+        <description>缺段</description>
+        <inputEntry id="mvp_decision_light_response_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_light_response_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_light_response_rule_0_out_0">
+          <text>&quot;missing&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_light_response_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_light_response_rule_1">
+        <description>超出 validPpfd：缺段，不钳制</description>
+        <inputEntry id="mvp_decision_light_response_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_light_response_rule_1_in_1">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_light_response_rule_1_out_0">
+          <text>&quot;missing&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_light_response_rule_1_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_light_response_rule_2">
+        <inputEntry id="mvp_decision_light_response_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_light_response_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_light_response_rule_2_out_0">
+          <text>&quot;ok&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_light_response_rule_2_out_1">
+          <text>&quot;L_rel = [q.min/(q.min+75), q.max/(q.max+75)] ÷ 0.4&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_vpd_envelope" name="VPD 包络">
+    <description>由 TypeScript 逐时段计算（assessMvpWatering.vaporFlux / vaporEnvelope）：H(D)=r·max(0, 1−s·ln r)，r=D/Dref，Dref=1.4kPa，s=0.6；D=0 时 H=0。区间包络取两端点的最小、最大值；H 在 D*=Dref·e^(1/s−1)≈2.73kPa 处取峰值（≈1.169），D* 落在区间内时最大值必须计入峰值。兜底区间 0.7～2.2 不含峰值，包络 ≈[H(0.7)=0.708, H(2.2)=1.145]。</description>
+    <informationRequirement id="mvp_decision_vpd_envelope_req_0">
+      <requiredInput href="#mvp_input_indoor_vpd" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_vpd_envelope_req_1">
+      <requiredAuthority href="#mvp_knowledge_vpd" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_vpd_envelope_table" hitPolicy="FIRST">
+      <input id="mvp_decision_vpd_envelope_in_0" label="有室内实测 VPD">
+        <inputExpression id="mvp_decision_vpd_envelope_in_0_expr" typeRef="boolean">
+          <text>indoor_vpd != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_vpd_envelope_in_1" label="所用 VPD 在 0.1～4 内">
+        <inputExpression id="mvp_decision_vpd_envelope_in_1_expr" typeRef="boolean">
+          <text>vpd.min &gt;= 0.1 and vpd.max &lt;= 4</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_vpd_envelope_out_0" name="vpd_segment_status" label="时段状态" typeRef="string" />
+      <output id="mvp_decision_vpd_envelope_out_1" name="vpd_range" label="所用 VPD 区间" typeRef="string" />
+      <output id="mvp_decision_vpd_envelope_out_2" name="vapor_envelope_rule" label="H 包络（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_vpd_envelope_rule_0">
+        <description>超出 validVpdKpa：缺段，不钳制</description>
+        <inputEntry id="mvp_decision_vpd_envelope_rule_0_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_vpd_envelope_rule_0_in_1">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_0_out_0">
+          <text>&quot;missing&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_0_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_vpd_envelope_rule_1">
+        <inputEntry id="mvp_decision_vpd_envelope_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_vpd_envelope_rule_1_in_1">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_1_out_0">
+          <text>&quot;ok&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_1_out_1">
+          <text>&quot;室内实测（点值）&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_1_out_2">
+          <text>&quot;[min(H(D.min),H(D.max)), max(H(D.min),H(D.max), 区间含 2.73 时加 H(2.73))]&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_vpd_envelope_rule_2">
+        <description>无实测时用兜底区间</description>
+        <inputEntry id="mvp_decision_vpd_envelope_rule_2_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_vpd_envelope_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_2_out_0">
+          <text>&quot;ok&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_2_out_1">
+          <text>&quot;[0.7, 2.2]（策略兜底，estimate）&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_vpd_envelope_rule_2_out_2">
+          <text>&quot;[0.708, 1.145]（峰值不在区间内）&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_environment_demand" name="环境需水强度">
+    <description>由 TypeScript 逐时段计算（assessMvpWatering.environmentDemand）：每参考日的相对环境干燥需求区间（代理指标，不是实测耗水毫升数）；v3 起叶片项乘植物需求比 P、基质蒸发项乘蒸发面比 Ae（区间端点同向相乘；v1/v2 与缺证据时 P=Ae=1）。夜间蒸腾未建模（低估方向，已记录）。任一分量缺段 → 该时段从干燥时段清单中丢弃。</description>
+    <informationRequirement id="mvp_decision_environment_demand_req_0">
+      <requiredDecision href="#mvp_decision_light_response" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_environment_demand_req_1">
+      <requiredDecision href="#mvp_decision_vpd_envelope" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_environment_demand_req_2">
+      <requiredDecision href="#mvp_decision_cultivation_retention" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_environment_demand_req_3">
+      <requiredAuthority href="#mvp_knowledge_demand" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_environment_demand_table" hitPolicy="FIRST">
+      <input id="mvp_decision_environment_demand_in_0" label="光响应时段状态">
+        <inputExpression id="mvp_decision_environment_demand_in_0_expr" typeRef="string">
+          <text>light_segment_status</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_environment_demand_in_1" label="VPD 时段状态">
+        <inputExpression id="mvp_decision_environment_demand_in_1_expr" typeRef="string">
+          <text>vpd_segment_status</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_environment_demand_out_0" name="demand_segment_status" label="时段状态" typeRef="string" />
+      <output id="mvp_decision_environment_demand_out_1" name="environment_demand_rule" label="需水强度（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_environment_demand_rule_0">
+        <description>时段丢弃</description>
+        <inputEntry id="mvp_decision_environment_demand_rule_0_in_0">
+          <text>&quot;missing&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_environment_demand_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_environment_demand_rule_0_out_0">
+          <text>&quot;dropped&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_environment_demand_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_environment_demand_rule_1">
+        <description>时段丢弃</description>
+        <inputEntry id="mvp_decision_environment_demand_rule_1_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_environment_demand_rule_1_in_1">
+          <text>&quot;missing&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_environment_demand_rule_1_out_0">
+          <text>&quot;dropped&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_environment_demand_rule_1_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_environment_demand_rule_2">
+        <description>叶片蒸腾项 × 0.8 + 基质蒸发项（道尔顿关系 D/Dref）× 0.2</description>
+        <inputEntry id="mvp_decision_environment_demand_rule_2_in_0">
+          <text>&quot;ok&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_environment_demand_rule_2_in_1">
+          <text>&quot;ok&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_environment_demand_rule_2_out_0">
+          <text>&quot;ok&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_environment_demand_rule_2_out_1">
+          <text>&quot;Demand_pot = 0.8 × L_rel × H × P + 0.2 × D/1.4 × Ae（min 取各下端，max 取各上端）&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_pot_volume_ratio" name="盆体积比">
+    <description>由 TypeScript 计算（deriveCultivationDrying + frustumFillGeometry，合同 §8.4）：对留空高度两端点 s∈{1, 3}cm，实际盆与参考盆用同一个 s。f=H−s，R_f=r+(R−r)·f/H，V(s)=π·f·(R_f²+R_f·r+r²)/3，A_top(s)=π·R_f²；体积比 v(s)=V/V_ref、土表面积比 A(s)=A_top/A_top,ref，各取两端点包络。排水条件不影响本推导（由盆器安全门独立裁决）。</description>
+    <informationRequirement id="mvp_decision_pot_volume_ratio_req_0">
+      <requiredInput href="#mvp_input_measured_pot" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_pot_volume_ratio_req_1">
+      <requiredAuthority href="#mvp_knowledge_reference_pot" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_pot_volume_ratio_table" hitPolicy="FIRST">
+      <input id="mvp_decision_pot_volume_ratio_in_0" label="实际内盆已确认">
+        <inputExpression id="mvp_decision_pot_volume_ratio_in_0_expr" typeRef="boolean">
+          <text>measured_pot.actualInnerPotConfirmed = true</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_pot_volume_ratio_in_1" label="三项尺寸齐全">
+        <inputExpression id="mvp_decision_pot_volume_ratio_in_1_expr" typeRef="boolean">
+          <text>measured_pot.potTopDiameterCm != null and measured_pot.potBottomDiameterCm != null and measured_pot.potHeightCm != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_pot_volume_ratio_in_2" label="盆高大于留空上限 3cm">
+        <inputExpression id="mvp_decision_pot_volume_ratio_in_2_expr" typeRef="boolean">
+          <text>measured_pot.potHeightCm &gt; 3</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_pot_volume_ratio_out_0" name="pot_geometry_status" label="几何状态" typeRef="string" />
+      <output id="mvp_decision_pot_volume_ratio_out_1" name="volume_ratio_rule" label="体积比 v（TypeScript 计算）" typeRef="string" />
+      <output id="mvp_decision_pot_volume_ratio_out_2" name="surface_area_ratio_rule" label="土表面积比 A（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_pot_volume_ratio_rule_0">
+        <description>未确认实际内盆</description>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_0_out_0">
+          <text>&quot;fallback&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_0_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_volume_ratio_rule_1">
+        <description>几何不全</description>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_1_in_1">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_1_out_0">
+          <text>&quot;fallback&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_1_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_1_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_volume_ratio_rule_2">
+        <description>装不了土：不猜装土高度</description>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_2_in_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_2_out_0">
+          <text>&quot;fallback&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_2_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_2_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_volume_ratio_rule_3">
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_3_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_volume_ratio_rule_3_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_3_out_0">
+          <text>&quot;measured&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_3_out_1">
+          <text>&quot;[min_s V(s)/V_ref(s), max_s V(s)/V_ref(s)]，参考盆 15/11/13cm&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_pot_volume_ratio_rule_3_out_2">
+          <text>&quot;[min_s A_top(s)/A_top,ref(s), max_s A_top(s)/A_top,ref(s)]&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_substrate_available_water" name="基质可用水（主要材料规则）">
+    <description>combineMvpSubstrateMix（合同 §8.10）：可用水（AW）采用 Bilderback 2005 口径 AW = 容器持水量 CC − θ(1500kPa)，不是 De Boodt 的易利用水 EAW。配比未知，按体积线性混合近似。主要材料 = 体积占比 ≥ 一半。同一规则同时用于干燥存量（可用水）与水量估算（可用水、容器持水量上限）。材料代码未知或主要材料不属于所选材料时拒绝（请求阶段已 400）。</description>
+    <informationRequirement id="mvp_decision_substrate_available_water_req_0">
+      <requiredDecision href="#mvp_decision_substrate_properties" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_substrate_available_water_req_1">
+      <requiredInput href="#mvp_input_substrate_materials" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_substrate_available_water_req_2">
+      <requiredInput href="#mvp_input_primary_material" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_substrate_available_water_table" hitPolicy="FIRST">
+      <input id="mvp_decision_substrate_available_water_in_0" label="已选材料">
+        <inputExpression id="mvp_decision_substrate_available_water_in_0_expr" typeRef="boolean">
+          <text>count(substrate_materials) &gt; 0</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_substrate_available_water_in_1" label="策略为 v3 且标了主要材料">
+        <inputExpression id="mvp_decision_substrate_available_water_in_1_expr" typeRef="boolean">
+          <text>policy.contractVersion = &quot;care-watering-mvp/v3&quot; and primary_material != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_substrate_available_water_in_2" label="还有其余组分">
+        <inputExpression id="mvp_decision_substrate_available_water_in_2_expr" typeRef="boolean">
+          <text>count(substrate_materials) &gt; 1</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_substrate_available_water_out_0" name="mix_rule" label="混合规则" typeRef="string" />
+      <output id="mvp_decision_substrate_available_water_out_1" name="available_water_rule" label="可用水（AW）区间（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_substrate_available_water_rule_0">
+        <description>未选基质</description>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_0_out_0">
+          <text>&quot;none&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_available_water_rule_1">
+        <description>只选一种：与未标相同</description>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_1_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_1_in_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_1_out_0">
+          <text>&quot;primary_only&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_1_out_1">
+          <text>&quot;主材料区间&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_available_water_rule_2">
+        <description>主材料区间 ∪ 主材料与最极端其余组分对半混合区间</description>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_2_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_2_out_0">
+          <text>&quot;primary_mix&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_2_out_1">
+          <text>&quot;[min(p.min, ½·p.min + ½·O_min), max(p.max, ½·p.max + ½·O_max)]，O 为其余组分的最小下端 / 最大上端&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_available_water_rule_3">
+        <description>未标主要材料（或 v1/v2）：各组分并集</description>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_3_in_1">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_substrate_available_water_rule_3_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_3_out_0">
+          <text>&quot;union&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_available_water_rule_3_out_1">
+          <text>&quot;[min_i AW_i.min, max_i AW_i.max]&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_cultivation_retention" name="栽培干燥倍率">
+    <description>cultivationDrying / deriveCultivationDrying（合同 §8.4～§8.6）：存量比 S 写入 DryingInterval.cultivationRetention（原“保水倍率”含义收窄为存量比）；植物需求比 P 只乘叶片项，蒸发面比 Ae 只乘基质蒸发项。参考盆＋泥炭：v=1、P=Ae=1、S≈[0.833, 1.167]。策略版本取活动策略快照 policy.contractVersion。</description>
+    <informationRequirement id="mvp_decision_cultivation_retention_req_0">
+      <requiredDecision href="#mvp_decision_pot_volume_ratio" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_cultivation_retention_req_1">
+      <requiredDecision href="#mvp_decision_substrate_available_water" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_cultivation_retention_req_2">
+      <requiredAuthority href="#mvp_knowledge_cultivation" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_cultivation_retention_table" hitPolicy="FIRST">
+      <input id="mvp_decision_cultivation_retention_in_0" label="策略为 v3">
+        <inputExpression id="mvp_decision_cultivation_retention_in_0_expr" typeRef="boolean">
+          <text>policy.contractVersion = &quot;care-watering-mvp/v3&quot;</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_cultivation_retention_in_1" label="几何状态">
+        <inputExpression id="mvp_decision_cultivation_retention_in_1_expr" typeRef="string">
+          <text>pot_geometry_status</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_cultivation_retention_in_2" label="有可用水区间">
+        <inputExpression id="mvp_decision_cultivation_retention_in_2_expr" typeRef="boolean">
+          <text>mix_rule != &quot;none&quot;</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_cultivation_retention_out_0" name="storage_ratio" label="存量比 S" typeRef="string" />
+      <output id="mvp_decision_cultivation_retention_out_1" name="plant_demand_scale" label="植物需求比 P" typeRef="string" />
+      <output id="mvp_decision_cultivation_retention_out_2" name="evaporation_area_scale" label="蒸发面比 Ae" typeRef="string" />
+      <output id="mvp_decision_cultivation_retention_out_3" name="cultivation_basis" label="依据" typeRef="string" />
+      <rule id="mvp_decision_cultivation_retention_rule_0">
+        <description>v1/v2：固定保水带，需求不按盆伸缩</description>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_0_out_0">
+          <text>&quot;[0.8, 1.25]&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_0_out_1">
+          <text>&quot;1&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_0_out_2">
+          <text>&quot;1&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_0_out_3">
+          <text>&quot;fallback&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_cultivation_retention_rule_1">
+        <description>几何不全、未确认内盆或装不了土</description>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_1_in_1">
+          <text>&quot;fallback&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_1_out_0">
+          <text>&quot;[0.8, 1.25]&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_1_out_1">
+          <text>&quot;1&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_1_out_2">
+          <text>&quot;1&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_1_out_3">
+          <text>&quot;fallback&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_cultivation_retention_rule_2">
+        <description>未选基质：缺持水依据时不默认 S=1</description>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_2_in_1">
+          <text>&quot;measured&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_2_in_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_2_out_0">
+          <text>&quot;[0.8, 1.25]&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_2_out_1">
+          <text>&quot;1&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_2_out_2">
+          <text>&quot;1&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_2_out_3">
+          <text>&quot;fallback&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_cultivation_retention_rule_3">
+        <inputEntry id="mvp_decision_cultivation_retention_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_3_in_1">
+          <text>&quot;measured&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_cultivation_retention_rule_3_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_3_out_0">
+          <text>&quot;[v.min × AW.min ÷ 0.3, v.max × AW.max ÷ 0.3]&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_3_out_1">
+          <text>&quot;包络{ v^b ：v ∈ {v.min, v.max}，b ∈ {0, 0.52} }&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_3_out_2">
+          <text>&quot;[A.min, A.max]（土表面积比）&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_cultivation_retention_rule_3_out_3">
+          <text>&quot;measured&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_gap_fill" name="缺段补齐">
+    <description>fillMvpDryingGaps（合同 §8.11，v3 起）：缺段 = 两个有效时段之间的时间空洞（时段缺失，或 PPFD 缺失、PPFD/VPD 超出有效域被丢弃；连续的合并计时）。补齐用的保守需求 = 有效域 PPFD 0～1500、VPD 0.1～4（含 H 峰值）代入需求公式的全区间包络，同样乘 P/Ae。</description>
+    <informationRequirement id="mvp_decision_gap_fill_req_0">
+      <requiredDecision href="#mvp_decision_environment_demand" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_gap_fill_req_1">
+      <requiredAuthority href="#mvp_knowledge_gap_fill" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_gap_fill_table" hitPolicy="FIRST">
+      <input id="mvp_decision_gap_fill_in_0" label="策略为 v3">
+        <inputExpression id="mvp_decision_gap_fill_in_0_expr" typeRef="boolean">
+          <text>policy.contractVersion = &quot;care-watering-mvp/v3&quot;</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_gap_fill_in_1" label="缺口位置">
+        <inputExpression id="mvp_decision_gap_fill_in_1_expr" typeRef="string">
+          <text>gap.position</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_gap_fill_in_2" label="缺口总时长（小时）">
+        <inputExpression id="mvp_decision_gap_fill_in_2_expr" typeRef="number">
+          <text>gap.durationHours</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_gap_fill_out_0" name="gap_action" label="处理" typeRef="string" />
+      <output id="mvp_decision_gap_fill_out_1" name="filled_demand_rule" label="补齐需求（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_gap_fill_rule_0">
+        <description>v1/v2 不补，保持已发布语义可复算</description>
+        <inputEntry id="mvp_decision_gap_fill_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_0_out_0">
+          <text>&quot;keep_gap&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_gap_fill_rule_1">
+        <description>首个有效时段之前、最后一个之后（预报覆盖终点）不补</description>
+        <inputEntry id="mvp_decision_gap_fill_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_1_in_1">
+          <text>&quot;leading&quot;,&quot;trailing&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_1_out_0">
+          <text>&quot;keep_gap&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_1_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_gap_fill_rule_2">
+        <description>窗口变宽但不中断</description>
+        <inputEntry id="mvp_decision_gap_fill_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_2_in_1">
+          <text>&quot;internal&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_2_in_2">
+          <text>&lt;= 6</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_2_out_0">
+          <text>&quot;fill&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_2_out_1">
+          <text>&quot;Demand 取 PPFD [0, 1500]、VPD [0.1, 4] 上的最低～最高包络（× P / Ae）&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_gap_fill_rule_3">
+        <description>保持空洞：历史 → history_gap；未来 → 覆盖终点</description>
+        <inputEntry id="mvp_decision_gap_fill_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_3_in_1">
+          <text>&quot;internal&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_gap_fill_rule_3_in_2">
+          <text>&gt; 6</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_3_out_0">
+          <text>&quot;keep_gap&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_gap_fill_rule_3_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_drying_progress" name="逐时段干燥进度累积">
+    <description>由 TypeScript 计算（replayDryProgress / integrateDryingFromAnchor，积分内核不变）。每个时段的干燥速率 rate = Demand_pot × 个体校准 ÷ S = [Demand_pot.min ÷ S.max, Demand_pot.max ÷ S.min]（个体校准固定 [1,1]），进度 += rate × 时长 ÷ 24h，单位为等效干燥日；目标为基线 baselineDays（定义在参考盆下）。缺段先经“缺段补齐”：v3 起 ≤6h 的内部空洞已补上；仍留下的空洞（&gt;6h、首段之前，或 v1/v2 的任一缺段）——起点到现在之间有空洞则整段进度为空（history_gap），未来方向遇空洞即停止（覆盖终点），窗口端点保持为空。同一组速率另用于：盆土有效期（湿/微湿最早离开状态时刻）和观察起点剩余量预测（replayObservedDryCycle）。</description>
+    <informationRequirement id="mvp_decision_drying_progress_req_0">
+      <requiredInput href="#mvp_input_last_confirmed_watering" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_drying_progress_req_1">
+      <requiredDecision href="#mvp_decision_gap_fill" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_drying_progress_req_2">
+      <requiredDecision href="#mvp_decision_cultivation_retention" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_drying_progress_req_3">
+      <requiredInput href="#mvp_input_plant_baseline" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_drying_progress_table" hitPolicy="FIRST">
+      <input id="mvp_decision_drying_progress_in_0" label="有基线">
+        <inputExpression id="mvp_decision_drying_progress_in_0_expr" typeRef="boolean">
+          <text>plant_baseline != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_drying_progress_in_1" label="有最近确认浇水">
+        <inputExpression id="mvp_decision_drying_progress_in_1_expr" typeRef="boolean">
+          <text>last_confirmed_watering_at != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_drying_progress_in_2" label="起点至今时段连续（补齐后）">
+        <inputExpression id="mvp_decision_drying_progress_in_2_expr" typeRef="boolean">
+          <text>noGap(last_confirmed_watering_at, now)</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_drying_progress_out_0" name="progress_status" label="历史进度状态" typeRef="string" />
+      <output id="mvp_decision_drying_progress_out_1" name="progress_rule" label="进度（TypeScript 计算）" typeRef="string" />
+      <output id="mvp_decision_drying_progress_out_2" name="window_rule" label="预测窗口（TypeScript 计算）" typeRef="string" />
+      <rule id="mvp_decision_drying_progress_rule_0">
+        <description>实际在 assessMvpWatering 前置出口已返回</description>
+        <inputEntry id="mvp_decision_drying_progress_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_0_out_0">
+          <text>&quot;missing_baseline&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_0_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_progress_rule_1">
+        <description>无起点不补今天、不补零</description>
+        <inputEntry id="mvp_decision_drying_progress_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_1_in_1">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_1_out_0">
+          <text>&quot;missing_origin&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_1_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_1_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_progress_rule_2">
+        <description>补齐后仍有空洞（v3 &gt;6h；v1/v2 任一缺段）：整段进度为空</description>
+        <inputEntry id="mvp_decision_drying_progress_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_2_in_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_2_out_0">
+          <text>&quot;history_gap&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_2_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_2_out_2">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_progress_rule_3">
+        <inputEntry id="mvp_decision_drying_progress_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_3_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_progress_rule_3_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_3_out_0">
+          <text>&quot;ready_candidate&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_3_out_1">
+          <text>&quot;progress = Σ [Demand_pot.min ÷ S.max, Demand_pot.max ÷ S.min] × Δt ÷ 24h（自最近确认浇水）&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_drying_progress_rule_3_out_2">
+          <text>&quot;沿未来连续时段继续累积：进度上界 ≥ 基线下界 → 最早检查；进度下界 ≥ 基线上界 → 最晚检查；遇空洞停止（coverageEnd）&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_soil_validity" name="盆土证据有效期">
+    <description>resolveMvpSoilEvidenceValidUntil（长期植物与临时案例同规则）。返回值严格晚于观察时刻；uncertain 或无观察不计算。结果作为 validUntil 进入盆土观察映射。</description>
+    <informationRequirement id="mvp_decision_soil_validity_req_0">
+      <requiredInput href="#mvp_input_soil_observation" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_soil_validity_req_1">
+      <requiredInput href="#mvp_input_last_confirmed_watering" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_soil_validity_req_2">
+      <requiredDecision href="#mvp_decision_drying_progress" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_soil_validity_req_3">
+      <requiredAuthority href="#mvp_knowledge_soil_validity" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_soil_validity_table" hitPolicy="UNIQUE">
+      <input id="mvp_decision_soil_validity_in_0" label="策略合同版本">
+        <inputExpression id="mvp_decision_soil_validity_in_0_expr" typeRef="string">
+          <text>policy.contractVersion</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_validity_in_1" label="观察状态">
+        <inputExpression id="mvp_decision_soil_validity_in_1_expr" typeRef="string">
+          <text>soil_observation.state</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_validity_in_2" label="能推出最早离开该状态时刻">
+        <inputExpression id="mvp_decision_soil_validity_in_2_expr" typeRef="boolean">
+          <text>drying_progress.leaveStateAtComputable</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_validity_in_3" label="观察后有已确认浇水">
+        <inputExpression id="mvp_decision_soil_validity_in_3_expr" typeRef="boolean">
+          <text>last_confirmed_watering_at &gt; soil_observation.observedAt</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_soil_validity_out_0" name="soil_valid_until_rule" label="有效截止时刻规则" typeRef="string" />
+      <rule id="mvp_decision_soil_validity_rule_0">
+        <description>不形成证据，不计算有效期</description>
+        <inputEntry id="mvp_decision_soil_validity_rule_0_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_0_in_1">
+          <text>&quot;uncertain&quot;,null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_0_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_validity_rule_0_out_0">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_validity_rule_1">
+        <description>v1 固定 TTL（已视为缺陷，仍兼容读取）</description>
+        <inputEntry id="mvp_decision_soil_validity_rule_1_in_0">
+          <text>&quot;care-watering-mvp/v1&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_1_in_1">
+          <text>&quot;wet&quot;,&quot;moist&quot;,&quot;dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_1_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_validity_rule_1_out_0">
+          <text>&quot;observedAt + soilEvidenceTtlHours&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_validity_rule_2">
+        <description>以最快干燥速率消耗 (剩余比例上界−下界)×基线下端 所需时间</description>
+        <inputEntry id="mvp_decision_soil_validity_rule_2_in_0">
+          <text>&quot;care-watering-mvp/v2&quot;,&quot;care-watering-mvp/v3&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_2_in_1">
+          <text>&quot;wet&quot;,&quot;moist&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_2_in_2">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_2_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_validity_rule_2_out_0">
+          <text>&quot;min(最早离开状态时刻, observedAt + 72h)&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_validity_rule_3">
+        <description>推不出（缺光照/环境段或不连续覆盖）→ 回退小时</description>
+        <inputEntry id="mvp_decision_soil_validity_rule_3_in_0">
+          <text>&quot;care-watering-mvp/v2&quot;,&quot;care-watering-mvp/v3&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_3_in_1">
+          <text>&quot;wet&quot;,&quot;moist&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_3_in_2">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_3_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_validity_rule_3_out_0">
+          <text>&quot;observedAt + 24h&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_validity_rule_4">
+        <description>干（含仅表土干）有效到晚于观察的已确认浇水</description>
+        <inputEntry id="mvp_decision_soil_validity_rule_4_in_0">
+          <text>&quot;care-watering-mvp/v2&quot;,&quot;care-watering-mvp/v3&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_4_in_1">
+          <text>&quot;dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_4_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_4_in_3">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_validity_rule_4_out_0">
+          <text>&quot;min(该次浇水时刻, observedAt + 72h)&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_validity_rule_5">
+        <description>统一封顶</description>
+        <inputEntry id="mvp_decision_soil_validity_rule_5_in_0">
+          <text>&quot;care-watering-mvp/v2&quot;,&quot;care-watering-mvp/v3&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_5_in_1">
+          <text>&quot;dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_5_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_validity_rule_5_in_3">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_validity_rule_5_out_0">
+          <text>&quot;observedAt + 72h&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_soil_mapping" name="盆土观察映射">
+    <description>mapMvpSoilObservation（合同 §3）：四态观察 → 安全门证据（state/scope/reliable/targetCriteriaConfirmed/collectedAt/validUntil）与观察时刻剩余等效干燥量 = 剩余比例 × 基线。不识别照片、不提升可靠性。</description>
+    <informationRequirement id="mvp_decision_soil_mapping_req_0">
+      <requiredDecision href="#mvp_decision_moisture_group" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_soil_mapping_req_1">
+      <requiredInput href="#mvp_input_soil_observation" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_soil_mapping_req_2">
+      <requiredDecision href="#mvp_decision_soil_validity" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_soil_mapping_req_3">
+      <requiredAuthority href="#mvp_knowledge_soil_fraction" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_soil_mapping_table" hitPolicy="UNIQUE">
+      <input id="mvp_decision_soil_mapping_in_0" label="观察状态">
+        <inputExpression id="mvp_decision_soil_mapping_in_0_expr" typeRef="string">
+          <text>soil_observation.state</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_mapping_in_1" label="观察范围">
+        <inputExpression id="mvp_decision_soil_mapping_in_1_expr" typeRef="string">
+          <text>soil_observation.scope</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_mapping_in_2" label="表土即可判定目标">
+        <inputExpression id="mvp_decision_soil_mapping_in_2_expr" typeRef="boolean">
+          <text>surface_sufficient</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_soil_mapping_out_0" name="evidence_state" label="证据状态" typeRef="string" />
+      <output id="mvp_decision_soil_mapping_out_1" name="target_criteria_confirmed" label="已达目标干燥" typeRef="boolean" />
+      <output id="mvp_decision_soil_mapping_out_2" name="remaining_fraction_min" label="剩余比例下界" typeRef="number" />
+      <output id="mvp_decision_soil_mapping_out_3" name="remaining_fraction_max" label="剩余比例上界" typeRef="number" />
+      <rule id="mvp_decision_soil_mapping_rule_0">
+        <description>无观察</description>
+        <inputEntry id="mvp_decision_soil_mapping_rule_0_in_0">
+          <text>null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_0_out_0">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_0_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_0_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_mapping_rule_1">
+        <description>不确定观察不形成证据</description>
+        <inputEntry id="mvp_decision_soil_mapping_rule_1_in_0">
+          <text>&quot;uncertain&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_1_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_1_out_0">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_1_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_1_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_1_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_mapping_rule_2">
+        <description>湿 → 安全门暂停浇水</description>
+        <inputEntry id="mvp_decision_soil_mapping_rule_2_in_0">
+          <text>&quot;wet&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_2_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_2_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_2_out_0">
+          <text>&quot;wet&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_2_out_1">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_2_out_2">
+          <text>0.6</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_2_out_3">
+          <text>1.0</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_mapping_rule_3">
+        <inputEntry id="mvp_decision_soil_mapping_rule_3_in_0">
+          <text>&quot;moist&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_3_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_3_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_3_out_0">
+          <text>&quot;unknown&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_3_out_1">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_3_out_2">
+          <text>0.25</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_3_out_3">
+          <text>0.6</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_mapping_rule_4">
+        <description>根区干：达到目标，不生成剩余量</description>
+        <inputEntry id="mvp_decision_soil_mapping_rule_4_in_0">
+          <text>&quot;dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_4_in_1">
+          <text>&quot;root_zone&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_4_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_4_out_0">
+          <text>&quot;target_dry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_4_out_1">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_4_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_4_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_mapping_rule_5">
+        <description>表土干且分组接受表土</description>
+        <inputEntry id="mvp_decision_soil_mapping_rule_5_in_0">
+          <text>&quot;dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_5_in_1">
+          <text>&quot;surface&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_5_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_5_out_0">
+          <text>&quot;target_dry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_5_out_1">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_5_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_5_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_mapping_rule_6">
+        <description>仅表土干但分组需要根区</description>
+        <inputEntry id="mvp_decision_soil_mapping_rule_6_in_0">
+          <text>&quot;dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_6_in_1">
+          <text>&quot;surface&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_mapping_rule_6_in_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_6_out_0">
+          <text>&quot;unknown&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_6_out_1">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_6_out_2">
+          <text>0</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_soil_mapping_rule_6_out_3">
+          <text>0.5</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_current_cycle_window" name="本轮检查窗口来源">
+    <description>resolveCurrentDryWindow＋replayWateringTiming：决定本轮窗口取自观察、历史预测还是被当前证据覆盖。“当前根区证据”= reliable 且 scope=root_zone 且 collectedAt ≤ now &lt; validUntil。观察预测仅在根区、当前有效、晚于最近浇水且积分覆盖时可用（replayObservedDryCycle）。</description>
+    <informationRequirement id="mvp_decision_current_cycle_window_req_0">
+      <requiredDecision href="#mvp_decision_soil_mapping" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_current_cycle_window_req_1">
+      <requiredInput href="#mvp_input_last_confirmed_watering" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_current_cycle_window_req_2">
+      <requiredDecision href="#mvp_decision_drying_progress" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_current_cycle_window_table" hitPolicy="FIRST">
+      <input id="mvp_decision_current_cycle_window_in_0" label="观察不晚于最近确认浇水">
+        <inputExpression id="mvp_decision_current_cycle_window_in_0_expr" typeRef="boolean">
+          <text>soil_observation.observedAt &lt;= last_confirmed_watering_at</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_current_cycle_window_in_1" label="当前根区证据">
+        <inputExpression id="mvp_decision_current_cycle_window_in_1_expr" typeRef="boolean">
+          <text>evidence_scope = &quot;root_zone&quot; and now &lt; soil_valid_until</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_current_cycle_window_in_2" label="证据状态">
+        <inputExpression id="mvp_decision_current_cycle_window_in_2_expr" typeRef="string">
+          <text>evidence_state</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_current_cycle_window_in_3" label="已达目标干燥">
+        <inputExpression id="mvp_decision_current_cycle_window_in_3_expr" typeRef="boolean">
+          <text>target_criteria_confirmed</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_current_cycle_window_in_4" label="所用预测最早检查时刻已到">
+        <inputExpression id="mvp_decision_current_cycle_window_in_4_expr" typeRef="boolean">
+          <text>drying_progress.earliestCheckReached</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_current_cycle_window_in_5" label="观察预测可用">
+        <inputExpression id="mvp_decision_current_cycle_window_in_5_expr" typeRef="boolean">
+          <text>drying_progress.observationPredictionReady</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_current_cycle_window_in_6" label="历史预测窗口存在">
+        <inputExpression id="mvp_decision_current_cycle_window_in_6_expr" typeRef="boolean">
+          <text>drying_progress.historyWindowAvailable</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_current_cycle_window_out_0" name="current_window_status" label="窗口来源" typeRef="string" />
+      <output id="mvp_decision_current_cycle_window_out_1" name="observation_ignored" label="观察属上一轮（被忽略）" typeRef="boolean" />
+      <rule id="mvp_decision_current_cycle_window_rule_0">
+        <description>观察早于最近浇水，不能证明本轮状态</description>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_4">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_5">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_0_in_6">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_0_out_0">
+          <text>&quot;prediction_only&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_0_out_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_current_cycle_window_rule_1">
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_4">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_5">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_1_in_6">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_1_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_1_out_1">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_current_cycle_window_rule_2">
+        <description>根区已达目标：窗口=now（不等于已浇水）</description>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_2">
+          <text>&quot;target_dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_3">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_4">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_5">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_2_in_6">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_2_out_0">
+          <text>&quot;target_observed&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_2_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_current_cycle_window_rule_3">
+        <description>预测已到但当前根区仍湿：不输出猜测日期</description>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_2">
+          <text>&quot;wet&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_4">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_5">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_3_in_6">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_3_out_0">
+          <text>&quot;prediction_conflict&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_3_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_current_cycle_window_rule_4">
+        <description>从观察时刻独立积分</description>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_4">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_5">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_4_in_6">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_4_out_0">
+          <text>&quot;observation_prediction&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_4_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_current_cycle_window_rule_5">
+        <description>仅历史预测</description>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_4">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_5">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_5_in_6">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_5_out_0">
+          <text>&quot;prediction_only&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_5_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_current_cycle_window_rule_6">
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_4">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_5">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_current_cycle_window_rule_6_in_6">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_6_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_current_cycle_window_rule_6_out_1">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_soil_gate" name="盆土安全门">
+    <description>evaluateWateringDecision 的 soilGate：可靠且未过期的湿土优先暂停；是否达到目标由上游映射按植物触发条件判定（用户 2026-10-08 裁决），安全门不再额外要求根区。观察属上一轮时 replayWateringTiming 以 soil=null 重新裁决。</description>
+    <informationRequirement id="mvp_decision_soil_gate_req_0">
+      <requiredDecision href="#mvp_decision_soil_mapping" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_soil_gate_req_1">
+      <requiredDecision href="#mvp_decision_current_cycle_window" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_soil_gate_table" hitPolicy="FIRST">
+      <input id="mvp_decision_soil_gate_in_0" label="观察属上一轮">
+        <inputExpression id="mvp_decision_soil_gate_in_0_expr" typeRef="boolean">
+          <text>observation_ignored</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_gate_in_1" label="证据未过期">
+        <inputExpression id="mvp_decision_soil_gate_in_1_expr" typeRef="boolean">
+          <text>now &lt; soil_valid_until</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_gate_in_2" label="证据状态">
+        <inputExpression id="mvp_decision_soil_gate_in_2_expr" typeRef="string">
+          <text>evidence_state</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_soil_gate_in_3" label="已达目标干燥">
+        <inputExpression id="mvp_decision_soil_gate_in_3_expr" typeRef="boolean">
+          <text>target_criteria_confirmed</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_soil_gate_out_0" name="soil_safety_gate" label="盆土安全门" typeRef="string" />
+      <rule id="mvp_decision_soil_gate_rule_0">
+        <description>上一轮观察不参与本轮裁决</description>
+        <inputEntry id="mvp_decision_soil_gate_rule_0_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_0_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_gate_rule_0_out_0">
+          <text>&quot;unknown&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_gate_rule_1">
+        <description>可靠湿土或积水优先否决（MVP 映射只产生 wet）</description>
+        <inputEntry id="mvp_decision_soil_gate_rule_1_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_1_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_1_in_2">
+          <text>&quot;wet&quot;,&quot;waterlogged&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_1_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_gate_rule_1_out_0">
+          <text>&quot;pause_watering&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_gate_rule_2">
+        <inputEntry id="mvp_decision_soil_gate_rule_2_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_2_in_2">
+          <text>&quot;target_dry&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_2_in_3">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_gate_rule_2_out_0">
+          <text>&quot;target_dry_confirmed&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_soil_gate_rule_3">
+        <description>缺少可靠当前证据，不自动放行</description>
+        <inputEntry id="mvp_decision_soil_gate_rule_3_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_3_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_3_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_soil_gate_rule_3_in_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_soil_gate_rule_3_out_0">
+          <text>&quot;unknown&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_drying_window_state" name="干燥窗口状态">
+    <description>evaluateWateringDecision 的 windowState：历史进度区间与基线区间比较；观察预测只看最早检查时刻；当前证据覆盖预测时不给窗口。</description>
+    <informationRequirement id="mvp_decision_drying_window_state_req_0">
+      <requiredDecision href="#mvp_decision_current_cycle_window" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_drying_window_state_req_1">
+      <requiredDecision href="#mvp_decision_drying_progress" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_drying_window_state_table" hitPolicy="FIRST">
+      <input id="mvp_decision_drying_window_state_in_0" label="窗口来源">
+        <inputExpression id="mvp_decision_drying_window_state_in_0_expr" typeRef="string">
+          <text>current_window_status</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_drying_window_state_in_1" label="历史进度相对基线">
+        <inputExpression id="mvp_decision_drying_window_state_in_1_expr" typeRef="string">
+          <text>drying_progress.progressPosition</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_drying_window_state_in_2" label="观察预测最早检查时刻">
+        <inputExpression id="mvp_decision_drying_window_state_in_2_expr" typeRef="string">
+          <text>drying_progress.observationEarliest</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_drying_window_state_out_0" name="drying_window_state" label="窗口状态" typeRef="string" />
+      <rule id="mvp_decision_drying_window_state_rule_0">
+        <description>当前证据覆盖预测</description>
+        <inputEntry id="mvp_decision_drying_window_state_rule_0_in_0">
+          <text>&quot;target_observed&quot;,&quot;prediction_conflict&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_0_out_0">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_1">
+        <inputEntry id="mvp_decision_drying_window_state_rule_1_in_0">
+          <text>&quot;observation_prediction&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_1_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_1_in_2">
+          <text>&quot;none&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_1_out_0">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_2">
+        <inputEntry id="mvp_decision_drying_window_state_rule_2_in_0">
+          <text>&quot;observation_prediction&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_2_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_2_in_2">
+          <text>&quot;future&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_2_out_0">
+          <text>&quot;before&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_3">
+        <description>最早端已到只意味着需要检查</description>
+        <inputEntry id="mvp_decision_drying_window_state_rule_3_in_0">
+          <text>&quot;observation_prediction&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_3_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_3_in_2">
+          <text>&quot;reached&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_3_out_0">
+          <text>&quot;uncertain&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_4">
+        <description>progress.max &lt; baseline.min</description>
+        <inputEntry id="mvp_decision_drying_window_state_rule_4_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_4_in_1">
+          <text>&quot;below_baseline&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_4_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_4_out_0">
+          <text>&quot;before&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_5">
+        <description>progress.min &gt; baseline.max</description>
+        <inputEntry id="mvp_decision_drying_window_state_rule_5_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_5_in_1">
+          <text>&quot;above_baseline&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_5_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_5_out_0">
+          <text>&quot;overdue&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_6">
+        <inputEntry id="mvp_decision_drying_window_state_rule_6_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_6_in_1">
+          <text>&quot;inside_baseline&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_6_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_6_out_0">
+          <text>&quot;within&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_7">
+        <description>跨阈值保留不确定</description>
+        <inputEntry id="mvp_decision_drying_window_state_rule_7_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_7_in_1">
+          <text>&quot;straddles_baseline&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_7_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_7_out_0">
+          <text>&quot;uncertain&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_drying_window_state_rule_8">
+        <description>无起点或积分缺段：不猜测窗口</description>
+        <inputEntry id="mvp_decision_drying_window_state_rule_8_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_8_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_drying_window_state_rule_8_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_drying_window_state_rule_8_out_0">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_pot_safety" name="盆器安全">
+    <description>evaluatePotSafety（经 deriveMeasuredPot）：实际内盆三值安全判断。</description>
+    <informationRequirement id="mvp_decision_pot_safety_req_0">
+      <requiredInput href="#mvp_input_measured_pot" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_pot_safety_table" hitPolicy="UNIQUE">
+      <input id="mvp_decision_pot_safety_in_0" label="实际内盆已确认">
+        <inputExpression id="mvp_decision_pot_safety_in_0_expr" typeRef="boolean">
+          <text>measured_pot.actualInnerPotConfirmed</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_pot_safety_in_1" label="尺寸合法">
+        <inputExpression id="mvp_decision_pot_safety_in_1_expr" typeRef="boolean">
+          <text>potGeometryValid</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_pot_safety_in_2" label="有排水">
+        <inputExpression id="mvp_decision_pot_safety_in_2_expr" typeRef="boolean">
+          <text>measured_pot.drainageAvailable</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_pot_safety_out_0" name="pot_safety" label="盆器安全" typeRef="string" />
+      <rule id="mvp_decision_pot_safety_rule_0">
+        <description>装饰外盆不能替代实际内盆</description>
+        <inputEntry id="mvp_decision_pot_safety_rule_0_in_0">
+          <text>false,null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_safety_rule_0_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_safety_rule_1">
+        <description>尺寸缺失或非法</description>
+        <inputEntry id="mvp_decision_pot_safety_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_1_in_1">
+          <text>false,null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_safety_rule_1_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_safety_rule_2">
+        <description>无孔或排水受阻</description>
+        <inputEntry id="mvp_decision_pot_safety_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_2_in_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_safety_rule_2_out_0">
+          <text>&quot;drainage_risk&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_safety_rule_3">
+        <description>排水证据缺失</description>
+        <inputEntry id="mvp_decision_pot_safety_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_3_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_3_in_2">
+          <text>null</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_safety_rule_3_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_pot_safety_rule_4">
+        <inputEntry id="mvp_decision_pot_safety_rule_4_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_4_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_pot_safety_rule_4_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_pot_safety_rule_4_out_0">
+          <text>&quot;safe&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_plant_light_anchor" name="植物位置光照锚点与 PPFD 时段序列">
+    <description>deriveMvpPlantLightIntervals（合同 §2a 单通道比例法）：PPFD(h)=Lux 换算区间×GHI(h)÷GHI(测量时段)。可用时产出“植物位置 PPFD 时段序列”（每个 Open-Meteo 时段一个 PPFD 区间；GHI 缺失的时段不产出）及测量后 24 小时内的室内实测 VPD，交给光响应；不可用时环境时段为空。原因只写入内部 derivations，不进入公开结果。策略或辐射缺失时 buildWateringAdvice 不计算（not_computed）。</description>
+    <informationRequirement id="mvp_decision_plant_light_anchor_req_0">
+      <requiredInput href="#mvp_input_lux_reading" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_plant_light_anchor_req_1">
+      <requiredInput href="#mvp_input_outdoor_radiation" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_plant_light_anchor_req_2">
+      <requiredAuthority href="#mvp_knowledge_light" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_plant_light_anchor_table" hitPolicy="FIRST">
+      <input id="mvp_decision_plant_light_anchor_in_0" label="辐射序列可用">
+        <inputExpression id="mvp_decision_plant_light_anchor_in_0_expr" typeRef="boolean">
+          <text>outdoor_radiation != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_plant_light_anchor_in_1" label="有 Lux 读数">
+        <inputExpression id="mvp_decision_plant_light_anchor_in_1_expr" typeRef="boolean">
+          <text>lux_reading != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_plant_light_anchor_in_2" label="读数天龄">
+        <inputExpression id="mvp_decision_plant_light_anchor_in_2_expr" typeRef="number">
+          <text>(now - lux_reading.measuredAt) / 1d</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_plant_light_anchor_in_3" label="测量时段 GHI(W/m²)">
+        <inputExpression id="mvp_decision_plant_light_anchor_in_3_expr" typeRef="number">
+          <text>anchorInterval.ghi</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_plant_light_anchor_in_4" label="换算 PPFD 下界超过 2.3×GHI">
+        <inputExpression id="mvp_decision_plant_light_anchor_in_4_expr" typeRef="boolean">
+          <text>measured.min &gt; anchorGhi * 2.3</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_plant_light_anchor_out_0" name="plant_light_status" label="光照状态" typeRef="string" />
+      <output id="mvp_decision_plant_light_anchor_out_1" name="plant_light_reason" label="不可用原因" typeRef="string" />
+      <rule id="mvp_decision_plant_light_anchor_rule_0">
+        <description>Provider 不可用或无策略</description>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_0_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_0_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_0_out_0">
+          <text>&quot;not_computed&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_plant_light_anchor_rule_1">
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_1_in_1">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_1_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_1_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_1_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_1_out_1">
+          <text>&quot;light_reading&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_plant_light_anchor_rule_2">
+        <description>早于 luxAnchorMaxAgeDays</description>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_2_in_2">
+          <text>&gt; 30</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_2_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_2_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_2_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_2_out_1">
+          <text>&quot;light_reading_stale&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_plant_light_anchor_rule_3">
+        <description>测量时刻无 GHI 时段</description>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_3_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_3_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_3_in_3">
+          <text>null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_3_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_3_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_3_out_1">
+          <text>&quot;anchor_radiation&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_plant_light_anchor_rule_4">
+        <description>天色太暗，比例不可信</description>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_4_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_4_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_4_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_4_in_3">
+          <text>&lt; 50</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_4_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_4_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_4_out_1">
+          <text>&quot;anchor_too_dark&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_plant_light_anchor_rule_5">
+        <description>读数不合理</description>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_5_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_5_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_5_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_5_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_5_in_4">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_5_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_5_out_1">
+          <text>&quot;anchor_inconsistent&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_plant_light_anchor_rule_6">
+        <description>不确定度 meter ±10% / camera_estimate ±30%，换算 50～58 lux/PPFD</description>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_6_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_6_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_6_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_6_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_plant_light_anchor_rule_6_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_6_out_0">
+          <text>&quot;available&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_plant_light_anchor_rule_6_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_watering_action" name="浇水行动（是否可浇水门）">
+    <description>assessMvpWatering 前置出口＋evaluateWateringDecision 最终行动（按顺序命中）。允许浇水不等于已发生浇水；不写计划、事实或提醒。</description>
+    <informationRequirement id="mvp_decision_watering_action_req_0">
+      <requiredInput href="#mvp_input_policy_snapshot" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_watering_action_req_1">
+      <requiredDecision href="#mvp_decision_moisture_group" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_watering_action_req_2">
+      <requiredDecision href="#mvp_decision_soil_gate" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_watering_action_req_3">
+      <requiredDecision href="#mvp_decision_drying_window_state" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_watering_action_req_4">
+      <requiredDecision href="#mvp_decision_pot_safety" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_watering_action_table" hitPolicy="FIRST">
+      <input id="mvp_decision_watering_action_in_0" label="有活动策略">
+        <inputExpression id="mvp_decision_watering_action_in_0_expr" typeRef="boolean">
+          <text>policy_published != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_watering_action_in_1" label="湿度分组">
+        <inputExpression id="mvp_decision_watering_action_in_1_expr" typeRef="string">
+          <text>moisture_group</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_watering_action_in_2" label="盆土安全门">
+        <inputExpression id="mvp_decision_watering_action_in_2_expr" typeRef="string">
+          <text>soil_safety_gate</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_watering_action_in_3" label="盆器安全">
+        <inputExpression id="mvp_decision_watering_action_in_3_expr" typeRef="string">
+          <text>pot_safety</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_watering_action_in_4" label="窗口状态">
+        <inputExpression id="mvp_decision_watering_action_in_4_expr" typeRef="string">
+          <text>drying_window_state</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_watering_action_out_0" name="watering_action" label="浇水行动" typeRef="string" />
+      <output id="mvp_decision_watering_action_out_1" name="direct_missing_evidence" label="前置缺失证据" typeRef="string" />
+      <rule id="mvp_decision_watering_action_rule_0">
+        <description>无发布：不启用旧算法</description>
+        <inputEntry id="mvp_decision_watering_action_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_0_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_0_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_0_out_0">
+          <text>&quot;temporarily_unavailable&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_0_out_1">
+          <text>&quot;published_watering_model&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_1">
+        <description>无基线</description>
+        <inputEntry id="mvp_decision_watering_action_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_1_in_1">
+          <text>null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_1_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_1_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_1_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_1_out_1">
+          <text>&quot;plant_baseline&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_2">
+        <description>湿土优先</description>
+        <inputEntry id="mvp_decision_watering_action_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_2_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_2_in_2">
+          <text>&quot;pause_watering&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_2_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_2_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_2_out_0">
+          <text>&quot;pause_watering&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_2_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_3">
+        <inputEntry id="mvp_decision_watering_action_rule_3_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_3_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_3_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_3_in_3">
+          <text>&quot;drainage_risk&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_3_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_3_out_0">
+          <text>&quot;review_drainage&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_3_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_4">
+        <description>盆器证据不足</description>
+        <inputEntry id="mvp_decision_watering_action_rule_4_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_4_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_4_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_4_in_3">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_4_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_4_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_4_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_5">
+        <inputEntry id="mvp_decision_watering_action_rule_5_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_5_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_5_in_2">
+          <text>&quot;target_dry_confirmed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_5_in_3">
+          <text>&quot;safe&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_5_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_5_out_0">
+          <text>&quot;water_allowed&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_5_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_6">
+        <inputEntry id="mvp_decision_watering_action_rule_6_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_6_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_6_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_6_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_6_in_4">
+          <text>&quot;before&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_6_out_0">
+          <text>&quot;check_later&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_6_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_7">
+        <description>预测超窗不代表已缺水</description>
+        <inputEntry id="mvp_decision_watering_action_rule_7_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_7_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_7_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_7_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_7_in_4">
+          <text>&quot;overdue&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_7_out_0">
+          <text>&quot;priority_check&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_7_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_8">
+        <inputEntry id="mvp_decision_watering_action_rule_8_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_8_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_8_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_8_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_8_in_4">
+          <text>&quot;within&quot;,&quot;uncertain&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_8_out_0">
+          <text>&quot;check_now&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_8_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_watering_action_rule_9">
+        <inputEntry id="mvp_decision_watering_action_rule_9_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_9_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_9_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_9_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_watering_action_rule_9_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_9_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_watering_action_rule_9_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_substrate_properties" name="基质物性">
+    <description>按单一材料查已发布物性（v2、v3 同值）；多材料的混合由“基质可用水（主要材料规则）”处理。策略须满足可用水上界 ≤ 持水量下界，否则拒绝。</description>
+    <informationRequirement id="mvp_decision_substrate_properties_req_0">
+      <requiredInput href="#mvp_input_substrate_materials" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_substrate_properties_req_1">
+      <requiredAuthority href="#mvp_knowledge_substrates" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_substrate_properties_table" hitPolicy="UNIQUE">
+      <input id="mvp_decision_substrate_properties_in_0" label="材料代码">
+        <inputExpression id="mvp_decision_substrate_properties_in_0_expr" typeRef="string">
+          <text>material</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_substrate_properties_out_0" name="cc_min" label="持水量下界" typeRef="number" />
+      <output id="mvp_decision_substrate_properties_out_1" name="cc_max" label="持水量上界" typeRef="number" />
+      <output id="mvp_decision_substrate_properties_out_2" name="aw_min" label="可用水（AW）下界" typeRef="number" />
+      <output id="mvp_decision_substrate_properties_out_3" name="aw_max" label="可用水（AW）上界" typeRef="number" />
+      <rule id="mvp_decision_substrate_properties_rule_0">
+        <inputEntry id="mvp_decision_substrate_properties_rule_0_in_0">
+          <text>&quot;general&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_0_out_0">
+          <text>0.25</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_0_out_1">
+          <text>0.4</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_0_out_2">
+          <text>0.1</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_0_out_3">
+          <text>0.17</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_1">
+        <inputEntry id="mvp_decision_substrate_properties_rule_1_in_0">
+          <text>&quot;coco&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_1_out_0">
+          <text>0.5</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_1_out_1">
+          <text>0.8</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_1_out_2">
+          <text>0.18</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_1_out_3">
+          <text>0.35</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_2">
+        <inputEntry id="mvp_decision_substrate_properties_rule_2_in_0">
+          <text>&quot;ceramsite&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_2_out_0">
+          <text>0.08</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_2_out_1">
+          <text>0.15</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_2_out_2">
+          <text>0.02</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_2_out_3">
+          <text>0.05</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_3">
+        <inputEntry id="mvp_decision_substrate_properties_rule_3_in_0">
+          <text>&quot;peat&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_3_out_0">
+          <text>0.52</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_3_out_1">
+          <text>0.65</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_3_out_2">
+          <text>0.25</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_3_out_3">
+          <text>0.35</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_4">
+        <inputEntry id="mvp_decision_substrate_properties_rule_4_in_0">
+          <text>&quot;perlite&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_4_out_0">
+          <text>0.2</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_4_out_1">
+          <text>0.3</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_4_out_2">
+          <text>0.08</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_4_out_3">
+          <text>0.15</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_5">
+        <inputEntry id="mvp_decision_substrate_properties_rule_5_in_0">
+          <text>&quot;bark&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_5_out_0">
+          <text>0.49</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_5_out_1">
+          <text>0.7</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_5_out_2">
+          <text>0.1</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_5_out_3">
+          <text>0.37</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_6">
+        <inputEntry id="mvp_decision_substrate_properties_rule_6_in_0">
+          <text>&quot;sphagnum&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_6_out_0">
+          <text>0.55</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_6_out_1">
+          <text>0.85</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_6_out_2">
+          <text>0.25</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_6_out_3">
+          <text>0.4</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_7">
+        <inputEntry id="mvp_decision_substrate_properties_rule_7_in_0">
+          <text>&quot;gritty&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_7_out_0">
+          <text>0.32</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_7_out_1">
+          <text>0.45</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_7_out_2">
+          <text>0.09</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_7_out_3">
+          <text>0.31</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_substrate_properties_rule_8">
+        <inputEntry id="mvp_decision_substrate_properties_rule_8_in_0">
+          <text>&quot;coarse_sand&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_8_out_0">
+          <text>0.2</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_8_out_1">
+          <text>0.3</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_8_out_2">
+          <text>0.05</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_substrate_properties_rule_8_out_3">
+          <text>0.12</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_water_amount" name="水量估算">
+    <description>estimateMvpWaterAmount（合同 §4），仅在行动为 water_allowed 时调用。V=截锥在“盆高−留空”处装土体积；净补水 N=[Vmin×dmin×AWmin, Vmax×dmax×AWmax]；建议浇入=[Nmin/(1−LFmin), Nmax/(1−LFmax)]，四舍五入到 10mL，且不超过 Vmax×CCmax/(1−LFmax)。AW 与 CCmax 按“基质可用水（主要材料规则）”同一混合规则（v3 才使用主要材料）。几何/排水分支在 MVP 路径中已被盆器安全门前置覆盖，代码保留为防御分支。</description>
+    <informationRequirement id="mvp_decision_water_amount_req_0">
+      <requiredDecision href="#mvp_decision_watering_action" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_water_amount_req_1">
+      <requiredDecision href="#mvp_decision_moisture_group" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_water_amount_req_2">
+      <requiredDecision href="#mvp_decision_substrate_available_water" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_water_amount_req_3">
+      <requiredInput href="#mvp_input_measured_pot" />
+    </informationRequirement>
+    <authorityRequirement id="mvp_decision_water_amount_req_4">
+      <requiredAuthority href="#mvp_knowledge_amount" />
+    </authorityRequirement>
+    <decisionTable id="mvp_decision_water_amount_table" hitPolicy="FIRST">
+      <input id="mvp_decision_water_amount_in_0" label="浇水行动">
+        <inputExpression id="mvp_decision_water_amount_in_0_expr" typeRef="string">
+          <text>watering_action</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_water_amount_in_1" label="内盆几何可用">
+        <inputExpression id="mvp_decision_water_amount_in_1_expr" typeRef="boolean">
+          <text>measured_pot.geometry != null</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_water_amount_in_2" label="有排水">
+        <inputExpression id="mvp_decision_water_amount_in_2_expr" typeRef="boolean">
+          <text>measured_pot.drainageAvailable</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_water_amount_in_3" label="已选材料">
+        <inputExpression id="mvp_decision_water_amount_in_3_expr" typeRef="boolean">
+          <text>mix_rule != &quot;none&quot;</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_water_amount_in_4" label="湿度分组">
+        <inputExpression id="mvp_decision_water_amount_in_4_expr" typeRef="string">
+          <text>moisture_group</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_water_amount_out_0" name="amount_status" label="水量结论" typeRef="string" />
+      <output id="mvp_decision_water_amount_out_1" name="amount_missing" label="缺失证据" typeRef="string" />
+      <output id="mvp_decision_water_amount_out_2" name="depletion_min" label="消耗比例下界" typeRef="number" />
+      <output id="mvp_decision_water_amount_out_3" name="depletion_max" label="消耗比例上界" typeRef="number" />
+      <rule id="mvp_decision_water_amount_rule_0">
+        <description>不调用估算</description>
+        <inputEntry id="mvp_decision_water_amount_rule_0_in_0">
+          <text>not(&quot;water_allowed&quot;)</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_0_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_0_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_0_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_0_out_0">
+          <text>&quot;not_allowed_now&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_0_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_0_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_0_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_1">
+        <inputEntry id="mvp_decision_water_amount_rule_1_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_1_in_1">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_1_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_1_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_1_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_1_out_1">
+          <text>&quot;inner_pot_geometry&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_1_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_1_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_2">
+        <description>无排水孔不适用“浇到少量出水”</description>
+        <inputEntry id="mvp_decision_water_amount_rule_2_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_2_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_2_in_2">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_2_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_2_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_2_out_0">
+          <text>&quot;unsupported_drainage&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_2_out_1">
+          <text>&quot;drainage_conditions&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_2_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_2_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_3">
+        <inputEntry id="mvp_decision_water_amount_rule_3_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_3_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_3_in_2">
+          <text>null</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_3_in_3">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_3_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_3_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_3_out_1">
+          <text>&quot;drainage_conditions&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_3_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_3_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_4">
+        <description>不以盆容积百分比兜底</description>
+        <inputEntry id="mvp_decision_water_amount_rule_4_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_4_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_4_in_2">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_4_in_3">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_4_in_4">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_4_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_4_out_1">
+          <text>&quot;substrate_materials&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_4_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_4_out_3">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_5">
+        <inputEntry id="mvp_decision_water_amount_rule_5_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_5_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_5_in_2">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_5_in_3">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_5_in_4">
+          <text>&quot;keep_moist&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_5_out_0">
+          <text>&quot;candidate&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_5_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_5_out_2">
+          <text>0.15</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_5_out_3">
+          <text>0.25</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_6">
+        <inputEntry id="mvp_decision_water_amount_rule_6_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_6_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_6_in_2">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_6_in_3">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_6_in_4">
+          <text>&quot;surface_dry&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_6_out_0">
+          <text>&quot;candidate&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_6_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_6_out_2">
+          <text>0.25</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_6_out_3">
+          <text>0.35</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_7">
+        <inputEntry id="mvp_decision_water_amount_rule_7_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_7_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_7_in_2">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_7_in_3">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_7_in_4">
+          <text>&quot;dry_wet&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_7_out_0">
+          <text>&quot;candidate&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_7_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_7_out_2">
+          <text>0.45</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_7_out_3">
+          <text>0.55</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_water_amount_rule_8">
+        <inputEntry id="mvp_decision_water_amount_rule_8_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_8_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_8_in_2">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_8_in_3">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_water_amount_rule_8_in_4">
+          <text>&quot;full_dry&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_8_out_0">
+          <text>&quot;candidate&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_8_out_1">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_8_out_2">
+          <text>0.7</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_water_amount_rule_8_out_3">
+          <text>0.85</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="mvp_decision_public_result" name="公开浇水结果">
+    <description>projectWateringReplayResult 的 candidate 出口（MVP 不使用 publicResult），assessMvpWatering 再固定 confidence=low。代码按 soilGate=pause 判断，与 watering_action=pause_watering 等价。conflicting_evidence / no_safe_single_application / not_required 三个供水分支在 MVP 中不会产生，未建模。存在检查窗口但时区缺失时另加 plant_timezone；validUntil=min(盆土有效期, 窗口覆盖终点)。</description>
+    <informationRequirement id="mvp_decision_public_result_req_0">
+      <requiredDecision href="#mvp_decision_watering_action" />
+    </informationRequirement>
+    <informationRequirement id="mvp_decision_public_result_req_1">
+      <requiredDecision href="#mvp_decision_water_amount" />
+    </informationRequirement>
+    <decisionTable id="mvp_decision_public_result_table" hitPolicy="FIRST">
+      <input id="mvp_decision_public_result_in_0" label="浇水行动">
+        <inputExpression id="mvp_decision_public_result_in_0_expr" typeRef="string">
+          <text>watering_action</text>
+        </inputExpression>
+      </input>
+      <input id="mvp_decision_public_result_in_1" label="水量结论">
+        <inputExpression id="mvp_decision_public_result_in_1_expr" typeRef="string">
+          <text>amount_status</text>
+        </inputExpression>
+      </input>
+      <output id="mvp_decision_public_result_out_0" name="result_status" label="结果状态" typeRef="string" />
+      <output id="mvp_decision_public_result_out_1" name="public_action" label="公开行动" typeRef="string" />
+      <output id="mvp_decision_public_result_out_2" name="missing_evidence" label="缺失证据" typeRef="string" />
+      <output id="mvp_decision_public_result_out_3" name="confidence" label="置信度" typeRef="string" />
+      <rule id="mvp_decision_public_result_rule_0">
+        <inputEntry id="mvp_decision_public_result_rule_0_in_0">
+          <text>&quot;temporarily_unavailable&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_0_out_0">
+          <text>&quot;temporarily_unavailable&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_0_out_1">
+          <text>&quot;temporarily_unavailable&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_0_out_2">
+          <text>&quot;published_watering_model&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_0_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_1">
+        <inputEntry id="mvp_decision_public_result_rule_1_in_0">
+          <text>&quot;pause_watering&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_1_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_1_out_0">
+          <text>&quot;ready&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_1_out_1">
+          <text>&quot;pause_watering&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_1_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_1_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_2">
+        <inputEntry id="mvp_decision_public_result_rule_2_in_0">
+          <text>&quot;review_drainage&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_2_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_2_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_2_out_1">
+          <text>&quot;review_drainage&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_2_out_2">
+          <text>&quot;drainage_conditions&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_2_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_3">
+        <inputEntry id="mvp_decision_public_result_rule_3_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_3_in_1">
+          <text>&quot;unsupported_drainage&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_3_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_3_out_1">
+          <text>&quot;review_drainage&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_3_out_2">
+          <text>&quot;drainage_conditions&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_3_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_4">
+        <description>无基线为 plant_baseline，否则 current_soil_or_pot_evidence</description>
+        <inputEntry id="mvp_decision_public_result_rule_4_in_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_4_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_4_out_0">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_4_out_1">
+          <text>&quot;insufficient_evidence&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_4_out_2">
+          <text>direct_missing_evidence</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_4_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_5">
+        <description>amountMl=建议浇入区间，netDeficitMl=净补水</description>
+        <inputEntry id="mvp_decision_public_result_rule_5_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_5_in_1">
+          <text>&quot;candidate&quot;</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_5_out_0">
+          <text>&quot;ready&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_5_out_1">
+          <text>&quot;water_allowed&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_5_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_5_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_6">
+        <description>可定性浇水但无水量</description>
+        <inputEntry id="mvp_decision_public_result_rule_6_in_0">
+          <text>&quot;water_allowed&quot;</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_6_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_6_out_0">
+          <text>&quot;ready&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_6_out_1">
+          <text>&quot;water_allowed&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_6_out_2">
+          <text>&quot;application_reference&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_6_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="mvp_decision_public_result_rule_7">
+        <description>check_later / check_now / priority_check：附检查盆土窗口</description>
+        <inputEntry id="mvp_decision_public_result_rule_7_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="mvp_decision_public_result_rule_7_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_7_out_0">
+          <text>&quot;ready&quot;</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_7_out_1">
+          <text>watering_action</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_7_out_2">
+          <text>null</text>
+        </outputEntry>
+        <outputEntry id="mvp_decision_public_result_rule_7_out_3">
+          <text>&quot;low&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <textAnnotation id="mvp_annotation_wall_evaporation">
+    <text>盆壁蒸发 κ（素烧陶等透气盆壁）：未纳入模型，待验证票 z8v0kmvewm；当前所有盆按不透气盆壁计算。</text>
+  </textAnnotation>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="mvp_watering_decisions_diagram" name="MVP 浇水决策（care-watering-mvp/v3，兼容 v1/v2）">
+      <dmndi:DMNShape id="mvp_input_plant_baseline_shape" dmnElementRef="mvp_input_plant_baseline">
+        <dc:Bounds x="360" y="245" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_soil_observation_shape" dmnElementRef="mvp_input_soil_observation">
+        <dc:Bounds x="100" y="505" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_last_confirmed_watering_shape" dmnElementRef="mvp_input_last_confirmed_watering">
+        <dc:Bounds x="620" y="505" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_policy_snapshot_shape" dmnElementRef="mvp_input_policy_snapshot">
+        <dc:Bounds x="1140" y="505" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_measured_pot_shape" dmnElementRef="mvp_input_measured_pot">
+        <dc:Bounds x="2180" y="765" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_substrate_materials_shape" dmnElementRef="mvp_input_substrate_materials">
+        <dc:Bounds x="1660" y="895" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_lux_reading_shape" dmnElementRef="mvp_input_lux_reading">
+        <dc:Bounds x="100" y="1155" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_outdoor_radiation_shape" dmnElementRef="mvp_input_outdoor_radiation">
+        <dc:Bounds x="360" y="1285" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_indoor_vpd_shape" dmnElementRef="mvp_input_indoor_vpd">
+        <dc:Bounds x="880" y="1155" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_light_response_shape" dmnElementRef="mvp_knowledge_light_response">
+        <dc:Bounds x="100" y="1020" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_vpd_shape" dmnElementRef="mvp_knowledge_vpd">
+        <dc:Bounds x="620" y="1280" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_demand_shape" dmnElementRef="mvp_knowledge_demand">
+        <dc:Bounds x="880" y="1020" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_input_primary_material_shape" dmnElementRef="mvp_input_primary_material">
+        <dc:Bounds x="2180" y="1025" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_reference_pot_shape" dmnElementRef="mvp_knowledge_reference_pot">
+        <dc:Bounds x="1140" y="890" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_cultivation_shape" dmnElementRef="mvp_knowledge_cultivation">
+        <dc:Bounds x="880" y="890" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_gap_fill_shape" dmnElementRef="mvp_knowledge_gap_fill">
+        <dc:Bounds x="360" y="890" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_annotation_wall_evaporation_shape" dmnElementRef="mvp_annotation_wall_evaporation">
+        <dc:Bounds x="1400" y="880" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_soil_fraction_shape" dmnElementRef="mvp_knowledge_soil_fraction">
+        <dc:Bounds x="360" y="370" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_soil_validity_shape" dmnElementRef="mvp_knowledge_soil_validity">
+        <dc:Bounds x="100" y="630" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_light_shape" dmnElementRef="mvp_knowledge_light">
+        <dc:Bounds x="100" y="1280" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_substrates_shape" dmnElementRef="mvp_knowledge_substrates">
+        <dc:Bounds x="1400" y="1020" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_knowledge_amount_shape" dmnElementRef="mvp_knowledge_amount">
+        <dc:Bounds x="1660" y="240" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_moisture_group_shape" dmnElementRef="mvp_decision_moisture_group">
+        <dc:Bounds x="620" y="230" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_light_response_shape" dmnElementRef="mvp_decision_light_response">
+        <dc:Bounds x="360" y="1010" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_vpd_envelope_shape" dmnElementRef="mvp_decision_vpd_envelope">
+        <dc:Bounds x="620" y="1140" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_environment_demand_shape" dmnElementRef="mvp_decision_environment_demand">
+        <dc:Bounds x="620" y="1010" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_pot_volume_ratio_shape" dmnElementRef="mvp_decision_pot_volume_ratio">
+        <dc:Bounds x="1140" y="750" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_substrate_available_water_shape" dmnElementRef="mvp_decision_substrate_available_water">
+        <dc:Bounds x="1920" y="1010" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_cultivation_retention_shape" dmnElementRef="mvp_decision_cultivation_retention">
+        <dc:Bounds x="880" y="750" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_gap_fill_shape" dmnElementRef="mvp_decision_gap_fill">
+        <dc:Bounds x="620" y="880" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_drying_progress_shape" dmnElementRef="mvp_decision_drying_progress">
+        <dc:Bounds x="620" y="750" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_soil_validity_shape" dmnElementRef="mvp_decision_soil_validity">
+        <dc:Bounds x="360" y="490" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_soil_mapping_shape" dmnElementRef="mvp_decision_soil_mapping">
+        <dc:Bounds x="620" y="360" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_current_cycle_window_shape" dmnElementRef="mvp_decision_current_cycle_window">
+        <dc:Bounds x="880" y="490" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_soil_gate_shape" dmnElementRef="mvp_decision_soil_gate">
+        <dc:Bounds x="1140" y="360" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_drying_window_state_shape" dmnElementRef="mvp_decision_drying_window_state">
+        <dc:Bounds x="1140" y="620" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_pot_safety_shape" dmnElementRef="mvp_decision_pot_safety">
+        <dc:Bounds x="1400" y="750" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_plant_light_anchor_shape" dmnElementRef="mvp_decision_plant_light_anchor">
+        <dc:Bounds x="360" y="1140" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_watering_action_shape" dmnElementRef="mvp_decision_watering_action">
+        <dc:Bounds x="1400" y="490" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_substrate_properties_shape" dmnElementRef="mvp_decision_substrate_properties">
+        <dc:Bounds x="1660" y="1010" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_water_amount_shape" dmnElementRef="mvp_decision_water_amount">
+        <dc:Bounds x="1660" y="360" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="mvp_decision_public_result_shape" dmnElementRef="mvp_decision_public_result">
+        <dc:Bounds x="1920" y="490" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="mvp_decision_moisture_group_req_0_edge" dmnElementRef="mvp_decision_moisture_group_req_0">
+        <di:waypoint x="540" y="270" />
+        <di:waypoint x="620" y="270" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_light_response_req_0_edge" dmnElementRef="mvp_decision_light_response_req_0">
+        <di:waypoint x="450" y="1140" />
+        <di:waypoint x="450" y="1090" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_light_response_req_1_edge" dmnElementRef="mvp_decision_light_response_req_1">
+        <di:waypoint x="280" y="1050" />
+        <di:waypoint x="360" y="1050" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_vpd_envelope_req_0_edge" dmnElementRef="mvp_decision_vpd_envelope_req_0">
+        <di:waypoint x="880" y="1180" />
+        <di:waypoint x="800" y="1180" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_vpd_envelope_req_1_edge" dmnElementRef="mvp_decision_vpd_envelope_req_1">
+        <di:waypoint x="710" y="1280" />
+        <di:waypoint x="710" y="1220" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_environment_demand_req_0_edge" dmnElementRef="mvp_decision_environment_demand_req_0">
+        <di:waypoint x="540" y="1050" />
+        <di:waypoint x="620" y="1050" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_environment_demand_req_1_edge" dmnElementRef="mvp_decision_environment_demand_req_1">
+        <di:waypoint x="710" y="1140" />
+        <di:waypoint x="710" y="1090" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_environment_demand_req_2_edge" dmnElementRef="mvp_decision_environment_demand_req_2">
+        <di:waypoint x="880" y="810" />
+        <di:waypoint x="820" y="810" />
+        <di:waypoint x="820" y="1030" />
+        <di:waypoint x="800" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_environment_demand_req_3_edge" dmnElementRef="mvp_decision_environment_demand_req_3">
+        <di:waypoint x="880" y="1050" />
+        <di:waypoint x="800" y="1050" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_pot_volume_ratio_req_0_edge" dmnElementRef="mvp_decision_pot_volume_ratio_req_0">
+        <di:waypoint x="2180" y="790" />
+        <di:waypoint x="1600" y="790" />
+        <di:waypoint x="1600" y="850" />
+        <di:waypoint x="1340" y="850" />
+        <di:waypoint x="1340" y="810" />
+        <di:waypoint x="1320" y="810" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_pot_volume_ratio_req_1_edge" dmnElementRef="mvp_decision_pot_volume_ratio_req_1">
+        <di:waypoint x="1230" y="890" />
+        <di:waypoint x="1230" y="830" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_substrate_available_water_req_0_edge" dmnElementRef="mvp_decision_substrate_available_water_req_0">
+        <di:waypoint x="1840" y="1050" />
+        <di:waypoint x="1920" y="1050" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_substrate_available_water_req_1_edge" dmnElementRef="mvp_decision_substrate_available_water_req_1">
+        <di:waypoint x="1840" y="920" />
+        <di:waypoint x="1950" y="920" />
+        <di:waypoint x="1950" y="1010" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_substrate_available_water_req_2_edge" dmnElementRef="mvp_decision_substrate_available_water_req_2">
+        <di:waypoint x="2180" y="1050" />
+        <di:waypoint x="2100" y="1050" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_cultivation_retention_req_0_edge" dmnElementRef="mvp_decision_cultivation_retention_req_0">
+        <di:waypoint x="1140" y="790" />
+        <di:waypoint x="1060" y="790" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_cultivation_retention_req_1_edge" dmnElementRef="mvp_decision_cultivation_retention_req_1">
+        <di:waypoint x="1950" y="1090" />
+        <di:waypoint x="1950" y="1110" />
+        <di:waypoint x="1080" y="1110" />
+        <di:waypoint x="1080" y="810" />
+        <di:waypoint x="1060" y="810" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_cultivation_retention_req_2_edge" dmnElementRef="mvp_decision_cultivation_retention_req_2">
+        <di:waypoint x="970" y="890" />
+        <di:waypoint x="970" y="830" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_gap_fill_req_0_edge" dmnElementRef="mvp_decision_gap_fill_req_0">
+        <di:waypoint x="710" y="1010" />
+        <di:waypoint x="710" y="960" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_gap_fill_req_1_edge" dmnElementRef="mvp_decision_gap_fill_req_1">
+        <di:waypoint x="540" y="920" />
+        <di:waypoint x="620" y="920" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_drying_progress_req_0_edge" dmnElementRef="mvp_decision_drying_progress_req_0">
+        <di:waypoint x="710" y="555" />
+        <di:waypoint x="710" y="750" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_drying_progress_req_1_edge" dmnElementRef="mvp_decision_drying_progress_req_1">
+        <di:waypoint x="710" y="880" />
+        <di:waypoint x="710" y="830" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_drying_progress_req_2_edge" dmnElementRef="mvp_decision_drying_progress_req_2">
+        <di:waypoint x="880" y="790" />
+        <di:waypoint x="800" y="790" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_drying_progress_req_3_edge" dmnElementRef="mvp_decision_drying_progress_req_3">
+        <di:waypoint x="360" y="270" />
+        <di:waypoint x="80" y="270" />
+        <di:waypoint x="80" y="770" />
+        <di:waypoint x="620" y="770" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_validity_req_0_edge" dmnElementRef="mvp_decision_soil_validity_req_0">
+        <di:waypoint x="280" y="530" />
+        <di:waypoint x="360" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_validity_req_1_edge" dmnElementRef="mvp_decision_soil_validity_req_1">
+        <di:waypoint x="620" y="530" />
+        <di:waypoint x="540" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_validity_req_2_edge" dmnElementRef="mvp_decision_soil_validity_req_2">
+        <di:waypoint x="650" y="750" />
+        <di:waypoint x="650" y="590" />
+        <di:waypoint x="510" y="590" />
+        <di:waypoint x="510" y="570" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_validity_req_3_edge" dmnElementRef="mvp_decision_soil_validity_req_3">
+        <di:waypoint x="280" y="640" />
+        <di:waypoint x="390" y="640" />
+        <di:waypoint x="390" y="570" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_mapping_req_0_edge" dmnElementRef="mvp_decision_soil_mapping_req_0">
+        <di:waypoint x="710" y="310" />
+        <di:waypoint x="710" y="360" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_mapping_req_1_edge" dmnElementRef="mvp_decision_soil_mapping_req_1">
+        <di:waypoint x="250" y="505" />
+        <di:waypoint x="250" y="460" />
+        <di:waypoint x="650" y="460" />
+        <di:waypoint x="650" y="440" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_mapping_req_2_edge" dmnElementRef="mvp_decision_soil_mapping_req_2">
+        <di:waypoint x="540" y="510" />
+        <di:waypoint x="600" y="510" />
+        <di:waypoint x="600" y="480" />
+        <di:waypoint x="670" y="480" />
+        <di:waypoint x="670" y="440" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_mapping_req_3_edge" dmnElementRef="mvp_decision_soil_mapping_req_3">
+        <di:waypoint x="540" y="400" />
+        <di:waypoint x="620" y="400" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_current_cycle_window_req_0_edge" dmnElementRef="mvp_decision_current_cycle_window_req_0">
+        <di:waypoint x="800" y="420" />
+        <di:waypoint x="910" y="420" />
+        <di:waypoint x="910" y="490" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_current_cycle_window_req_1_edge" dmnElementRef="mvp_decision_current_cycle_window_req_1">
+        <di:waypoint x="800" y="530" />
+        <di:waypoint x="880" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_current_cycle_window_req_2_edge" dmnElementRef="mvp_decision_current_cycle_window_req_2">
+        <di:waypoint x="750" y="750" />
+        <di:waypoint x="750" y="590" />
+        <di:waypoint x="910" y="590" />
+        <di:waypoint x="910" y="570" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_gate_req_0_edge" dmnElementRef="mvp_decision_soil_gate_req_0">
+        <di:waypoint x="800" y="400" />
+        <di:waypoint x="1140" y="400" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_soil_gate_req_1_edge" dmnElementRef="mvp_decision_soil_gate_req_1">
+        <di:waypoint x="1030" y="490" />
+        <di:waypoint x="1030" y="420" />
+        <di:waypoint x="1140" y="420" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_drying_window_state_req_0_edge" dmnElementRef="mvp_decision_drying_window_state_req_0">
+        <di:waypoint x="1030" y="570" />
+        <di:waypoint x="1030" y="640" />
+        <di:waypoint x="1140" y="640" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_drying_window_state_req_1_edge" dmnElementRef="mvp_decision_drying_window_state_req_1">
+        <di:waypoint x="770" y="750" />
+        <di:waypoint x="770" y="680" />
+        <di:waypoint x="1140" y="680" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_pot_safety_req_0_edge" dmnElementRef="mvp_decision_pot_safety_req_0">
+        <di:waypoint x="2210" y="765" />
+        <di:waypoint x="2210" y="740" />
+        <di:waypoint x="1600" y="740" />
+        <di:waypoint x="1600" y="770" />
+        <di:waypoint x="1580" y="770" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_plant_light_anchor_req_0_edge" dmnElementRef="mvp_decision_plant_light_anchor_req_0">
+        <di:waypoint x="280" y="1180" />
+        <di:waypoint x="360" y="1180" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_plant_light_anchor_req_1_edge" dmnElementRef="mvp_decision_plant_light_anchor_req_1">
+        <di:waypoint x="450" y="1285" />
+        <di:waypoint x="450" y="1220" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_plant_light_anchor_req_2_edge" dmnElementRef="mvp_decision_plant_light_anchor_req_2">
+        <di:waypoint x="280" y="1290" />
+        <di:waypoint x="340" y="1290" />
+        <di:waypoint x="340" y="1200" />
+        <di:waypoint x="360" y="1200" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_watering_action_req_0_edge" dmnElementRef="mvp_decision_watering_action_req_0">
+        <di:waypoint x="1320" y="530" />
+        <di:waypoint x="1400" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_watering_action_req_1_edge" dmnElementRef="mvp_decision_watering_action_req_1">
+        <di:waypoint x="800" y="290" />
+        <di:waypoint x="1450" y="290" />
+        <di:waypoint x="1450" y="490" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_watering_action_req_2_edge" dmnElementRef="mvp_decision_watering_action_req_2">
+        <di:waypoint x="1320" y="420" />
+        <di:waypoint x="1430" y="420" />
+        <di:waypoint x="1430" y="490" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_watering_action_req_3_edge" dmnElementRef="mvp_decision_watering_action_req_3">
+        <di:waypoint x="1320" y="640" />
+        <di:waypoint x="1430" y="640" />
+        <di:waypoint x="1430" y="570" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_watering_action_req_4_edge" dmnElementRef="mvp_decision_watering_action_req_4">
+        <di:waypoint x="1490" y="750" />
+        <di:waypoint x="1490" y="570" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_substrate_properties_req_0_edge" dmnElementRef="mvp_decision_substrate_properties_req_0">
+        <di:waypoint x="1750" y="945" />
+        <di:waypoint x="1750" y="1010" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_substrate_properties_req_1_edge" dmnElementRef="mvp_decision_substrate_properties_req_1">
+        <di:waypoint x="1580" y="1050" />
+        <di:waypoint x="1660" y="1050" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_water_amount_req_0_edge" dmnElementRef="mvp_decision_water_amount_req_0">
+        <di:waypoint x="1580" y="510" />
+        <di:waypoint x="1690" y="510" />
+        <di:waypoint x="1690" y="440" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_water_amount_req_1_edge" dmnElementRef="mvp_decision_water_amount_req_1">
+        <di:waypoint x="800" y="270" />
+        <di:waypoint x="1640" y="270" />
+        <di:waypoint x="1640" y="380" />
+        <di:waypoint x="1660" y="380" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_water_amount_req_2_edge" dmnElementRef="mvp_decision_water_amount_req_2">
+        <di:waypoint x="2070" y="1010" />
+        <di:waypoint x="2070" y="830" />
+        <di:waypoint x="2380" y="830" />
+        <di:waypoint x="2380" y="400" />
+        <di:waypoint x="1840" y="400" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_water_amount_req_3_edge" dmnElementRef="mvp_decision_water_amount_req_3">
+        <di:waypoint x="2230" y="765" />
+        <di:waypoint x="2230" y="420" />
+        <di:waypoint x="1840" y="420" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_water_amount_req_4_edge" dmnElementRef="mvp_decision_water_amount_req_4">
+        <di:waypoint x="1750" y="300" />
+        <di:waypoint x="1750" y="360" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_public_result_req_0_edge" dmnElementRef="mvp_decision_public_result_req_0">
+        <di:waypoint x="1580" y="530" />
+        <di:waypoint x="1920" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="mvp_decision_public_result_req_1_edge" dmnElementRef="mvp_decision_public_result_req_1">
+        <di:waypoint x="1810" y="440" />
+        <di:waypoint x="1810" y="510" />
+        <di:waypoint x="1920" y="510" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="long_term_care_rules" name="长期养护规则（long-term-care/v1）" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>只读可视化：反映 src/care/domain/long-term-care-rules.ts 中建议确认、检查计划时刻与浇水补记三条规则。未接入规则引擎。</description>
+  <inputData id="ltc_input_watering_result" name="公开浇水结果">
+    <description>来自 mvp_watering_decisions 的公开结果（status、details.action、checkWindow、generatedAt）。长期植物建议的事务内同时写结果与建议。</description>
+    <variable id="ltc_input_watering_result_variable" name="watering_result" typeRef="Any" />
+  </inputData>
+  <knowledgeSource id="ltc_knowledge_rules" name="long-term-care/v1 硬规则">
+    <description>U3 浇水补记 ≤7 天；U5 检查计划最多推迟 7 天；U7 无最晚端建议有效 24 小时；Q1/Q5 主代理裁决；§12 计划过期宽限 care.plans.expiry_grace_hours=72（与 soilEvidenceMaxHours=72 对齐）。均为代码常量，不可运营配置。</description>
+  </knowledgeSource>
+  <inputData id="ltc_input_care_plan" name="待扫描计划（状态与计划时刻）">
+    <description>care_plans 行的 status、scheduled_at_ms；比较时刻为本次扫描运行开始时刻（单次运行内所有批次相同）。</description>
+    <variable id="ltc_input_care_plan_variable" name="care_plan" typeRef="Any" />
+  </inputData>
+  <inputData id="ltc_input_confirm_request" name="确认请求（schedule_check）">
+    <description>{ decision: &quot;schedule_check&quot;, scheduledAt? }；窗口端点取自锁定建议中保存的结果。</description>
+    <variable id="ltc_input_confirm_request_variable" name="confirm_request" typeRef="Any" />
+  </inputData>
+  <inputData id="ltc_input_watering_fact_request" name="浇水事实请求">
+    <description>occurredAt、amountMl?；来自 POST facts、确认 record_watering 或完成计划附带浇水。</description>
+    <variable id="ltc_input_watering_fact_request_variable" name="watering_fact_request" typeRef="Any" />
+  </inputData>
+  <decision id="ltc_decision_proposal" name="是否生成可确认建议">
+    <description>isConfirmableWateringResult＋resolveProposalValidUntil：只对长期植物写 care_proposals（proposed）。</description>
+    <informationRequirement id="ltc_decision_proposal_req_0">
+      <requiredInput href="#ltc_input_watering_result" />
+    </informationRequirement>
+    <authorityRequirement id="ltc_decision_proposal_req_1">
+      <requiredAuthority href="#ltc_knowledge_rules" />
+    </authorityRequirement>
+    <decisionTable id="ltc_decision_proposal_table" hitPolicy="FIRST">
+      <input id="ltc_decision_proposal_in_0" label="结果状态">
+        <inputExpression id="ltc_decision_proposal_in_0_expr" typeRef="string">
+          <text>watering_result.status</text>
+        </inputExpression>
+      </input>
+      <input id="ltc_decision_proposal_in_1" label="公开行动">
+        <inputExpression id="ltc_decision_proposal_in_1_expr" typeRef="string">
+          <text>watering_result.details.action</text>
+        </inputExpression>
+      </input>
+      <input id="ltc_decision_proposal_in_2" label="窗口最晚端晚于生成时刻">
+        <inputExpression id="ltc_decision_proposal_in_2_expr" typeRef="boolean">
+          <text>checkWindow.latestAt &gt; generatedAt</text>
+        </inputExpression>
+      </input>
+      <output id="ltc_decision_proposal_out_0" name="proposal_created" label="生成建议" typeRef="boolean" />
+      <output id="ltc_decision_proposal_out_1" name="proposal_valid_until_rule" label="建议有效截止" typeRef="string" />
+      <rule id="ltc_decision_proposal_rule_0">
+        <inputEntry id="ltc_decision_proposal_rule_0_in_0">
+          <text>&quot;ready&quot;</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_proposal_rule_0_in_1">
+          <text>&quot;water_allowed&quot;,&quot;check_later&quot;,&quot;check_now&quot;,&quot;priority_check&quot;</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_proposal_rule_0_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_proposal_rule_0_out_0">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="ltc_decision_proposal_rule_0_out_1">
+          <text>&quot;checkWindow.latestAt&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="ltc_decision_proposal_rule_1">
+        <description>无最晚端或不晚于生成时刻（Q1）</description>
+        <inputEntry id="ltc_decision_proposal_rule_1_in_0">
+          <text>&quot;ready&quot;</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_proposal_rule_1_in_1">
+          <text>&quot;water_allowed&quot;,&quot;check_later&quot;,&quot;check_now&quot;,&quot;priority_check&quot;</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_proposal_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_proposal_rule_1_out_0">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="ltc_decision_proposal_rule_1_out_1">
+          <text>&quot;generatedAt + 24h&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="ltc_decision_proposal_rule_2">
+        <description>pause_watering、review_drainage、insufficient_evidence、暂不可用：只返回结果，proposalRef=null</description>
+        <inputEntry id="ltc_decision_proposal_rule_2_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_proposal_rule_2_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_proposal_rule_2_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_proposal_rule_2_out_0">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="ltc_decision_proposal_rule_2_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="ltc_decision_check_schedule" name="检查计划时刻">
+    <description>resolveCheckScheduledAt（U5/Q5）：下界 = max(最早端 ?? now, now)；上界 = 最晚端（晚于建议生成时刻时）否则（最早端 ?? now）+ 7 天。</description>
+    <informationRequirement id="ltc_decision_check_schedule_req_0">
+      <requiredInput href="#ltc_input_confirm_request" />
+    </informationRequirement>
+    <informationRequirement id="ltc_decision_check_schedule_req_2">
+      <requiredDecision href="#ltc_decision_proposal" />
+    </informationRequirement>
+    <authorityRequirement id="ltc_decision_check_schedule_req_1">
+      <requiredAuthority href="#ltc_knowledge_rules" />
+    </authorityRequirement>
+    <decisionTable id="ltc_decision_check_schedule_table" hitPolicy="FIRST">
+      <input id="ltc_decision_check_schedule_in_0" label="用户自选时刻">
+        <inputExpression id="ltc_decision_check_schedule_in_0_expr" typeRef="boolean">
+          <text>confirm_request.scheduledAt != null</text>
+        </inputExpression>
+      </input>
+      <input id="ltc_decision_check_schedule_in_1" label="自选时刻在允许范围内">
+        <inputExpression id="ltc_decision_check_schedule_in_1_expr" typeRef="boolean">
+          <text>scheduledAt in [下界..上界]</text>
+        </inputExpression>
+      </input>
+      <output id="ltc_decision_check_schedule_out_0" name="schedule_accepted" label="接受" typeRef="boolean" />
+      <output id="ltc_decision_check_schedule_out_1" name="scheduled_at_rule" label="计划时刻" typeRef="string" />
+      <rule id="ltc_decision_check_schedule_rule_0">
+        <description>缺省避免落在过去</description>
+        <inputEntry id="ltc_decision_check_schedule_rule_0_in_0">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_check_schedule_rule_0_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_check_schedule_rule_0_out_0">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="ltc_decision_check_schedule_rule_0_out_1">
+          <text>&quot;max(checkWindow.earliestAt ?? now, now)&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="ltc_decision_check_schedule_rule_1">
+        <inputEntry id="ltc_decision_check_schedule_rule_1_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_check_schedule_rule_1_in_1">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_check_schedule_rule_1_out_0">
+          <text>true</text>
+        </outputEntry>
+        <outputEntry id="ltc_decision_check_schedule_rule_1_out_1">
+          <text>&quot;scheduledAt&quot;</text>
+        </outputEntry>
+      </rule>
+      <rule id="ltc_decision_check_schedule_rule_2">
+        <description>400 VALIDATION_FAILED：检查时间须在建议的检查窗口内</description>
+        <inputEntry id="ltc_decision_check_schedule_rule_2_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_check_schedule_rule_2_in_1">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_check_schedule_rule_2_out_0">
+          <text>false</text>
+        </outputEntry>
+        <outputEntry id="ltc_decision_check_schedule_rule_2_out_1">
+          <text>null</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="ltc_decision_plan_expired" name="计划是否过期">
+    <description>§12.1：只有 planned 可过期；运行开始时刻 − scheduledAt 严格大于 72 小时才过期，恰好 72 小时不过期。由每小时定时事件函数 care-plan-expiry 以条件更新 status=planned AND scheduled_at_ms &lt; 开始时刻−72h 执行（version+1）；请求路径不做读时过期。</description>
+    <informationRequirement id="ltc_decision_plan_expired_req_0">
+      <requiredInput href="#ltc_input_care_plan" />
+    </informationRequirement>
+    <authorityRequirement id="ltc_decision_plan_expired_req_1">
+      <requiredAuthority href="#ltc_knowledge_rules" />
+    </authorityRequirement>
+    <decisionTable id="ltc_decision_plan_expired_table" hitPolicy="FIRST">
+      <input id="ltc_decision_plan_expired_in_0" label="计划状态">
+        <inputExpression id="ltc_decision_plan_expired_in_0_expr" typeRef="string">
+          <text>care_plan.status</text>
+        </inputExpression>
+      </input>
+      <input id="ltc_decision_plan_expired_in_1" label="距计划时刻小时数">
+        <inputExpression id="ltc_decision_plan_expired_in_1_expr" typeRef="number">
+          <text>(runStartedAt - care_plan.scheduledAt) / 1h</text>
+        </inputExpression>
+      </input>
+      <output id="ltc_decision_plan_expired_out_0" name="plan_expired" label="标记为 expired" typeRef="boolean" />
+      <rule id="ltc_decision_plan_expired_rule_0">
+        <description>写 status=expired、version+1；日历与 completedFactRef 不变</description>
+        <inputEntry id="ltc_decision_plan_expired_rule_0_in_0">
+          <text>&quot;planned&quot;</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_plan_expired_rule_0_in_1">
+          <text>&gt; 72</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_plan_expired_rule_0_out_0">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="ltc_decision_plan_expired_rule_1">
+        <description>completed、cancelled、expired 永不改写；恰好 72 小时不过期</description>
+        <inputEntry id="ltc_decision_plan_expired_rule_1_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_plan_expired_rule_1_in_1">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_plan_expired_rule_1_out_0">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="ltc_decision_watering_occurred_at" name="浇水时刻补记校验">
+    <description>validateWateringOccurredAt（U3）。</description>
+    <informationRequirement id="ltc_decision_watering_occurred_at_req_0">
+      <requiredInput href="#ltc_input_watering_fact_request" />
+    </informationRequirement>
+    <authorityRequirement id="ltc_decision_watering_occurred_at_req_1">
+      <requiredAuthority href="#ltc_knowledge_rules" />
+    </authorityRequirement>
+    <decisionTable id="ltc_decision_watering_occurred_at_table" hitPolicy="FIRST">
+      <input id="ltc_decision_watering_occurred_at_in_0" label="不晚于现在">
+        <inputExpression id="ltc_decision_watering_occurred_at_in_0_expr" typeRef="boolean">
+          <text>occurredAt &lt;= now</text>
+        </inputExpression>
+      </input>
+      <input id="ltc_decision_watering_occurred_at_in_1" label="不早于 7 天前">
+        <inputExpression id="ltc_decision_watering_occurred_at_in_1_expr" typeRef="boolean">
+          <text>occurredAt &gt;= now - 7d</text>
+        </inputExpression>
+      </input>
+      <input id="ltc_decision_watering_occurred_at_in_2" label="不早于植物加入花园">
+        <inputExpression id="ltc_decision_watering_occurred_at_in_2_expr" typeRef="boolean">
+          <text>occurredAt &gt;= plantCreatedAt</text>
+        </inputExpression>
+      </input>
+      <output id="ltc_decision_watering_occurred_at_out_0" name="occurred_at_valid" label="合法" typeRef="boolean" />
+      <rule id="ltc_decision_watering_occurred_at_rule_0">
+        <inputEntry id="ltc_decision_watering_occurred_at_rule_0_in_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_watering_occurred_at_rule_0_in_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_watering_occurred_at_rule_0_in_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_watering_occurred_at_rule_0_out_0">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="ltc_decision_watering_occurred_at_rule_1">
+        <description>400 VALIDATION_FAILED：浇水时间须在最近 7 天内、不晚于现在且不早于植物加入花园</description>
+        <inputEntry id="ltc_decision_watering_occurred_at_rule_1_in_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_watering_occurred_at_rule_1_in_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="ltc_decision_watering_occurred_at_rule_1_in_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="ltc_decision_watering_occurred_at_rule_1_out_0">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="long_term_care_rules_diagram" name="长期养护规则（long-term-care/v1）">
+      <dmndi:DMNShape id="ltc_input_watering_result_shape" dmnElementRef="ltc_input_watering_result">
+        <dc:Bounds x="100" y="245" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_knowledge_rules_shape" dmnElementRef="ltc_knowledge_rules">
+        <dc:Bounds x="360" y="370" width="180" height="60" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_input_care_plan_shape" dmnElementRef="ltc_input_care_plan">
+        <dc:Bounds x="880" y="505" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_input_confirm_request_shape" dmnElementRef="ltc_input_confirm_request">
+        <dc:Bounds x="620" y="245" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_input_watering_fact_request_shape" dmnElementRef="ltc_input_watering_fact_request">
+        <dc:Bounds x="100" y="505" width="180" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_decision_proposal_shape" dmnElementRef="ltc_decision_proposal">
+        <dc:Bounds x="360" y="230" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_decision_check_schedule_shape" dmnElementRef="ltc_decision_check_schedule">
+        <dc:Bounds x="620" y="360" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_decision_plan_expired_shape" dmnElementRef="ltc_decision_plan_expired">
+        <dc:Bounds x="620" y="490" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="ltc_decision_watering_occurred_at_shape" dmnElementRef="ltc_decision_watering_occurred_at">
+        <dc:Bounds x="360" y="490" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="ltc_decision_proposal_req_0_edge" dmnElementRef="ltc_decision_proposal_req_0">
+        <di:waypoint x="280" y="270" />
+        <di:waypoint x="360" y="270" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_proposal_req_1_edge" dmnElementRef="ltc_decision_proposal_req_1">
+        <di:waypoint x="450" y="370" />
+        <di:waypoint x="450" y="310" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_check_schedule_req_0_edge" dmnElementRef="ltc_decision_check_schedule_req_0">
+        <di:waypoint x="710" y="295" />
+        <di:waypoint x="710" y="360" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_check_schedule_req_1_edge" dmnElementRef="ltc_decision_check_schedule_req_1">
+        <di:waypoint x="540" y="400" />
+        <di:waypoint x="620" y="400" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_check_schedule_req_2_edge" dmnElementRef="ltc_decision_check_schedule_req_2">
+        <di:waypoint x="540" y="290" />
+        <di:waypoint x="600" y="290" />
+        <di:waypoint x="600" y="380" />
+        <di:waypoint x="620" y="380" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_plan_expired_req_0_edge" dmnElementRef="ltc_decision_plan_expired_req_0">
+        <di:waypoint x="880" y="530" />
+        <di:waypoint x="800" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_plan_expired_req_1_edge" dmnElementRef="ltc_decision_plan_expired_req_1">
+        <di:waypoint x="540" y="420" />
+        <di:waypoint x="600" y="420" />
+        <di:waypoint x="600" y="510" />
+        <di:waypoint x="620" y="510" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_watering_occurred_at_req_0_edge" dmnElementRef="ltc_decision_watering_occurred_at_req_0">
+        <di:waypoint x="280" y="530" />
+        <di:waypoint x="360" y="530" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="ltc_decision_watering_occurred_at_req_1_edge" dmnElementRef="ltc_decision_watering_occurred_at_req_1">
+        <di:waypoint x="450" y="430" />
+        <di:waypoint x="450" y="490" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

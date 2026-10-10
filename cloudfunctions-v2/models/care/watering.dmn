@@ -49,7 +49,7 @@
     <variable id="watering_variable_calculated_dry_progress" name="calculated_dry_progress" typeRef="Any" />
   </inputData>
   <inputData id="watering_input_predicted_window_state" name="后端预测检查窗口状态">
-    <description>before、within、overdue 或 null；无起点或其他输入时不得猜测窗口。</description>
+    <description>before、within、overdue、uncertain 或 null；无起点或其他输入时不得猜测窗口。</description>
     <variable id="watering_variable_predicted_window_state" name="predicted_window_state" typeRef="string" />
   </inputData>
   <inputData id="watering_input_soil_evidence_reliable" name="盆土证据可靠且未过期">
@@ -287,7 +287,25 @@
           <text>-</text>
         </inputEntry>
         <outputEntry id="watering_value_watering_action_2">
-          <text>"inspect_drainage"</text>
+          <text>"review_drainage"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_7">
+        <description>实际内盆证据不足时不按窗口给检查建议（evaluateWateringDecision）</description>
+        <inputEntry id="watering_entry_watering_action_7_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_7_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_7_2">
+          <text>"insufficient_evidence"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_7_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_7">
+          <text>"insufficient_evidence"</text>
         </outputEntry>
       </rule>
       <rule id="watering_rule_watering_action_3">
@@ -308,24 +326,6 @@
           <text>"water_allowed"</text>
         </outputEntry>
       </rule>
-      <rule id="watering_rule_watering_action_4">
-        <description>预测只建议检查，不自动浇水</description>
-        <inputEntry id="watering_entry_watering_action_4_0">
-          <text>true</text>
-        </inputEntry>
-        <inputEntry id="watering_entry_watering_action_4_1">
-          <text>-</text>
-        </inputEntry>
-        <inputEntry id="watering_entry_watering_action_4_2">
-          <text>-</text>
-        </inputEntry>
-        <inputEntry id="watering_entry_watering_action_4_3">
-          <text>"within", "overdue"</text>
-        </inputEntry>
-        <outputEntry id="watering_value_watering_action_4">
-          <text>"inspect_soil"</text>
-        </outputEntry>
-      </rule>
       <rule id="watering_rule_watering_action_5">
         <description>尚未进入检查窗口</description>
         <inputEntry id="watering_entry_watering_action_5_0">
@@ -341,7 +341,43 @@
           <text>"before"</text>
         </inputEntry>
         <outputEntry id="watering_value_watering_action_5">
-          <text>"wait_and_observe"</text>
+          <text>"check_later"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_8">
+        <description>预测超窗只要求优先检查，不代表已经缺水</description>
+        <inputEntry id="watering_entry_watering_action_8_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_8_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_8_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_8_3">
+          <text>"overdue"</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_8">
+          <text>"priority_check"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_4">
+        <description>窗口内或跨阈值不确定：检查盆土后再决定</description>
+        <inputEntry id="watering_entry_watering_action_4_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_3">
+          <text>"within", "uncertain"</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_4">
+          <text>"check_now"</text>
         </outputEntry>
       </rule>
       <rule id="watering_rule_watering_action_6">
