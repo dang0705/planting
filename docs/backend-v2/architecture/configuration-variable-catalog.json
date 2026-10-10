@@ -2591,6 +2591,34 @@
       "codeLocations": []
     },
     {
+      "id": "diagnosis.evaluation.ai_budget_cny",
+      "chineseName": "视觉诊断离线评测 AI 调用预算上限",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "decimal",
+      "unit": "元（人民币）",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md"
+      ],
+      "consumers": [
+        "diagnosis 离线评测脚本",
+        "AI 成本策略"
+      ],
+      "changePolicy": "用户逐次授权评测批次预算；每批次锁定价目快照与累计成本，超额前停止",
+      "fallback": "未冻结前不得发起任何付费评测调用",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "累计成本按 usage 与价目快照实时计算；达到上限 80% 时停止新批次，任何单批不得越过上限",
+      "pendingReason": "用户 2026-10-10 口头给出上限 50 元，尚待随评测设计一并书面确认，且价目快照、单案例 token 尚未实测",
+      "blockingScope": "视觉诊断离线评测与提示词迭代的付费调用",
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
+    },
+    {
       "id": "diagnosis.fixed_packages.release_refs",
       "chineseName": "黄叶与萎蔫固定题包发布引用",
       "domain": "diagnosis",
