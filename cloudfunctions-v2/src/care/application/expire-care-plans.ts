@@ -48,6 +48,8 @@ export interface ExpireCarePlansDependencies {
   readonly runBatch: (input: CarePlanExpiryBatchInput) => Promise<number>
   /** 白名单结构化日志端口。 */
   readonly log: (event: CarePlanExpiryLogEvent) => void
+  /** 单批最多改写行数；入口从环境变量层读取（运维覆盖 100–2000），省略时取代码默认 500。 */
+  readonly batchSize?: number
 }
 
 /** 扫描入参：函数超时毫秒（来自运行时上下文）；取不到为 null。 */
@@ -77,7 +79,7 @@ export function createExpireCarePlansJob(dependencies: ExpireCarePlansDependenci
       return summary
     }
     const cutoffMs = resolveCarePlanExpiryCutoffMs(startedAtMs)
-    const limit = CARE_PLAN_EXPIRY_SCAN.batchSize
+    const limit = dependencies.batchSize ?? CARE_PLAN_EXPIRY_SCAN.batchSize
     let expiredCount = 0
     let batchCount = 0
     let outcome: CarePlanExpiryOutcome

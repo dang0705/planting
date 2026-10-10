@@ -1,5 +1,6 @@
 import type { IncomingMessage } from 'node:http'
 import Ajv, { type JSONSchemaType } from 'ajv'
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -49,13 +50,20 @@ export type SearchPlantCatalogDependencies = {
   /** 只接收脱敏请求结果的审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
+/** 目录搜索边界（全部为硬规则，取值见代码层注册表）：关键词码点上限、limit 默认 / 最小 / 最大。 */
+const catalogLimits = {
+  queryMaxCodePoints: RUNTIME_PARAMETERS.plantKnowledge.searchQueryMaxCodePoints.value,
+  defaultLimit: RUNTIME_PARAMETERS.plantKnowledge.catalogDefaultLimit.value,
+  minimumLimit: RUNTIME_PARAMETERS.plantKnowledge.catalogMinimumLimit.value,
+  maximumLimit: RUNTIME_PARAMETERS.plantKnowledge.searchResultMaxItems.value
+}
 const schema: JSONSchemaType<PlantCatalogQuery> = {
   type: 'object',
   additionalProperties: false,
   required: ['q', 'limit'],
   properties: {
-    q: { type: 'string', minLength: 1, maxLength: 64 },
-    limit: { type: 'integer', minimum: 1, maximum: 20 }
+    q: { type: 'string', minLength: 1, maxLength: catalogLimits.queryMaxCodePoints },
+    limit: { type: 'integer', minimum: catalogLimits.minimumLimit, maximum: catalogLimits.maximumLimit }
   }
 }
 const validate = new Ajv({ allErrors: true }).compile(schema)
@@ -69,7 +77,7 @@ function readQuery(request: IncomingMessage): Record<string, unknown> {
   const limit = parameters.get('limit')
   return {
     q: q?.trim().normalize('NFC'),
-    limit: limit === null ? 10 : /^\d+$/u.test(limit) ? Number(limit) : undefined
+    limit: limit === null ? catalogLimits.defaultLimit : /^\d+$/u.test(limit) ? Number(limit) : undefined
   }
 }
 /** 创建目录公开 GET；权限步骤显式不适用，其余步骤沿用固定请求链。 */

@@ -1,6 +1,7 @@
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
 import { withReadConnection, type Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
-import { lockStoredEnvironmentGroup } from '../domain/environment-profile.js'
+import { lockStoredEnvironmentGroup, plantLightFromColumns } from '../domain/environment-profile.js'
+import { deriveProfileReadiness, type ProfileReadiness } from '../domain/profile-progress.js'
 
 /** 实测盆器证据（与档案 measuredPot 同键）；任一项未知为 null。 */
 export interface UserPlantMeasuredPot {
@@ -36,6 +37,17 @@ export interface UserPlantCareContext {
   readonly bindingRef: string | null
   /** 环境档案位置的城市代码（user-plant-environment-profile/v1）；未设置为 null。care 据此取城市中心坐标。 */
   readonly cityRef: string | null
+  /** 档案中植物位置最近一次 Lux（迁移 030）；未测为 null。是否仍有效由 care 按浇水策略 luxAnchorMaxAgeDays 判定。 */
+  readonly plantLight: UserPlantStoredLight | null
+  /** 与档案完整度同一判定的就绪标记（user-plant-profile-completeness/v1 §4）。 */
+  readonly profileReadiness: ProfileReadiness
+}
+
+/** 档案中的 Lux 读数（care 命令同形：测量时间为 UTC 毫秒）。 */
+export interface UserPlantStoredLight {
+  /** 植物位置照度（Lux，非负）。 */ readonly lux: number
+  /** 测量时间 UTC 毫秒。 */ readonly measuredAtMs: number
+  /** 来源：照度计或相机估算。 */ readonly source: 'meter' | 'camera_estimate'
 }
 
 /** 读取输入：已验真主体的公开用户标识与路径中的用户植物引用。 */
@@ -51,6 +63,7 @@ const potKeys = ['actualInnerPotConfirmed', 'drainageAvailable', 'potTopDiameter
 /** 只读一次：植物、档案与最新绑定在同一条 SQL 中读出，避免拼凑不同时刻的事实。 */
 const readSql = `SELECT p.lifecycle_status, CAST(p.created_at_ms AS CHAR) AS created_at_ms, p.version AS plant_version,
     f.version AS profile_version, f.nickname, f.pot_profile_json, c.location_json,
+    c.plant_light_lux, CAST(c.plant_light_measured_at_ms AS CHAR) AS plant_light_measured_at_ms, c.plant_light_source,
     (SELECT b.catalog_taxon_ref FROM user_plant_catalog_bindings b WHERE b.user_internal_id = p.user_internal_id AND b.user_plant_internal_id = p.id
       ORDER BY b.bound_at_ms DESC, b.id DESC LIMIT 1) AS catalog_taxon_ref,
     (SELECT b.binding_ref FROM user_plant_catalog_bindings b WHERE b.user_internal_id = p.user_internal_id AND b.user_plant_internal_id = p.id
@@ -93,11 +106,15 @@ function toContext(row: Record<string, unknown>): UserPlantCareContext {
   if ((lifecycle !== 'active' && lifecycle !== 'archived') || !Number.isSafeInteger(created)) { throw new Error('用户植物上下文读回不合法') }
   const nickname = typeof row.nickname === 'string' && row.nickname.trim().length > 0 ? row.nickname.trim() : null
   const taxon = typeof row.catalog_taxon_ref === 'string' ? row.catalog_taxon_ref : null
+  const measuredPot = parseMeasuredPot(row.pot_profile_json)
+  const light = plantLightFromColumns(row.plant_light_lux ?? null, row.plant_light_measured_at_ms ?? null, row.plant_light_source ?? null)
   return { lifecycle, createdAtMs: created, plantVersion: version(row.plant_version),
     profileVersion: row.profile_version === null || row.profile_version === undefined ? null : version(row.profile_version),
-    nickname, measuredPot: parseMeasuredPot(row.pot_profile_json), catalogTaxonRef: taxon,
+    nickname, measuredPot, catalogTaxonRef: taxon,
     bindingRef: typeof row.binding_ref === 'string' ? row.binding_ref : null,
-    cityRef: lockStoredEnvironmentGroup('location', row.location_json ?? null)?.cityRef ?? null }
+    cityRef: lockStoredEnvironmentGroup('location', row.location_json ?? null)?.cityRef ?? null,
+    plantLight: light === undefined ? null : { lux: light.lux, measuredAtMs: Date.parse(light.measuredAt), source: light.source },
+    profileReadiness: deriveProfileReadiness({ catalogBound: taxon !== null, measuredPot: measuredPot ?? undefined }) }
 }
 
 /** user-plant 只读归属端口：不是本人或已删除返回 null（调用方映射 404，不泄露存在性）。 */

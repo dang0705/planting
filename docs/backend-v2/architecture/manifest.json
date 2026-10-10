@@ -14,23 +14,18 @@
     "contracts/diagnosis-knowledge-sources.md": "128fe0fd45ea0eb15ad781b67db2175ec3d199fc423e2fa6041edc33ba858302",
     "contracts/diagnosis-outcome-fields.md": "3ae1749a54b37dfb45edd1132ad7c27a8470a53571c1300f647eea1348c60cd1",
     "contracts/authenticated-ephemeral-plant-case.md": "6846d3316a32cbed04fce258c6ed7cab3f891bb98913c918a4c5b9d62b9353eb",
-    "contracts/care-environment-foundation.md": "d56119c61b8e3d7bd1bd295306ae4b9b4f03cb1135fba3cbb96689e0af82c3fe",
+    "contracts/care-environment-foundation.md": "685cd828ed2e6f70e97ed0c34f24e986e6dc524831a9b9be81680bd79b47d059",
     "contracts/watering-decision-model.md": "4ac7c2bdf09ad73912c09b1ffc6c8233eb24caabe4104e8e28c1958a2bdcdc70",
     "contracts/plant-catalog-search.md": "a478e3b694f13fcd93cdfead1410067dcd7fe9e71849c93899fa62e66a54f9fc",
     "infrastructure.md": "6a85e024a17d055d312a781bb0b7c9ed8a408fc042da549716f9893cddbe7171",
     "business-to-technical-map.md": "bdf7fb49ea6ebee96a275172dd9145f481a54e131457f0bae4d30692cc6fa212",
     "architecture-rules.md": "95d6ed2f917caf66f8f5e07efe782c682ba31939337fc738a9fee18e4b603547",
-    "configuration-and-providers.md": "5fca28e165aa1381dda57837dc5e43cb9af57ae922a0dd02bbf86710f2735f78",
-    "configuration-variable-catalog.json": "0a9e6656f211f54dd86feec30c2ab2e153000e74f4a9fdd966a1cb6c94f7fcb7",
-    "configuration-variable-catalog.md": "c884f7e7b22c5b0f7b9e8b7505f87ea471c0a6fa0ae3ecde32f140a9148eafcb"
+    "configuration-and-providers.md": "a24c00ba508fdae289004775b65d134d13ab107203115a5a6d0076b6231021ac",
+    "configuration-variable-catalog.json": "0c03626bbc77f069a3f31c6743b9216b9e18671c02ede0a366e90de86d4f7023",
+    "configuration-variable-catalog.md": "76c2cbe0e26509121f65e8e676d8f1dfc18f0ca41a1282284d79a934601473b9"
   },
   "diagrams": {
     "business": "56af49f641ebec6ed2a5b06e16634e8841b2f3cf6bebd018fde0c0b0283ef1f0",
     "infrastructure": "ec12df43919b8844f12995faf4150cabbf4e1bb0b658c58f6fa3ce62af081fdf"
-  },
-  "generatedAt": "2026-10-04T08:54:00+08:00",
-  "generationStatus": "ROOT_README_SYNCED",
-  "diagramStatus": "ROOT_README_SYNCED",
-  "syncNote": "Root README.md synced 2026-10-04 to docs/backend-v2 catalog truth (plant_search_* + SQL tropicals_species_encyclopedia_ref; Tropicals live API not MVP catalog/encyclopedia primary).",
-  "unverifiedExternalFiles": []
+  }
 }

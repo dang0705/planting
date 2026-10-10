@@ -129,6 +129,8 @@ function applySchema(): void {
     '001_identity.sql',
     '002_plant_knowledge.sql',
     '003_user_plant.sql',
+    // 030（Lux 存档）为单株读取投影新增养护环境三列。
+    '030_user_plant_care_context_plant_light.sql',
     '008_foundation.sql'
   ]) {
     const sql = fs.readFileSync(path.join(projectRoot, 'docs/backend-v2/schema', fileName), 'utf8')

@@ -1,12 +1,12 @@
 import type { MysqlTransactionContext } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import { serializeCanonicalJson, type CanonicalJsonValue } from '../../foundation/json/canonical-json-sha256.js'
-import { CARE_CONTEXT_GROUP_KEYS, lockStoredEnvironmentGroup, type EnvironmentGroups } from '../domain/environment-profile.js'
+import { CARE_CONTEXT_GROUP_KEYS, CARE_CONTEXT_JSON_GROUP_KEYS, lockStoredEnvironmentGroup, plantLightFromColumns, plantLightToColumns, type EnvironmentGroups, type PlantLightProfile } from '../domain/environment-profile.js'
 
 type Transaction = MysqlTransactionContext<Mysql2QueryConnection>
-/** 存于 `user_plant_care_contexts` 的三个分组。 */
+/** 存于 `user_plant_care_contexts` 的分组（三个 JSON 分组 + plantLight）。 */
 export type CareContextGroupKey = (typeof CARE_CONTEXT_GROUP_KEYS)[number]
-/** 三个分组的修改：省略保留、null 清除、对象替换。 */
+/** 养护环境分组的修改：省略保留、null 清除、对象替换。 */
 export type CareContextGroupPatch = { readonly [TKey in CareContextGroupKey]?: EnvironmentGroups[TKey] | null }
 /** 保存后的最终状态：未设置的分组省略。 */
 export type CareContextGroups = { readonly [TKey in CareContextGroupKey]?: EnvironmentGroups[TKey] }
@@ -38,6 +38,21 @@ const column = { location: 'location_json', lighting: 'light_environment_json', 
 /** 本合同不采集栽培方式，列为 NOT NULL，固定占位且不公开（user-plant-environment-profile/v1 §2）。 */
 const cultivationPlaceholder = 'unspecified'
 
+/** plantLight 三列的读取片段（迁移 030）；时间列转文本避免 BIGINT 精度问题。 */
+const plantLightSelect = 'plant_light_lux, CAST(plant_light_measured_at_ms AS CHAR) AS plant_light_measured_at_ms, plant_light_source'
+
+/** 一行养护环境 → 已设置的分组（JSON 分组校验 + plantLight 三列校验）；损坏数据抛错。 */
+function readGroups(row: Record<string, unknown>): Record<string, unknown> {
+  const groups: Record<string, unknown> = {}
+  for (const key of CARE_CONTEXT_JSON_GROUP_KEYS) {
+    const stored = lockStoredEnvironmentGroup(key, row[column[key]])
+    if (stored !== undefined) { groups[key] = stored }
+  }
+  const light = plantLightFromColumns(row.plant_light_lux, row.plant_light_measured_at_ms, row.plant_light_source)
+  if (light !== undefined) { groups.plantLight = light }
+  return groups
+}
+
 /** 显式事务守卫。 */
 function connectionOf(transaction: Transaction): Mysql2QueryConnection {
   if (transaction.transactionContext !== true || !transaction.connection) { throw new TypeError('环境档案写入需要显式事务') }
@@ -66,37 +81,40 @@ export function createMysqlUserPlantEnvironmentRepository() {
       const connection = connectionOf(transaction)
       const { userId, plantId } = await ownerKeys(connection, input.userRef, input.userPlantRef)
       const rows = await connection.query(
-        `SELECT location_json, light_environment_json, ventilation_environment_json, _openid FROM user_plant_care_contexts
+        `SELECT location_json, light_environment_json, ventilation_environment_json, ${plantLightSelect}, _openid FROM user_plant_care_contexts
           WHERE user_internal_id = ? AND user_plant_internal_id = ? FOR UPDATE`, [userId, plantId])
       if (rows.length > 1 || (rows.length === 1 && rows[0]!._openid !== '')) { throw new Error('养护环境记录不唯一或技术字段非法') }
-      const current: Record<string, unknown> = {}
-      for (const key of CARE_CONTEXT_GROUP_KEYS) {
-        const stored = rows.length === 1 ? lockStoredEnvironmentGroup(key, rows[0]![column[key]]) : undefined
-        if (stored !== undefined) { current[key] = stored }
-      }
+      const current: Record<string, unknown> = rows.length === 1 ? readGroups(rows[0]!) : {}
       const changedKeys = CARE_CONTEXT_GROUP_KEYS.filter(key => key in input.patch)
       if (changedKeys.length === 0) { return Object.freeze(current) as CareContextGroups }
       const next: Record<string, unknown> = { ...current }
       for (const key of changedKeys) {
         const value = input.patch[key]
-        if (value === null || value === undefined) { delete next[key] } else { next[key] = value }
+        if (value === null || value === undefined) { delete next[key] } else if (key === 'plantLight') {
+          // 统一为读回格式（带毫秒 UTC），读回核对才能逐字一致。
+          const columns = plantLightToColumns(value as PlantLightProfile)
+          next[key] = plantLightFromColumns(columns.lux, columns.measuredAtMs, columns.source)
+        } else { next[key] = value }
       }
+      const light = plantLightToColumns(next.plantLight as PlantLightProfile | undefined)
       const written = rows.length === 0
         ? await connection.execute(
-          `INSERT INTO user_plant_care_contexts (user_internal_id, user_plant_internal_id, location_json, cultivation_method, light_environment_json, ventilation_environment_json, version, created_at_ms, updated_at_ms)
-            VALUES (?, ?, CAST(? AS JSON), ?, CAST(? AS JSON), CAST(? AS JSON), 1, ?, ?)`,
-          [userId, plantId, toJson(next.location), cultivationPlaceholder, toJson(next.lighting), toJson(next.ventilation), input.occurredAtMs, input.occurredAtMs])
+          `INSERT INTO user_plant_care_contexts (user_internal_id, user_plant_internal_id, location_json, cultivation_method, light_environment_json, ventilation_environment_json,
+              plant_light_lux, plant_light_measured_at_ms, plant_light_source, version, created_at_ms, updated_at_ms)
+            VALUES (?, ?, CAST(? AS JSON), ?, CAST(? AS JSON), CAST(? AS JSON), ?, ?, ?, 1, ?, ?)`,
+          [userId, plantId, toJson(next.location), cultivationPlaceholder, toJson(next.lighting), toJson(next.ventilation), light.lux, light.measuredAtMs, light.source, input.occurredAtMs, input.occurredAtMs])
         : await connection.execute(
           `UPDATE user_plant_care_contexts SET location_json = CAST(? AS JSON), light_environment_json = CAST(? AS JSON), ventilation_environment_json = CAST(? AS JSON),
+            plant_light_lux = ?, plant_light_measured_at_ms = ?, plant_light_source = ?,
             version = version + 1, updated_at_ms = ? WHERE user_internal_id = ? AND user_plant_internal_id = ?`,
-          [toJson(next.location), toJson(next.lighting), toJson(next.ventilation), input.occurredAtMs, userId, plantId])
+          [toJson(next.location), toJson(next.lighting), toJson(next.ventilation), light.lux, light.measuredAtMs, light.source, input.occurredAtMs, userId, plantId])
       if (written.affectedRows !== 1) { throw new Error('养护环境写入未确定') }
       const readback = await connection.query(
-        'SELECT location_json, light_environment_json, ventilation_environment_json FROM user_plant_care_contexts WHERE user_internal_id = ? AND user_plant_internal_id = ?', [userId, plantId])
+        `SELECT location_json, light_environment_json, ventilation_environment_json, ${plantLightSelect} FROM user_plant_care_contexts WHERE user_internal_id = ? AND user_plant_internal_id = ?`, [userId, plantId])
       if (readback.length !== 1) { throw new Error('养护环境读回不唯一') }
+      const stored = readGroups(readback[0]!)
       for (const key of CARE_CONTEXT_GROUP_KEYS) {
-        const stored = lockStoredEnvironmentGroup(key, readback[0]![column[key]])
-        if (toJson(stored) !== toJson(next[key])) { throw new Error('养护环境读回与本次写入不一致') }
+        if (toJson(stored[key]) !== toJson(next[key])) { throw new Error('养护环境读回与本次写入不一致') }
       }
       return Object.freeze(next) as CareContextGroups
     },

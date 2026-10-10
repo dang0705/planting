@@ -107,7 +107,8 @@ function applySchema(): void {
     '-e',
     `CREATE DATABASE \`${databaseName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
   ])
-  for (const fileName of ['001_identity.sql', '002_plant_knowledge.sql', '003_user_plant.sql']) {
+  // 030（Lux 存档）为单株读取投影新增 user_plant_care_contexts 三列，需在 003 之后执行。
+  for (const fileName of ['001_identity.sql', '002_plant_knowledge.sql', '003_user_plant.sql', '030_user_plant_care_context_plant_light.sql']) {
     const sql = fs.readFileSync(path.join(projectRoot, 'docs/backend-v2/schema', fileName), 'utf8')
     try {
       runDocker(

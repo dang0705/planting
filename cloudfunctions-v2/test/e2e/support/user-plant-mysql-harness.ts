@@ -12,6 +12,9 @@ import { createUserPlantServer, type UserPlantServerDependencies } from '../../.
 import { calculateCanonicalJsonSha256 } from '../../../src/foundation/json/canonical-json-sha256.js'
 import { createMysqlPublishedHttpWritePolicyReader, createMysqlPublishedProfileWritePolicyReader } from '../../../src/user-plant/repository/mysql-published-profile-write-policy-reader.js'
 import { findProjectRoot } from '../../support/project-root.js'
+import { createMysqlMvpWateringPolicyReader } from '../../../src/care/repository/mysql-mvp-watering-policy-reader.js'
+import { createReadProfileProgressSnapshot } from '../../../src/user-plant/application/read-profile-progress-snapshot.js'
+import { createMysqlProfileProgressPolicyReader } from '../../../src/user-plant/repository/mysql-profile-progress-policy-reader.js'
 
 /**
  * user-plant 真实库测试夹具（unit_real_data）：本机 Docker MySQL 8.4 + schema manifest 全量 DDL + 真实 user-plant HTTP 服务。
@@ -104,6 +107,14 @@ export async function startUserPlantMysqlHarness(options: {
     // 真实发布策略读取：未写入策略夹具时返回 null，PATCH 按合同失败关闭为 503。
     readProfileWriteSnapshot: () => createMysqlPublishedProfileWritePolicyReader(source).read(options.now),
     readBindingHttpSnapshot: () => createMysqlPublishedHttpWritePolicyReader(source).read(options.now),
+    // 档案完整度：真实读取 user-plant/profile_progress 与 care/mvp_watering 发布；未发布时省略完整度字段。
+    readProfileProgressSnapshot: createReadProfileProgressSnapshot({
+      readProgressPolicy: nowMs => createMysqlProfileProgressPolicyReader(source).read(nowMs),
+      readPlantLightMaxAgeDays: async nowMs => {
+        const resolution = await createMysqlMvpWateringPolicyReader(source).read(new Date(nowMs).toISOString())
+        return resolution.status === 'available' ? resolution.snapshot.luxAnchorMaxAgeDays : null
+      }
+    }),
     ...options.serverOverrides
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -170,6 +181,20 @@ export function profileWritePoliciesSql(issuedAtMs: number): string {
     { ref: 'bpr_harness_httpwrite1', domain: 'http', code: 'request_write', schema: 'http-request-write-policy/v1', version: 'http-write/2026-10-10', body: httpPolicyBody }
   ].map(fixture => `INSERT INTO business_policy_releases (_openid, release_ref, domain_code, policy_code, schema_version, release_version, content_sha256, policy_json, status, effective_at_ms, expires_at_ms, verified_at_ms, created_at_ms, updated_at_ms)
       VALUES ('', '${fixture.ref}', '${fixture.domain}', '${fixture.code}', '${fixture.schema}', '${fixture.version}', '${calculateCanonicalJsonSha256(fixture.body)}', '${JSON.stringify(fixture.body)}', 'active', ${issuedAtMs}, NULL, ${issuedAtMs}, ${issuedAtMs}, ${issuedAtMs});
+    INSERT INTO active_business_policy_releases (_openid, domain_code, policy_code, release_internal_id, active_release_version, active_content_sha256, version, activated_at_ms, created_at_ms, updated_at_ms)
+      SELECT '', r.domain_code, r.policy_code, r.id, r.release_version, r.content_sha256, 1, ${issuedAtMs}, ${issuedAtMs}, ${issuedAtMs} FROM business_policy_releases r WHERE r.release_ref = '${fixture.ref}';`).join('\n')
+}
+
+/**
+ * 发布档案完整度规则（仓库 v1 正文）与浇水策略（v3 正文，提供 luxAnchorMaxAgeDays）两份活动策略；夹具发布，不代表线上发布证明。
+ */
+export function profileProgressPoliciesSql(issuedAtMs: number): string {
+  const read = (file: string) => JSON.parse(fs.readFileSync(path.join(findProjectRoot(), file), 'utf8')) as Record<string, unknown>
+  return [
+    { ref: 'bpr_harness_progress01', domain: 'user-plant', code: 'profile_progress', schema: 'user-plant-profile-progress/v1', version: 'user-plant-profile-progress/v1.0.0', body: read('cloudfunctions-v2/models/user-plant/profile-progress-policy.v1.json') },
+    { ref: 'bpr_harness_watering03', domain: 'care', code: 'mvp_watering', schema: 'care-watering-mvp/v3', version: 'care-watering-mvp/v3.0.0', body: read('cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json') }
+  ].map(fixture => `INSERT INTO business_policy_releases (_openid, release_ref, domain_code, policy_code, schema_version, release_version, content_sha256, policy_json, status, effective_at_ms, expires_at_ms, verified_at_ms, created_at_ms, updated_at_ms)
+      VALUES ('', '${fixture.ref}', '${fixture.domain}', '${fixture.code}', '${fixture.schema}', '${fixture.version}', '${calculateCanonicalJsonSha256(fixture.body as never)}', CAST('${JSON.stringify(fixture.body).replaceAll("'", "''")}' AS JSON), 'active', ${issuedAtMs}, NULL, ${issuedAtMs}, ${issuedAtMs}, ${issuedAtMs});
     INSERT INTO active_business_policy_releases (_openid, domain_code, policy_code, release_internal_id, active_release_version, active_content_sha256, version, activated_at_ms, created_at_ms, updated_at_ms)
       SELECT '', r.domain_code, r.policy_code, r.id, r.release_version, r.content_sha256, 1, ${issuedAtMs}, ${issuedAtMs}, ${issuedAtMs} FROM business_policy_releases r WHERE r.release_ref = '${fixture.ref}';`).join('\n')
 }

@@ -49,7 +49,8 @@ describe('过期扫描 Repository', () => {
     await expect(expireDueCarePlans(transaction, { cutoffMs: cutoff, nowMs: now, limit: 500 })).resolves.toBe(0)
   })
 
-  it.each([0, 501, 1.5, -1])('批量上限非法（%s）→ 拒绝且不执行 SQL', async limit => {
+  // 主代理 2026-10-10 裁定：每批大小改为运维参数（默认 500，环境变量可在 100–2000 覆盖），守卫上限随之为 2000。
+  it.each([0, 2001, 1.5, -1])('批量上限非法（%s）→ 拒绝且不执行 SQL', async limit => {
     const { calls, transaction } = fakeTransaction(0)
     await expect(expireDueCarePlans(transaction, { cutoffMs: cutoff, nowMs: now, limit })).rejects.toThrow()
     expect(calls).toHaveLength(0)

@@ -174,6 +174,10 @@ type UserPlantBaseDto = {
   cover?: import('./user-plant-cover-asset-contract.js').PublicCoverDto;
   /** 仅列表项：是否有有效封面（列表不逐项签链接）。 */
   hasCover?: boolean;
+  /** 仅单株读取与档案保存响应：档案完整度（user-plant-profile-completeness/v1，读时现算）；规则不可用时省略。 */
+  completeness?: import('./user-plant-profile-completeness-contract.js').ProfileCompletenessDto;
+  /** 仅列表项：档案完整度百分比；规则不可用时省略。 */
+  completenessPercent?: number;
 };
 
 /** 当前允许公开的档案事实；其余专业参数必须留在服务端。 */
@@ -185,6 +189,7 @@ export type UserPlantProfileDto = {
   /** 已设置的城市级位置（不含经纬度）；未设置时省略。 */ location?: import('../user-plant/domain/environment-profile.js').LocationProfile;
   /** 已设置的光照选项；未设置时省略。 */ lighting?: import('../user-plant/domain/environment-profile.js').LightingProfile;
   /** 已设置的通风与空气环境；未设置时省略。 */ ventilation?: import('../user-plant/domain/environment-profile.js').VentilationProfile;
+  /** 植物位置最近一次 Lux 实测（原样返回，不附有效标记）；未测时省略。 */ plantLight?: import('../user-plant/domain/environment-profile.js').PlantLightProfile;
 };
 
 /** 当前身份未确认时不得夹带已确认身份引用。 */

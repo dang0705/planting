@@ -1,4 +1,5 @@
 import { createSecretKey } from 'node:crypto'
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import {
   createVerifyPlatformCredentialUseCase,
   PlatformCredentialEvidenceError,
@@ -6,8 +7,6 @@ import {
 } from './platform-credential-evidence.js'
 import { createWechatMiniprogramCredentialProvider } from './wechat-miniprogram-credential-provider.js'
 
-/** 配置目录 wechat_miniprogram_login 档案批准的总时限（毫秒）。 */
-const wechatTotalDeadlineMs = 5000
 /** 平台主体 HMAC 密钥最少字节数（256 位）。 */
 const minimumHmacKeyBytes = 32
 /** 当前密钥版本；数据库只保存该引用，不保存密钥材料。 */
@@ -32,7 +31,9 @@ const configurationInvalid = () => new PlatformCredentialEvidenceError('INTERNAL
  */
 export function createWechatLoginVerifier(
   environment: WechatLoginEnvironment,
-  fetchImplementation: typeof globalThis.fetch
+  fetchImplementation: typeof globalThis.fetch,
+  /** 总时限毫秒；省略时取代码层注册表（配置目录 wechat_miniprogram_login 档案 totalDeadlineMs）。 */
+  totalDeadlineMs: number = RUNTIME_PARAMETERS.identity.wechatLoginTotalDeadlineMs.value
 ): (code: string) => Promise<VerifiedPlatformIdentityEvidence> {
   const appId = environment.WECHAT_MINIPROGRAM_APPID?.trim()
   const appSecret = environment.WECHAT_MINIPROGRAM_PRIVATE_KEY?.trim()
@@ -40,7 +41,7 @@ export function createWechatLoginVerifier(
   if (!appId || !appSecret || !encodedKey) { throw configurationInvalid() }
   const keyBytes = Buffer.from(encodedKey, 'base64')
   if (keyBytes.length < minimumHmacKeyBytes) { throw configurationInvalid() }
-  const provider = createWechatMiniprogramCredentialProvider({ fetch: fetchImplementation, appId, appSecret, totalDeadlineMs: wechatTotalDeadlineMs })
+  const provider = createWechatMiniprogramCredentialProvider({ fetch: fetchImplementation, appId, appSecret, totalDeadlineMs })
   const verify = createVerifyPlatformCredentialUseCase({
     provider,
     keyRing: { current: { keyVersion: currentKeyVersion, secretKey: createSecretKey(keyBytes) }, retiring: [] },

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../idempotency/http-idempotency.js'
 import type { HttpIdempotencyReservationInput } from '../idempotency/mysql-http-idempotency-repository.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonValue } from '../json/canonical-json-sha256.js'
@@ -88,10 +89,10 @@ interface ParsedRequest<TDto> {
   readonly requestHash: string
 }
 
-/** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），同既有路由约定。 */
-const jsonBodyLimitBytes = 1_048_576
-/** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），同既有路由约定。 */
-const idempotencyRetentionMs = 168 * 60 * 60 * 1000
+/** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），取值见代码层注册表。 */
+const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
+/** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），取值见代码层注册表，此处换算为毫秒。 */
+const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 const digest = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
 

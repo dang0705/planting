@@ -36,8 +36,10 @@ import {
 import { timelineResponseSchema, type TimelineResponseDto } from "./user-plant-timeline-contract.js";
 import {
   bindUserPlantAssetRequestSchema,
+  coverUploadTargetResponseSchema,
   userPlantAssetResponseSchema,
   type BindUserPlantAssetRequestDto,
+  type CoverUploadTargetResponseDto,
   type UserPlantAssetResponseDto,
 } from "./user-plant-cover-asset-contract.js";
 import {
@@ -151,6 +153,8 @@ export function createPublicContractValidators(): {
   bindUserPlantAssetRequest: ValidateFunction<BindUserPlantAssetRequestDto>;
   /** 登记封面成功数据校验器；不允许私有 fileID 或内部字段。 */
   userPlantAssetResponse: ValidateFunction<UserPlantAssetResponseDto>;
+  /** 封面上传路径成功数据校验器；不允许单独的用户编号、桶名或环境 ID。 */
+  coverUploadTargetResponse: ValidateFunction<CoverUploadTargetResponseDto>;
   /** 创建用户植物请求校验器；只接受严格空 JSON 对象。 */
   createUserPlantRequest: ValidateFunction<CreateUserPlantRequestDto>;
   /** 创建用户植物响应校验器；只接受服务端生成的固定初始投影。 */
@@ -239,6 +243,7 @@ export function createPublicContractValidators(): {
     timelineResponse: ajv.compile(timelineResponseSchema),
     bindUserPlantAssetRequest: ajv.compile(bindUserPlantAssetRequestSchema),
     userPlantAssetResponse: ajv.compile(userPlantAssetResponseSchema),
+    coverUploadTargetResponse: ajv.compile(coverUploadTargetResponseSchema),
     createUserPlantRequest: ajv.compile(createUserPlantRequestSchema),
     createUserPlantResponse: ajv.compile(createUserPlantResponseSchema),
     createTemporaryCaseRequest: ajv.compile(createTemporaryCaseRequestSchema),

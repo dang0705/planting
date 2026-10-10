@@ -1,8 +1,11 @@
 import type { MysqlTransactionContext } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
-import { CARE_PLAN_EXPIRY_SCAN } from '../domain/care-plan-expiry-rules.js'
+import { OPERATIONAL_ENVIRONMENT_OVERRIDES } from '../../configuration/environment.js'
 
 type Transaction = MysqlTransactionContext<Mysql2QueryConnection>
+
+/** SQL LIMIT 守卫上限 = 过期扫描每批运维覆盖的登记最大值（主代理 2026-10-10：默认 500，允许 100–2000）。 */
+const maximumBatchSize = OPERATIONAL_ENVIRONMENT_OVERRIDES.carePlanExpiryBatchSize.maximum
 
 /** 一批过期写入输入（long-term-care-contract.md §12.1/§12.2）。 */
 export interface ExpireDueCarePlansInput {
@@ -29,7 +32,7 @@ function connectionOf(transaction: Transaction): Mysql2QueryConnection {
  */
 export async function expireDueCarePlans(transaction: Transaction, input: ExpireDueCarePlansInput): Promise<number> {
   const connection = connectionOf(transaction)
-  if (!Number.isSafeInteger(input.limit) || input.limit < 1 || input.limit > CARE_PLAN_EXPIRY_SCAN.batchSize) {
+  if (!Number.isSafeInteger(input.limit) || input.limit < 1 || input.limit > maximumBatchSize) {
     throw new RangeError('计划过期批量上限不合法')
   }
   const written = await connection.execute(

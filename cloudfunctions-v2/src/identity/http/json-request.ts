@@ -1,9 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { PublicErrorResponse } from '../../foundation/http/request-chain.js'
 
-/** 冻结 HTTP JSON 请求体上限，来自配置目录 `http.json_body_limit_bytes` 已确认值。 */
-const requestBodyLimitBytes = 1_048_576
+/** 冻结 HTTP JSON 请求体上限，来自配置目录 `http.json_body_limit_bytes` 已确认值（取值见代码层注册表）。 */
+const requestBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
 /** 所有公开响应固定使用 UTF-8 JSON。 */
 const jsonContentType = 'application/json; charset=utf-8'
 

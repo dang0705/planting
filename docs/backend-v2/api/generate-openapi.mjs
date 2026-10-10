@@ -115,6 +115,8 @@ const successSchemaRefByContract = {
   /** 时间线（user-plant-timeline/v1，2026-10-10 冻结）。 */
   TimelineResponse: '#/components/schemas/TimelineSuccess',
   UserPlantAssetResponse: '#/components/schemas/UserPlantAssetSuccess',
+  /** 封面上传路径（user-plant-cover-asset/v1 §2.1，2026-10-10 用户追加）。 */
+  CoverUploadTargetResponse: '#/components/schemas/CoverUploadTargetSuccess',
 }
 
 /** 列表查询参数（user-plant.md「列表公开接口」）；分页默认/上限来自 hard_rule user-plant.list.page_size。 */
@@ -654,10 +656,37 @@ const openapi = {
           profile: { type: 'object', description: '公开档案投影，见 cloudfunctions-v2/models/user-plant/public-profile-contract.md。' },
           cover: { type: 'object', description: '仅单株读取：{ assetRef, url（云存储不可用为 null）, urlExpiresAt（当前为 null）}。' },
           hasCover: { type: 'boolean', description: '仅列表项：是否有有效封面。' },
+          completeness: { $ref: '#/components/schemas/ProfileCompleteness' },
+          completenessPercent: { type: 'integer', minimum: 0, maximum: 100, description: '仅列表项：档案完整度百分比（user-plant-profile-completeness/v1）；规则不可用时省略。' },
           version: { type: 'integer', minimum: 1 },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
+      },
+      ProfileCompleteness: {
+        type: 'object', additionalProperties: false, required: ['percent', 'level', 'doneItems', 'missingItems', 'nextRecommended'],
+        description: '仅单株读取与档案保存响应：档案完整度（user-plant-profile-completeness/v1，读时现算）；规则不可用时省略。',
+        properties: {
+          percent: { type: 'integer', minimum: 0, maximum: 100 },
+          level: { enum: ['starter', 'good', 'great', 'complete'] },
+          doneItems: { type: 'array', maxItems: 7, items: { $ref: '#/components/schemas/ProfileProgressItemCode' } },
+          missingItems: { type: 'array', maxItems: 7, items: { type: 'object', additionalProperties: false, required: ['code', 'weight', 'reason', 'benefit', 'editTarget'], properties: {
+            code: { $ref: '#/components/schemas/ProfileProgressItemCode' }, weight: { type: 'integer', minimum: 1, maximum: 100 },
+            reason: { type: 'string' }, benefit: { type: 'string' },
+            editTarget: { enum: ['catalogBinding', 'measuredPot', 'substrate', 'location', 'plantLight', 'ventilation', 'lighting'] },
+          } } },
+          nextRecommended: { anyOf: [{ $ref: '#/components/schemas/ProfileProgressItemCode' }, { type: 'null' }] },
+        },
+      },
+      ProfileProgressItemCode: { enum: ['catalog_binding', 'measured_pot', 'substrate', 'location', 'plant_light', 'ventilation', 'lighting'] },
+      CoverUploadTargetSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'object', additionalProperties: false, required: ['purpose', 'cloudPath', 'allowedMimeTypes', 'maxBytes'], properties: {
+          purpose: { const: 'profile' },
+          cloudPath: { type: 'string', pattern: '^user-plant/usr_[A-Za-z0-9_-]{8,60}/covers/upl_[A-Za-z0-9_-]{8,60}-[a-f0-9]{32}$', description: '本次上传路径（不含扩展名）；前端追加 .jpg/.png/.webp 后上传。' },
+          allowedMimeTypes: { type: 'array', minItems: 1, items: { enum: ['image/jpeg', 'image/png', 'image/webp'] } },
+          maxBytes: { type: 'integer', minimum: 1 },
+        } } },
       },
       BindUserPlantAssetRequest: {
         type: 'object', additionalProperties: false, required: ['purpose', 'fileId', 'contentSha256'],

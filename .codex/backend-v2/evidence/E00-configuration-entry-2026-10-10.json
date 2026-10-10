@@ -1,0 +1,587 @@
+{
+  "capturedAt": "2026-10-10",
+  "ticket": "E00 / 配置总入口（代码层 + 环境变量层）",
+  "status": "implemented_not_deployed_not_committed",
+  "decisionSource": {
+    "user": "用户 2026-10-10：配置总入口分两层——①代码层集中模块；②环境变量层（函数环境变量 / .env.local）",
+    "coordinator": "主代理任务：盘点 + 统一入口 + 目录补所在层与代码位置；业务规则只放代码层、运维类可环境变量覆盖且带上下限；不得新增业务配置项或改变取值；层级最终由主代理裁定"
+  },
+  "design": "docs/backend-v2/architecture/configuration-layers.md",
+  "layers": {
+    "env": "cloudfunctions-v2/src/configuration/environment.ts（部署时；读取 + 校验 + 运维覆盖白名单 + 凭证脱敏容器）",
+    "code": "cloudfunctions-v2/src/configuration/runtime-parameters.ts（随版本发布；按领域分组的只读注册表）",
+    "policy": "BusinessPolicyRelease（运行时切换，可回滚；src/configuration/*-policy.ts 类型与 Schema，机制不变）"
+  },
+  "inventory": {
+    "scope": "cloudfunctions-v2/src/**（非测试）的数值 / 时长 / 次数 / 阈值 / 分页 / 超时 / 批量 / 版本号常量与全部 process.env 读取",
+    "codeLayerRegistry": {
+      "count": 22,
+      "items": [
+        {
+          "key": "http.jsonBodyLimitBytes",
+          "value": 1048576,
+          "catalog": "http.json_body_limit_bytes",
+          "catalogStatus": "confirmed(domain_policy)",
+          "consumers": [
+            "src/server.ts",
+            "src/identity/http/json-request.ts",
+            "src/foundation/http/authenticated-json-route.ts",
+            "src/diagnosis/http/answer-route.ts",
+            "src/diagnosis/http/create-session-route.ts"
+          ]
+        },
+        {
+          "key": "http.idempotencyRetentionHours",
+          "value": 168,
+          "catalog": "http.idempotency.retention_hours",
+          "catalogStatus": "confirmed(domain_policy)",
+          "consumers": [
+            "src/foundation/http/authenticated-json-route.ts",
+            "src/diagnosis/http/answer-route.ts",
+            "src/diagnosis/http/create-session-route.ts"
+          ]
+        },
+        {
+          "key": "identity.serviceSignatureClockSkewSeconds",
+          "value": 300,
+          "catalog": "identity.service_signature.clock_skew_seconds",
+          "catalogStatus": "confirmed(domain_policy)",
+          "consumers": [
+            "src/identity/http/user-trial-anchor-route.ts"
+          ]
+        },
+        {
+          "key": "identity.serviceSignatureNonceTtlSeconds",
+          "value": 600,
+          "catalog": "identity.service_signature.nonce_ttl_seconds",
+          "catalogStatus": "confirmed(domain_policy)",
+          "consumers": [
+            "src/identity/http/user-trial-anchor-route.ts"
+          ]
+        },
+        {
+          "key": "identity.wechatLoginTotalDeadlineMs",
+          "value": 5000,
+          "catalog": "providerProfiles.wechat_miniprogram_login.totalDeadlineMs",
+          "catalogStatus": "confirmed",
+          "consumers": [
+            "src/identity/provider/wechat-login-verifier.ts",
+            "src/identity/provider/platform-login-dispatcher.ts",
+            "src/entries/identity.ts"
+          ]
+        },
+        {
+          "key": "identity.douyinLoginTotalDeadlineMs",
+          "value": 5000,
+          "catalog": "providerProfiles.douyin_miniprogram_login.totalDeadlineMs",
+          "catalogStatus": "confirmed",
+          "consumers": [
+            "src/identity/provider/platform-login-dispatcher.ts",
+            "src/entries/identity.ts"
+          ]
+        },
+        {
+          "key": "plantKnowledge.searchQueryMaxCodePoints",
+          "value": 64,
+          "catalog": "plant-knowledge.search.query_max_code_points",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/plant-knowledge/application/search-published-plants.ts",
+            "src/plant-knowledge/application/search-plant-catalog.ts"
+          ]
+        },
+        {
+          "key": "plantKnowledge.searchResultMaxItems",
+          "value": 20,
+          "catalog": "plant-knowledge.search.result_max_items",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/plant-knowledge/repository/mysql-published-plant-search-repository.ts",
+            "src/plant-knowledge/application/search-plant-catalog.ts"
+          ]
+        },
+        {
+          "key": "plantKnowledge.catalogDefaultLimit",
+          "value": 10,
+          "catalog": "plant-knowledge.catalog.default_limit",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/plant-knowledge/application/search-plant-catalog.ts"
+          ]
+        },
+        {
+          "key": "plantKnowledge.catalogMinimumLimit",
+          "value": 1,
+          "catalog": "plant-knowledge.catalog.minimum_limit",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/plant-knowledge/application/search-plant-catalog.ts"
+          ]
+        },
+        {
+          "key": "plantKnowledge.encyclopediaReferenceMaxCodePoints",
+          "value": 512,
+          "catalog": "plant-knowledge.encyclopedia.reference_max_code_points",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/plant-knowledge/application/get-plant-encyclopedia.ts"
+          ]
+        },
+        {
+          "key": "care.planExpiryGraceHours",
+          "value": 72,
+          "catalog": "care.plans.expiry_grace_hours",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/care-plan-expiry-rules.ts"
+          ]
+        },
+        {
+          "key": "care.planExpiryScan",
+          "value": {
+            "cron": "0 0 * * * * *",
+            "intervalHours": 1,
+            "batchSize": 500,
+            "runBudgetFractionOfFunctionTimeout": 0.5
+          },
+          "catalog": "care.plans.expiry_scan",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/care-plan-expiry-rules.ts"
+          ]
+        },
+        {
+          "key": "care.outboxDispatch",
+          "value": {
+            "cron": "0 * * * * * *",
+            "leaseSeconds": 30,
+            "batchSize": 100,
+            "maxAttempts": 5
+          },
+          "catalog": "care.outbox_dispatch",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/care-outbox-dispatch-rules.ts"
+          ]
+        },
+        {
+          "key": "care.dryingGapFillMaxHours",
+          "value": 6,
+          "catalog": "care.watering.drying_gap_fill_max_hours",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/watering/fill-mvp-drying-gaps.ts"
+          ]
+        },
+        {
+          "key": "care.wateringBackfillMaxDays",
+          "value": 7,
+          "catalog": "care.facts.watering_backfill_max_days",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/long-term-care-rules.ts"
+          ]
+        },
+        {
+          "key": "care.checkMaxPostponeDays",
+          "value": 7,
+          "catalog": "care.plans.check_max_postpone_days",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/long-term-care-rules.ts"
+          ]
+        },
+        {
+          "key": "care.openWindowProposalValidHours",
+          "value": 24,
+          "catalog": "care.watering.open_window_proposal_valid_hours",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/long-term-care-rules.ts"
+          ]
+        },
+        {
+          "key": "care.planPageSize",
+          "value": {
+            "default": 20,
+            "max": 50
+          },
+          "catalog": "care.plans.page_size",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/domain/long-term-care-rules.ts"
+          ]
+        },
+        {
+          "key": "care.openMeteoTotalDeadlineMs",
+          "value": 8000,
+          "catalog": "providerProfiles.open_meteo.totalDeadlineMs",
+          "catalogStatus": "confirmed",
+          "consumers": [
+            "src/entries/care.ts（经 environment.ts）"
+          ]
+        },
+        {
+          "key": "care.openMeteoRequestWindowDays",
+          "value": {
+            "maxPastDays": 92,
+            "maxForecastDays": 16
+          },
+          "catalog": "care.lighting.open_meteo_request_window_days",
+          "catalogStatus": "hard_rule",
+          "consumers": [
+            "src/care/provider/open-meteo-radiation-client.ts"
+          ]
+        },
+        {
+          "key": "storage.cloudbaseStorageTotalDeadlineMs",
+          "value": 10000,
+          "catalog": "providerProfiles.cloudbase_storage.totalDeadlineMs",
+          "catalogStatus": "confirmed",
+          "consumers": [
+            "src/entries/user-plant.ts（经 environment.ts）"
+          ]
+        }
+      ]
+    },
+    "envLayer": {
+      "count": 17,
+      "operational": [
+        {
+          "name": "LOG_LEVEL",
+          "default": "info",
+          "allowed": "fatal/error/warn/info/debug/trace/silent",
+          "previousReaders": [
+            "src/server.ts",
+            "src/entries/*.ts ×8"
+          ]
+        }
+      ],
+      "operationalOverrides": [
+        {
+          "name": "V2_WECHAT_LOGIN_TOTAL_DEADLINE_MS",
+          "default": 5000,
+          "range": [
+            2000,
+            10000
+          ],
+          "status": "建议值待拍板"
+        },
+        {
+          "name": "V2_DOUYIN_LOGIN_TOTAL_DEADLINE_MS",
+          "default": 5000,
+          "range": [
+            2000,
+            10000
+          ],
+          "status": "建议值待拍板"
+        },
+        {
+          "name": "V2_OPEN_METEO_TOTAL_DEADLINE_MS",
+          "default": 8000,
+          "range": [
+            2000,
+            15000
+          ],
+          "status": "建议值待拍板"
+        },
+        {
+          "name": "V2_CLOUDBASE_STORAGE_TOTAL_DEADLINE_MS",
+          "default": 10000,
+          "range": [
+            2000,
+            20000
+          ],
+          "status": "建议值待拍板"
+        }
+      ],
+      "deployment": [
+        "V2_MYSQL_HOST",
+        "V2_MYSQL_PORT",
+        "V2_MYSQL_DATABASE",
+        "V2_MYSQL_USER",
+        "V2_CLOUDBASE_ENV_ID"
+      ],
+      "credentialsNameOnly": [
+        "V2_MYSQL_PASSWORD",
+        "WECHAT_MINIPROGRAM_APPID",
+        "WECHAT_MINIPROGRAM_PRIVATE_KEY",
+        "DOUYIN_APPID",
+        "DOUYIN_APP_SECRET",
+        "PLATFORM_SUBJECT_HMAC_KEY_V1",
+        "V2_CLOUDBASE_STORAGE_API_KEY"
+      ],
+      "processEnvAfter": "仅 src/configuration/environment.ts 读取；入口只调用 read*Environment(process.env)"
+    },
+    "policyLayer": {
+      "unchanged": [
+        "identity-session-policy",
+        "member-ai-quota-policy",
+        "mvp-glass-policy",
+        "mvp-watering-policy（v3 发布）",
+        "user-plant-limits-policy"
+      ],
+      "note": "profile-progress-policy.ts 为另一代理并行新增，未触碰"
+    },
+    "catalogTierCounts": {
+      "policy": {
+        "total": 127,
+        "withCodeReference": 6,
+        "plannedNotImplemented": 121
+      },
+      "code": {
+        "total": 87,
+        "withCodeReference": 27,
+        "hardRuleNoKeyReference": 60
+      },
+      "env": {
+        "total": 8,
+        "withCodeReference": 0
+      }
+    },
+    "pendingMigrationAfterOtherAgent": [
+      {
+        "file": "src/user-plant/http/claim-guest-plant-case-route.ts",
+        "constants": [
+          "jsonBodyLimitBytes=1_048_576"
+        ],
+        "catalog": "http.json_body_limit_bytes"
+      },
+      {
+        "file": "src/user-plant/http/create-temporary-case-route.ts",
+        "constants": [
+          "jsonBodyLimitBytes=1_048_576",
+          "idempotencyRetentionMs=168h"
+        ],
+        "catalog": "http.json_body_limit_bytes / http.idempotency.retention_hours"
+      },
+      {
+        "file": "src/user-plant/http/create-user-plant-route.ts",
+        "constants": [
+          "jsonBodyLimitBytes=1_048_576",
+          "idempotencyRetentionMs=168h"
+        ],
+        "catalog": "http.json_body_limit_bytes / http.idempotency.retention_hours"
+      },
+      {
+        "file": "src/user-plant/http/transition-user-plant-route.ts",
+        "constants": [
+          "bodyLimitBytes=1_048_576",
+          "idempotencyRetentionMs=604_800_000"
+        ],
+        "catalog": "http.json_body_limit_bytes / http.idempotency.retention_hours"
+      },
+      {
+        "file": "src/user-plant/domain/guest-claim-lease.ts",
+        "constants": [
+          "GUEST_CLAIM_PROCESSING_LEASE_MS=30s"
+        ],
+        "catalog": "user-plant.guest_claim.processing_lease_seconds（hard_rule）"
+      },
+      {
+        "file": "src/user-plant/domain/user-plant-list-query.ts / repository/mysql-user-plant-list-repository.ts（maxFetchLimit=51）/ contracts/user-plant-list-delete-contract.ts（listMaxItems=50）",
+        "constants": [
+          "USER_PLANT_LIST_PAGE_SIZE={20,50}"
+        ],
+        "catalog": "user-plant.list.page_size（hard_rule）"
+      },
+      {
+        "file": "src/user-plant/domain/timeline.ts / contracts/user-plant-timeline-contract.ts（maxItems=50）",
+        "constants": [
+          "USER_PLANT_TIMELINE_PAGE_SIZE={20,50}"
+        ],
+        "catalog": "user-plant.timeline.page_size（hard_rule）"
+      },
+      {
+        "file": "src/user-plant/domain/cover-asset.ts",
+        "constants": [
+          "COVER_ASSET_RULES（单株 1 张、替换后清理 7 天、MIME 白名单、5MB）"
+        ],
+        "catalog": "user-plant.assets.* / storage.upload.*（domain_policy 却以代码常量实现，见 decisionsNeeded）"
+      },
+      {
+        "file": "src/care/http/watering-advice-route.ts",
+        "constants": [
+          "jsonBodyLimitBytes=1_048_576",
+          "idempotencyRetentionMs=168h"
+        ],
+        "catalog": "http.json_body_limit_bytes / http.idempotency.retention_hours",
+        "reason": "浇水建议请求路径由另一代理修改中"
+      }
+    ],
+    "notMigratedWithReason": {
+      "unitConversions": "3_600_000 / 86_400_000 / 1_000 / 1_000_000 / 30*60_000 等单位换算",
+      "httpStatusCodes": "200/400/401/404/405/409/413/415/500/503",
+      "securityAndProtocol": "令牌熵 32/16 字节、HMAC 密钥最少 32 字节、平台 code 最长 128/256、servicePort=9000、数据库端口上限 65535、版本号最大长度 64 等",
+      "algorithmCoefficients": "太阳方位导数、maximumPpfdPerGhi=2.3、indoorClimateWindowMs=24h、配土主要材料 ½、几何角度 90/180/360（属算法合同版本，不是运行参数）",
+      "dtoSchemaBounds": "各 AJV Schema 的 maxLength/maxItems（与冻结 API 合同同源）",
+      "uncatalogedNeedsDecision": [
+        "src/weather/application/city-climate-fit.ts 推荐 top 上限 50（目录无对应项）",
+        "src/plant-knowledge/repository/mysql-tropicals-taxon-reader.ts catalogTaxonRef.length>512（与 encyclopedia.reference_max_code_points 同值但按 UTF-16 计；与浇水基线相邻文件，未触碰）"
+      ]
+    }
+  },
+  "filesChanged": {
+    "added": [
+      "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+      "cloudfunctions-v2/src/configuration/environment.ts",
+      "cloudfunctions-v2/test/configuration/runtime-parameters.spec.ts",
+      "cloudfunctions-v2/test/configuration/environment.spec.ts",
+      "cloudfunctions-v2/test/configuration/configuration-entry-source-scan.spec.ts",
+      "docs/backend-v2/architecture/configuration-layers.md"
+    ],
+    "modifiedSource": [
+      "src/care/domain/care-plan-expiry-rules.ts",
+      "src/care/domain/care-outbox-dispatch-rules.ts",
+      "src/care/domain/long-term-care-rules.ts",
+      "src/care/watering/fill-mvp-drying-gaps.ts",
+      "src/care/provider/open-meteo-radiation-client.ts",
+      "src/identity/provider/platform-login-dispatcher.ts（新增可选第三参 deadlines，向后兼容）",
+      "src/identity/provider/wechat-login-verifier.ts（新增可选第三参 totalDeadlineMs）",
+      "src/identity/http/user-trial-anchor-route.ts",
+      "src/identity/http/json-request.ts",
+      "src/foundation/http/authenticated-json-route.ts",
+      "src/diagnosis/http/answer-route.ts",
+      "src/diagnosis/http/create-session-route.ts",
+      "src/plant-knowledge/application/search-published-plants.ts",
+      "src/plant-knowledge/application/search-plant-catalog.ts",
+      "src/plant-knowledge/application/get-plant-encyclopedia.ts",
+      "src/plant-knowledge/repository/mysql-published-plant-search-repository.ts",
+      "src/server.ts",
+      "src/entries/{care,care-outbox-dispatch,care-plan-expiry,diagnosis,identity,plant-knowledge,user-plant,weather}.ts"
+    ],
+    "modifiedDocs": [
+      "docs/backend-v2/architecture/configuration-variable-catalog.json（每项新增 configurationTier / codeLocations；保留另一代理并行修改的 2 项）",
+      "docs/backend-v2/architecture/generate-configuration-variable-catalog.mjs（表格增加「所在层」、读取规则第 5 条）",
+      "docs/backend-v2/architecture/configuration-variable-catalog.md（重新生成）",
+      "docs/backend-v2/architecture/manifest.json（重新生成 SHA-256）"
+    ],
+    "catalogAnnotationScript": "一次性脚本（会话 scratchpad，未入库）：hard_rule→code、deployment_secret→env、provider_runtime→code、domain_policy→policy（已以代码常量实现者记 code 并列入 decisionsNeeded）；codeLocations = 源码中按边界匹配到该 key 的文件"
+  },
+  "tdd": {
+    "path": "classic_red_then_green + counterfactual_mutation",
+    "expectedSources": [
+      "configuration-variable-catalog.json 冻结值与 Provider 档案",
+      "configuration-layers.md §2/§4/§6",
+      "CLAUDE.md §2 凭证不得进入日志/测试输出"
+    ],
+    "red": [
+      {
+        "stage": "RED-1（产品前）",
+        "result": "3 个新 spec 全部失败：Cannot find module src/configuration/runtime-parameters.js / environment.js"
+      },
+      {
+        "stage": "RED-2（注册表与环境层已建、领域未迁移）",
+        "result": "configuration-entry-source-scan.spec.ts 4/4 失败：已迁移文件仍写死（例：care-plan-expiry-rules.ts 仍写死 CARE_PLAN_EXPIRY_GRACE_HOURS = 72）、HTTP 上限/幂等期散落、entries 存在 process.env.LOG_LEVEL 属性访问、目录缺 configurationTier"
+      }
+    ],
+    "counterfactualMutations": [
+      {
+        "mutation": "注册表 planExpiryGraceHours 72→48",
+        "red": "runtime-parameters 2 项 + care-plan-expiry-rules 4 项失败"
+      },
+      {
+        "mutation": "去掉覆盖上下限校验",
+        "red": "越界 1999/15001 用例与「错误不含凭证」用例失败"
+      },
+      {
+        "mutation": "错误信息拼入取值",
+        "red": "非法/越界 7 个用例与凭证用例失败"
+      },
+      {
+        "mutation": "凭证容器不脱敏",
+        "red": "readIdentityEnvironment 脱敏用例失败"
+      },
+      {
+        "mutation": "空串不视为未设置",
+        "red": "LOG_LEVEL 空串、覆盖空串用例失败"
+      },
+      {
+        "mutation": "fill-mvp-drying-gaps 写回 = 6",
+        "red": "源码扫描「已迁移文件不再写死」失败"
+      }
+    ],
+    "green": {
+      "isolatedWorktree": "HEAD + 本次改动（另一代理的 2 个目录项按 HEAD 还原）：vitest 300 文件全过（3231 passed / 5 skipped），tsc 两套 0 错误，oxlint 0 错误，build.mjs 成功且 foundation-http（真实启动 dist/server.cjs）10/10 通过",
+      "mainWorkingTree": "本次范围内全部通过；仍有失败均属另一代理进行中的 user-plant 改动（typescript-chinese-documentation-policy 指向 profile-progress/环境档案新文件、cover-upload-target-route 模块尚未创建、src/user-plant/domain/profile-progress.ts 与 public-profile.ts 类型错误、environment-profile.ts 1 个 oxlint 错误）"
+    },
+    "testLevels": {
+      "runtime-parameters.spec.ts": "unit_real_data（真实目录 JSON）",
+      "environment.spec.ts": "unit_fake（只替换环境变量对象）",
+      "configuration-entry-source-scan.spec.ts": "unit_real_data（扫描真实源码与目录）"
+    },
+    "notCovered": [
+      "真实 CloudBase 函数环境变量注入与实例重启",
+      "Provider 真实超时行为",
+      "主工作区 dist/ 未重新构建（避免影响他人部署制品）"
+    ]
+  },
+  "behaviorChange": {
+    "none": "所有取值不变；未设置任何新环境变量时行为与改动前一致",
+    "minor": [
+      "LOG_LEVEL 非法值：以前由 pino 在构造 logger 时抛错，现在由 environment.ts 先抛 EnvironmentConfigError（同样启动失败，错误不含取值）",
+      "LOG_LEVEL 为空串：以前传给 pino 会抛错，现在视为未设置用 info",
+      "新增 4 个可选运维覆盖环境变量（未设置即代码默认）"
+    ]
+  },
+  "decisionsNeeded": [
+    "Provider 总时限环境变量覆盖与 configuration-and-providers.md §1「第三方能力配置只能发布不可变版本」存在张力：保留为过渡旋钮，还是清空白名单等 Provider 注册表发布落地",
+    "4 个覆盖项的上下限（建议 2000–10000/10000/15000/20000 毫秒）",
+    "发件箱租约/批量、过期扫描批量等目录 hard_rule 项：本次刻意未开放环境变量覆盖；若要开放须把目录从 hard_rule 改裁决",
+    "domain_policy 却以代码常量实现的 8 项（http.json_body_limit_bytes、http.idempotency.retention_hours、identity.service_signature.clock_skew_seconds / nonce_ttl_seconds、user-plant.assets.max_count_per_plant / replaced_cover_cleanup_days、storage.upload.allowed_mime_types / max_image_bytes）：标为 code 层，是否保持或迁入策略发布",
+    "weather 推荐 top 上限 50 未登记目录：登记为硬规则还是视为合同 Schema 边界"
+  ],
+  "risks": [
+    "配置目录 JSON / md / manifest 与另一代理并行修改：若对方用旧内存副本整体覆盖目录，会丢失 configurationTier / codeLocations，需重跑注解与生成脚本"
+  ],
+  "coordinatorDecisionRound2": {
+    "decidedAt": "2026-10-10",
+    "decisions": [
+      "环境变量覆盖白名单为正式规则；configuration-and-providers.md §1 已增补说明（该文件不在 contract-registry，哈希登记于 architecture/manifest.json，已重新生成）",
+      "4 个 Provider 总时限默认值与上下限按建议采纳",
+      "新增运维覆盖：V2_CARE_OUTBOX_LEASE_SECONDS（30，10–120）、V2_CARE_OUTBOX_BATCH_SIZE（100，20–500）、V2_CARE_PLAN_EXPIRY_BATCH_SIZE（500，100–2000）；maxAttempts、72h、6h、分页仍为硬规则",
+      "目录 care.outbox_dispatch / care.plans.expiry_scan：configurationTier=env_overridable + environmentOverrides（逐字段、日期、理由），status 仍为 hard_rule（未登记字段不可覆盖）；4 个 Provider 档案同样带 environmentOverrides",
+      "8 项 domain_policy 代码常量：configurationTier=code + configurationTierNote「将来如需运行时切换再升级为策略发布」",
+      "新增目录项 weather.city_climate.recommend_top_max=50（hard_rule，代码层，ticket 暂挂 [P4] 盆土视觉和四类养护能力，待主代理确认）；注册表 weather.recommendTopMaxItems，city-climate-fit.ts 从注册表读取"
+    ],
+    "productChanges": [
+      "dispatch-care-outbox.ts / care-outbox-dispatch-runtime.ts：可选 settings{leaseSeconds,batchSize}，缺省取代码默认",
+      "expire-care-plans.ts：可选 batchSize；mysql-care-plan-expiry-repository.ts SQL LIMIT 守卫上限改为登记最大值 2000",
+      "environment.ts：OperationalOverrideSpec 增 field/defaultValue/decidedAt；新增 readCareOutboxDispatchEnvironment、readCarePlanExpiryEnvironment；两个事件函数入口改用之"
+    ],
+    "tdd": {
+      "path": "classic_red_then_green",
+      "red": "实现前 9 个用例失败：注册表缺 weather、白名单七项、两个新读取器、派发注入 settings、过期注入 batchSize、Repository 2000/2001 守卫、weather 源码扫描、目录裁定落地",
+      "expectedChange": "mysql-care-plan-expiry-repository.spec.ts 非法批量 501→2001（依据主代理裁定，非吞失败）",
+      "green": "隔离工作树（HEAD + 本次改动，另一代理的 2 个目录项按 HEAD 还原、entries/user-plant.ts 只叠加本次环境变量改动）：vitest 301 文件全过（3239 passed / 5 skipped），tsc 两套 0 错误，oxlint 0 错误，build.mjs 成功"
+    },
+    "incident": {
+      "what": "隔离验证脚本第一次因 zsh 不拆分变量导致复制失败，后续命令误在主工作区执行：主工作区目录 JSON 中另一代理的 user-plant.profile_progress.policy / subscription.points.profile_milestones 两项被还原为 HEAD 版本，并在 node_modules 内生成自指符号链接、重建了被 git 忽略的 cloudfunctions-v2/dist",
+      "recovery": "从另一代理会话记录中取出其最后一次目录写入脚本（05:22:56Z）原样重放，两项已恢复为其 confirmed 版本；删除误建符号链接；目录 md / manifest 重新生成。dist 为本地忽略制品，未恢复旧版（内容为当前工作区构建）",
+      "residualRisk": "若另一代理在 05:22:56Z 之后、我误操作之前又改过这两项（记录中未见），则需其复核"
+    }
+  },
+  "userPolicyRound3": {
+    "decidedAt": "2026-10-10",
+    "policy": "用户新方针：日常维护以「环境变量 + 策略发布」为主，业务参数尽量少用代码常量",
+    "deliveredBatch": "第 1、2 步：分类与迁移清单 + 设计说明（configuration-layers.md v2 §5；configuration-and-providers.md §1 方针段落；architecture manifest 已重新生成）",
+    "classification": {
+      "toPolicy": 17,
+      "toEnvNew": 3,
+      "envExisting": 7,
+      "deploymentCron": 2,
+      "keepCode": "目录 hard_rule 不变量/枚举/算法定义约 60 项 + 安全协议/防攻击/合同上限/单位与状态码"
+    },
+    "newPolicyTypes": [
+      "care/long_term_rules",
+      "plant-knowledge/public_search",
+      "weather/public_read",
+      "user-plant/list_rules（只出清单）",
+      "user-plant/asset_rules（只出清单）",
+      "care/mvp_watering 新 schema 版本（延后）"
+    ],
+    "ddl": "无需新增：复用 business_policy_releases / active_business_policy_releases / configuration_release_audit_records",
+    "catalogRevision": "未执行：分类待用户确认；且修订会立即使 care-plan-expiry-rules / long-term-care-rules 等锁定测试失配，按 TDD 顺序应在第 3 步与 Expected 测试同批落地",
+    "noCodeChangesThisRound": true
+  }
+}

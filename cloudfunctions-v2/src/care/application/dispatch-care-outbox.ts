@@ -15,8 +15,8 @@ export interface LeasedCareEvent {
 export interface LeaseCareEventsInput {
   /** 本次运行的租约持有者标识。 */ readonly owner: string
   /** 服务端当前 UTC 毫秒。 */ readonly nowMs: number
-  /** 领取后占用租约的毫秒数（硬规则 30 秒）。 */ readonly leaseMs: number
-  /** 本批最多领取的事件条数（硬规则 100）。 */ readonly limit: number
+  /** 领取后占用租约的毫秒数（默认 30 秒，运维可覆盖 10–120 秒）。 */ readonly leaseMs: number
+  /** 本批最多领取的事件条数（默认 100，运维可覆盖 20–500）。 */ readonly limit: number
   /** 最大尝试次数（硬规则 5，满次进死信）。 */ readonly maxAttempts: number
 }
 
@@ -57,6 +57,12 @@ export type CareOutboxDispatchLogEvent =
   }
 
 /** 派发用例依赖。 */
+/** 发件箱派发运维参数（主代理 2026-10-10 裁定可由环境变量在登记范围内覆盖）。 */
+export interface CareOutboxDispatchSettings {
+  /** 领取后租约秒数（默认 30，允许 10–120）。 */ readonly leaseSeconds: number
+  /** 单次最多领取条数（默认 100，允许 20–500）。 */ readonly batchSize: number
+}
+
 export interface DispatchCareOutboxDependencies {
   /** 服务端 UTC 毫秒时钟。 */ readonly now: () => number
   /** 为本次运行生成租约持有者标识。 */ readonly createLeaseOwner: () => string
@@ -64,6 +70,8 @@ export interface DispatchCareOutboxDependencies {
   /** 投递给 user-plant 时间线投影（幂等）；失败抛出。 */ readonly deliver: (event: LeasedCareEvent) => Promise<void>
   /** 在独立短事务中结算一条事件；租约已被接管时返回 false。 */ readonly settle: (input: SettleCareEventInput) => Promise<boolean>
   /** 白名单结构化日志端口。 */ readonly log: (event: CareOutboxDispatchLogEvent) => void
+  /** 运维参数（租约秒数、每批条数）；入口从环境变量层读取，省略时取代码默认 30 秒 / 100 条。最大尝试次数为硬规则不可注入。 */
+  readonly settings?: CareOutboxDispatchSettings
 }
 
 /** 只保留错误类名。 */
@@ -87,8 +95,8 @@ export function createDispatchCareOutboxJob(dependencies: DispatchCareOutboxDepe
     }
     let leased: LeaseCareEventsResult
     try {
-      leased = await dependencies.lease({ owner, nowMs: startedAtMs, leaseMs: CARE_OUTBOX_DISPATCH.leaseSeconds * 1000,
-        limit: CARE_OUTBOX_DISPATCH.batchSize, maxAttempts: CARE_OUTBOX_DISPATCH.maxAttempts })
+      leased = await dependencies.lease({ owner, nowMs: startedAtMs, leaseMs: (dependencies.settings?.leaseSeconds ?? CARE_OUTBOX_DISPATCH.leaseSeconds) * 1000,
+        limit: dependencies.settings?.batchSize ?? CARE_OUTBOX_DISPATCH.batchSize, maxAttempts: CARE_OUTBOX_DISPATCH.maxAttempts })
     } catch { return finish('failed') }
     counts.leasedCount = leased.leased.length
     counts.deadLetterCount = leased.deadLettered

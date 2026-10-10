@@ -55,6 +55,14 @@
 |---|---|---|
 | `plant_location` | 长期植物档案无城市或城市不在目录，且结果为 `insufficient_evidence` | 提示去植物档案设置城市 |
 
+### 长期植物的 Lux 存档（2026-10-10 用户裁决）
+
+- `target.kind = 'user_plant'` 且请求**未带** `lightReading`（省略或 null）时，服务端读取该植物档案 `plantLight`（`user-plant-environment-profile/v1`）：
+  若 `当前时刻 − measuredAt ≤ luxAnchorMaxAgeDays 天`（取本请求锁定的浇水策略快照，当前 30 天），按请求带了这条读数处理（同样进入输入清单与辐射时间窗）；
+  已过期或没有存档 → 视为未测 Lux，按 `plant_light` 缺失处理（规则同上表）。
+- 请求带了 `lightReading` 时以请求为准，不读存档、也不自动写回档案（存档只经档案 `PATCH`）。
+- 临时案例不读档案。
+
 ## 写入与幂等
 
 - 只追加计算结果（临时结果存储或长期结果存储），不写浇水事实、计划或提醒；“我刚浇过水”走 `care/facts`。

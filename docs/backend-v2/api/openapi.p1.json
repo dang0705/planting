@@ -1163,6 +1163,66 @@
         ]
       }
     },
+    "/api/v2/user-plants/{userPlantRef}/cover-upload-target": {
+      "get": {
+        "operationId": "getUserPlantCoverUploadTarget",
+        "summary": "user-plant 域：getUserPlantCoverUploadTarget",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "UserPlantPath",
+        "x-response-contract": "CoverUploadTargetResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverUploadTargetSuccess"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
     "/api/v2/user-plants/{userPlantRef}/timeline": {
       "get": {
         "operationId": "listUserPlantTimeline",
@@ -5257,7 +5317,7 @@
           "version"
         ],
         "minProperties": 2,
-        "description": "user-plant-environment-profile/v1：v1 的昵称与实测盆器（盆型 = 尺寸 + 排水）语义不变；新增基质、位置、光照（只收朝向）、通风四个分组，省略保留、null 清除。不接受任何派生值。2026-10-10 删除 potShape 分组与光照的玻璃/距离/遮挡字段。",
+        "description": "user-plant-environment-profile/v1：v1 的昵称与实测盆器（盆型 = 尺寸 + 排水）语义不变；新增基质、位置、光照（只收朝向）、通风四个分组，省略保留、null 清除。不接受任何派生值。2026-10-10 删除 potShape 分组与光照的玻璃/距离/遮挡字段。 同日追加 plantLight 分组（植物位置最近一次 Lux）。",
         "properties": {
           "version": {
             "type": "integer",
@@ -5403,7 +5463,7 @@
             ]
           },
           "lighting": {
-            "description": "光照只收朝向（2026-10-10 用户纠偏：城市在 location，植物位置 Lux 由浇水建议请求实测，不进档案）；null 清除。",
+            "description": "光照只收朝向（2026-10-10 用户纠偏：城市在 location；植物位置 Lux 另存于 plantLight）；null 清除。",
             "oneOf": [
               {
                 "type": "null"
@@ -5467,6 +5527,39 @@
                     "type": [
                       "boolean",
                       "null"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "plantLight": {
+            "description": "植物位置最近一次 Lux 实测（2026-10-10 用户追加 Lux 存档）；省略保留，null 清除；measuredAt 不得晚于服务端当前时刻（代码复核）。",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "lux",
+                  "measuredAt",
+                  "source"
+                ],
+                "properties": {
+                  "lux": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "measuredAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"
+                  },
+                  "source": {
+                    "enum": [
+                      "meter",
+                      "camera_estimate"
                     ]
                   }
                 }
@@ -5553,6 +5646,15 @@
             "type": "boolean",
             "description": "仅列表项：是否有有效封面。"
           },
+          "completeness": {
+            "$ref": "#/components/schemas/ProfileCompleteness"
+          },
+          "completenessPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "仅列表项：档案完整度百分比（user-plant-profile-completeness/v1）；规则不可用时省略。"
+          },
           "version": {
             "type": "integer",
             "minimum": 1
@@ -5564,6 +5666,147 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ProfileCompleteness": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "percent",
+          "level",
+          "doneItems",
+          "missingItems",
+          "nextRecommended"
+        ],
+        "description": "仅单株读取与档案保存响应：档案完整度（user-plant-profile-completeness/v1，读时现算）；规则不可用时省略。",
+        "properties": {
+          "percent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "level": {
+            "enum": [
+              "starter",
+              "good",
+              "great",
+              "complete"
+            ]
+          },
+          "doneItems": {
+            "type": "array",
+            "maxItems": 7,
+            "items": {
+              "$ref": "#/components/schemas/ProfileProgressItemCode"
+            }
+          },
+          "missingItems": {
+            "type": "array",
+            "maxItems": 7,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "code",
+                "weight",
+                "reason",
+                "benefit",
+                "editTarget"
+              ],
+              "properties": {
+                "code": {
+                  "$ref": "#/components/schemas/ProfileProgressItemCode"
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "benefit": {
+                  "type": "string"
+                },
+                "editTarget": {
+                  "enum": [
+                    "catalogBinding",
+                    "measuredPot",
+                    "substrate",
+                    "location",
+                    "plantLight",
+                    "ventilation",
+                    "lighting"
+                  ]
+                }
+              }
+            }
+          },
+          "nextRecommended": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileProgressItemCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ProfileProgressItemCode": {
+        "enum": [
+          "catalog_binding",
+          "measured_pot",
+          "substrate",
+          "location",
+          "plant_light",
+          "ventilation",
+          "lighting"
+        ]
+      },
+      "CoverUploadTargetSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "purpose",
+              "cloudPath",
+              "allowedMimeTypes",
+              "maxBytes"
+            ],
+            "properties": {
+              "purpose": {
+                "const": "profile"
+              },
+              "cloudPath": {
+                "type": "string",
+                "pattern": "^user-plant/usr_[A-Za-z0-9_-]{8,60}/covers/upl_[A-Za-z0-9_-]{8,60}-[a-f0-9]{32}$",
+                "description": "本次上传路径（不含扩展名）；前端追加 .jpg/.png/.webp 后上传。"
+              },
+              "allowedMimeTypes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp"
+                  ]
+                }
+              },
+              "maxBytes": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
           }
         }
       },

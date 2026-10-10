@@ -2,7 +2,7 @@ import pino from 'pino'
 
 import { createCareOutboxDispatchEventHandler } from '../care/event/care-outbox-dispatch-handler.js'
 import { createCareOutboxDispatchJobFromSource } from '../care/event/care-outbox-dispatch-runtime.js'
-import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
+import { readCareOutboxDispatchEnvironment } from '../configuration/environment.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 
 /**
@@ -11,17 +11,21 @@ import { createMysql2ConnectionSource } from '../foundation/database/mysql2-conn
  * 复用共享连接与 Repository，不监听端口、不挂 HTTP 网关。
  */
 
+/** 环境变量层统一读取（日志级别、数据库、发件箱租约 / 每批运维覆盖；非法即启动失败，错误不含取值）。 */
+const environment = readCareOutboxDispatchEnvironment(process.env)
+
 /** 只输出白名单计数事件；不输出连接、身份、事件内容或错误原文。 */
 const logger = pino({
   base: null,
-  level: process.env.LOG_LEVEL ?? 'info',
+  level: environment.logLevel,
   redact: { paths: ['headers', 'authorization', 'body', 'env', 'config'], censor: '[已脱敏]' }
 })
-const source = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
+const source = createMysql2ConnectionSource(environment.database)
 
 const job = createCareOutboxDispatchJobFromSource({
   source,
   now: () => Date.now(),
+  settings: environment.outboxDispatch,
   log: event => {
     const level = event.event === 'care_outbox_delivery_failed' || (event.event === 'care_outbox_dispatch_run' && event.outcome === 'failed') ? 'warn' : 'info'
     logger[level]({ function: 'care-outbox-dispatch', ...event }, '时间线事件派发')

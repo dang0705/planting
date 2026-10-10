@@ -1,17 +1,18 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { CareCalendarDto } from '../../contracts/types.js'
 import type { WateringCapabilityResult } from '../application/project-watering-replay-result.js'
 
 const hour = 3_600_000
 const day = 24 * hour
 
-/** 浇水事实最长补记天数（配置目录 `care.facts.watering_backfill_max_days`，用户 2026-10-09 裁决 U3）。 */
-export const WATERING_BACKFILL_MAX_DAYS = 7
-/** 检查窗口无最晚端时检查计划最多推迟天数（`care.plans.check_max_postpone_days`，用户裁决 U5）。 */
-export const CHECK_MAX_POSTPONE_DAYS = 7
-/** 检查窗口无最晚端时建议有效小时数（`care.watering.open_window_proposal_valid_hours`，用户裁决 U7）。 */
-export const OPEN_WINDOW_PROPOSAL_VALID_HOURS = 24
-/** 计划列表分页（硬规则 `care.plans.page_size`，主代理裁决 T5）。 */
-export const CARE_PLAN_PAGE_SIZE = Object.freeze({ default: 20, max: 50 })
+/** 浇水事实最长补记天数（配置目录 `care.facts.watering_backfill_max_days`，用户 2026-10-09 裁决 U3；取值见代码层注册表）。 */
+export const WATERING_BACKFILL_MAX_DAYS = RUNTIME_PARAMETERS.care.wateringBackfillMaxDays.value
+/** 检查窗口无最晚端时检查计划最多推迟天数（`care.plans.check_max_postpone_days`，用户裁决 U5；取值见代码层注册表）。 */
+export const CHECK_MAX_POSTPONE_DAYS = RUNTIME_PARAMETERS.care.checkMaxPostponeDays.value
+/** 检查窗口无最晚端时建议有效小时数（`care.watering.open_window_proposal_valid_hours`，用户裁决 U7；取值见代码层注册表）。 */
+export const OPEN_WINDOW_PROPOSAL_VALID_HOURS = RUNTIME_PARAMETERS.care.openWindowProposalValidHours.value
+/** 计划列表分页（硬规则 `care.plans.page_size`，主代理裁决 T5；取值见代码层注册表，深度只读）。 */
+export const CARE_PLAN_PAGE_SIZE = RUNTIME_PARAMETERS.care.planPageSize.value
 /** 日历条目时长（long-term-care/v1 §9）。 */
 const calendarDurationMs = 30 * 60_000
 /** 日历固定提示（不含个人信息与内部引用）。 */

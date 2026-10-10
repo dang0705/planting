@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { UserPlantRef } from '../../contracts/types.js'
 
 /**
@@ -6,7 +7,7 @@ import type { UserPlantRef } from '../../contracts/types.js'
  */
 
 /** 硬规则 `user-plant.list.page_size`：缺省 20 条、最多 50 条；与配置目录一致性由测试锁定，不做运营配置。 */
-export const USER_PLANT_LIST_PAGE_SIZE = Object.freeze({ default: 20, max: 50 })
+export const USER_PLANT_LIST_PAGE_SIZE = RUNTIME_PARAMETERS.userPlant.listPageSize.value
 
 /** 列表可见的生命周期；deleting/deleted 永远不可见。 */
 export type ListableUserPlantLifecycle = 'active' | 'archived'

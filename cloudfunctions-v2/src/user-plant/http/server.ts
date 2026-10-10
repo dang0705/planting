@@ -80,6 +80,12 @@ import { withCoverLink } from '../application/get-user-plant-cover.js'
 import { createMysqlActiveCoverReader } from '../repository/mysql-user-plant-asset-repository.js'
 import { bindUserPlantCoverRoute, createBindUserPlantCoverRouteHandler } from './bind-user-plant-cover-route.js'
 import { createListUserPlantTimelineRouteHandler, listUserPlantTimelineRoute } from './list-user-plant-timeline-route.js'
+import { withListCompleteness, withSavedCompleteness, withSingleCompleteness, type ProfileCompletenessDecoratorDependencies } from '../application/profile-completeness-decorator.js'
+import type { ProfileProgressSnapshot } from '../application/read-profile-progress-snapshot.js'
+import { createMysqlCatalogBindingPresenceReader } from '../repository/mysql-catalog-binding-presence-reader.js'
+import { createGetCoverUploadTargetApplicationService } from '../application/get-cover-upload-target.js'
+import { coverUploadTargetRoute, createCoverUploadTargetRouteHandler } from './cover-upload-target-route.js'
+import { randomBytes } from 'node:crypto'
 import { createConfirmUserPlantIdentityApplicationService } from '../application/confirm-user-plant-identity.js'
 import { confirmUserPlantIdentityRoute, createConfirmUserPlantIdentityRouteHandler } from './confirm-user-plant-identity-route.js'
 import { createMysqlPublishedIdentityRepository, type PublishedIdentitySqlRow } from '../../plant-knowledge/repository/mysql-published-identity-repository.js'
@@ -114,6 +120,8 @@ export type UserPlantServerDependencies = {
   readonly readUserPlantLimitsPolicy?: (capturedAt: string) => Promise<Readonly<UserPlantLimitsPolicySnapshot> | null>
   /** 云存储 Provider（user-plant-cover-asset/v1）；未配置时封面登记 503、单株读取 cover.url 为 null。 */
   readonly storage?: PrivateObjectStorage
+  /** 档案完整度快照（规则发布 + 浇水策略 Lux 有效天数）；未接入或不可用时省略完整度字段。 */
+  readonly readProfileProgressSnapshot?: (nowMs: number) => Promise<ProfileProgressSnapshot | null>
 }
 
 const okStatus = 200
@@ -253,6 +261,14 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     })
   })
   const deleteUserPlant = createDeleteUserPlantApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository })
+  /** 档案完整度叠加（user-plant-profile-completeness/v1）：单株、保存、列表读时现算，失败省略字段。 */
+  const catalogPresence = createMysqlCatalogBindingPresenceReader(dependencies.connectionSource)
+  const completeness: ProfileCompletenessDecoratorDependencies = {
+    ...(dependencies.readProfileProgressSnapshot === undefined ? {} : { readSnapshot: dependencies.readProfileProgressSnapshot }),
+    readCatalogBound: (userRef, refs) => catalogPresence.read(userRef, refs), now: dependencies.now
+  }
+  const saveProfileWithCompleteness = withSavedCompleteness(completeness, saveProfile)
+  const readUploadTarget = createGetCoverUploadTargetApplicationService({ getUserPlant, randomHex: () => randomBytes(16).toString('hex') })
   const bearerAuthenticator = createUserBearerAuthenticator(resolvePrincipal)
   /** user-plant → plant-knowledge 只读适配：身份确认前判定规范身份是否已发布（与公开准入同一 SQL）。 */
   const publishedIdentityReader = createMysqlPublishedIdentityRepository({
@@ -265,7 +281,12 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   const dispatch = createRouteDispatcher([
     {
       route: listUserPlantsRoute,
-      handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, listUserPlants })
+      handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
+        listUserPlants: withListCompleteness(completeness, listUserPlants) })
+    },
+    {
+      route: coverUploadTargetRoute,
+      handler: createCoverUploadTargetRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, readUploadTarget })
     },
     {
       route: bindUserPlantCoverRoute,
@@ -316,7 +337,7 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         let snapshot: PublishedProfileWriteSnapshot | null = null
         try { snapshot = await dependencies.readProfileWriteSnapshot?.() ?? null } catch { /* SQL异常不暴露，不补默认策略。 */ }
         return createUpdateProfileRouteHandler({
-          resolvePrincipal, getUserPlant, saveProfile, cityExists, now: dependencies.now, writeAudit: dependencies.writeAudit,
+          resolvePrincipal, getUserPlant, saveProfile: saveProfileWithCompleteness, cityExists, now: dependencies.now, writeAudit: dependencies.writeAudit,
           maxBodyBytes: snapshot?.maxBodyBytes ?? null,
           resolveWritePolicy: async () => snapshot
         })(request, response, parameters)
@@ -361,7 +382,8 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
       handler: createGetUserPlantRouteHandler({
         resolvePrincipal,
         // 单株读取在有封面时现场换链接；档案修改的归属读取仍用不带封面的原用例（不触发外部调用）。
-        getUserPlant: withCoverLink({ getUserPlant, readActiveCover: createMysqlActiveCoverReader(dependencies.connectionSource), storage: dependencies.storage }),
+        getUserPlant: withSingleCompleteness(completeness,
+          withCoverLink({ getUserPlant, readActiveCover: createMysqlActiveCoverReader(dependencies.connectionSource), storage: dependencies.storage })),
         now: dependencies.now,
         writeAudit: dependencies.writeAudit
       })

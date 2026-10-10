@@ -308,6 +308,11 @@ export function createUpdateProfileRouteHandler(
             } catch { throw unavailable() }
             if (!exists) { throw new PublicRequestError(400, 'VALIDATION_FAILED', '城市不在支持列表') }
           }
+          // Lux 存档：测量时间不得晚于服务端当前时刻（user-plant-environment-profile/v1 plantLight）。
+          const plantLight = dto.patch.plantLight
+          if (plantLight !== undefined && plantLight !== null && Date.parse(plantLight.measuredAt) > now) {
+            throw new PublicRequestError(400, 'VALIDATION_FAILED', '光照测量时间不能晚于现在')
+          }
           const groups = Object.fromEntries(ENVIRONMENT_GROUP_KEYS.filter(key => key in dto.patch).map(key => [key, dto.patch[key] ?? null]))
           const facts = {
             userPlantRef: dto.userPlantRef,
@@ -316,7 +321,7 @@ export function createUpdateProfileRouteHandler(
             ...('measuredPot' in dto.patch ? { measuredPot: dto.patch.measuredPot! } : {}),
             ...groups
           }
-          const environment = Object.fromEntries(['location', 'lighting', 'ventilation'].filter(key => key in groups).map(key => [key, groups[key]])) as CareContextGroupPatch
+          const environment = Object.fromEntries(['location', 'lighting', 'ventilation', 'plantLight'].filter(key => key in groups).map(key => [key, groups[key]])) as CareContextGroupPatch
           return {
             command: {
               userRef: principal.user_id,

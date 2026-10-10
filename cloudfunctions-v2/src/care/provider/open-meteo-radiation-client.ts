@@ -1,3 +1,5 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+
 /** Open-Meteo 预报端点（官方文档 https://open-meteo.com/en/docs）。 */
 const forecastEndpoint = 'https://api.open-meteo.com/v1/forecast'
 /** 只请求太阳辐射三个变量；普通天气由和风提供。 */
@@ -42,6 +44,9 @@ export type OpenMeteoRadiationResult = {
 
 /** 整数且在闭区间内。 */
 const integerWithin = (value: number, min: number, max: number) => Number.isInteger(value) && value >= min && value <= max
+/** 请求回看 / 预报天数上限（硬规则 `care.lighting.open_meteo_request_window_days`，取值见代码层注册表）。 */
+const requestWindowDays = RUNTIME_PARAMETERS.care.openMeteoRequestWindowDays.value
+
 /** 有限且在闭区间内。 */
 const finiteWithin = (value: number, min: number, max: number) => Number.isFinite(value) && value >= min && value <= max
 
@@ -51,7 +56,7 @@ const finiteWithin = (value: number, min: number, max: number) => Number.isFinit
  */
 export async function fetchOpenMeteoRadiation(dependencies: OpenMeteoClientDependencies, query: OpenMeteoRadiationQuery): Promise<OpenMeteoRadiationResult> {
   if (!finiteWithin(query.latitude, -90, 90) || !finiteWithin(query.longitude, -180, 180)
-    || !integerWithin(query.pastDays, 0, 92) || !integerWithin(query.forecastDays, 0, 16)) {
+    || !integerWithin(query.pastDays, 0, requestWindowDays.maxPastDays) || !integerWithin(query.forecastDays, 0, requestWindowDays.maxForecastDays)) {
     throw new TypeError('Open-Meteo 查询参数非法')
   }
   const url = new URL(forecastEndpoint)

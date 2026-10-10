@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:qinghuazhi:user-plant:profile-progress-policy:v1",
+  "title": "长期植物档案完整度计分规则正文",
+  "description": "user-plant-profile-progress/v1：7 个计分项各一次、权重正整数合计 100（合计与唯一性由代码复核）；4 个固定档位。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "items", "levels"],
+  "properties": {
+    "contractVersion": { "const": "user-plant-profile-progress/v1" },
+    "items": {
+      "type": "array", "minItems": 7, "maxItems": 7,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["code", "weight", "editTarget", "reason", "benefit"],
+        "properties": {
+          "code": { "enum": ["catalog_binding", "measured_pot", "substrate", "location", "plant_light", "ventilation", "lighting"] },
+          "weight": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "editTarget": { "enum": ["catalogBinding", "measuredPot", "substrate", "location", "plantLight", "ventilation", "lighting"] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "benefit": { "type": "string", "minLength": 1, "maxLength": 120 }
+        }
+      }
+    },
+    "levels": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["level", "minPercent"],
+        "properties": {
+          "level": { "enum": ["starter", "good", "great", "complete"] },
+          "minPercent": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      }
+    }
+  }
+}

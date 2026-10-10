@@ -5,13 +5,16 @@
  * 72 小时与盆土证据最长有效期 `soilEvidenceMaxHours` 对齐——过了这个时长，这次检查已失去意义，应重新获取建议。
  */
 
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+
 const hour = 3_600_000
 
 /**
  * 计划过期宽限小时数（配置目录 `care.plans.expiry_grace_hours`，owner=care）。
- * 主代理 2026-10-09 裁定为不可配置硬规则：由本常量 + 目录一致性测试 + 合同 §12 共同保证，不走策略发布，运行时不读取目录。
+ * 主代理 2026-10-09 裁定为不可配置硬规则：取值只在代码层注册表 `RUNTIME_PARAMETERS.care.planExpiryGraceHours` 定义一次，
+ * 由注册表 + 目录一致性测试 + 合同 §12 共同保证，不走策略发布、不允许环境变量覆盖，运行时不读取目录。
  */
-export const CARE_PLAN_EXPIRY_GRACE_HOURS = 72
+export const CARE_PLAN_EXPIRY_GRACE_HOURS = RUNTIME_PARAMETERS.care.planExpiryGraceHours.value
 
 /**
  * 过期扫描运行参数（配置目录 `care.plans.expiry_scan`，主代理 2026-10-09 裁定为不可配置硬规则）。
@@ -19,13 +22,9 @@ export const CARE_PLAN_EXPIRY_GRACE_HOURS = 72
  * - `intervalHours`：扫描间隔小时数，仅用于说明最长滞后。
  * - `batchSize`：单批（单个短事务）最多改写的计划行数。
  * - `runBudgetFractionOfFunctionTimeout`：单次运行时长上限占函数超时的比例。
+ * 取值只在代码层注册表 `RUNTIME_PARAMETERS.care.planExpiryScan` 定义（深度只读），不允许环境变量覆盖。
  */
-export const CARE_PLAN_EXPIRY_SCAN = Object.freeze({
-  cron: '0 0 * * * * *',
-  intervalHours: 1,
-  batchSize: 500,
-  runBudgetFractionOfFunctionTimeout: 0.5
-})
+export const CARE_PLAN_EXPIRY_SCAN = RUNTIME_PARAMETERS.care.planExpiryScan.value
 
 /** 截止时刻：计划时刻早于它（严格小于）即已过期；= 现在 − 72 小时。 */
 export function resolveCarePlanExpiryCutoffMs(nowMs: number): number {

@@ -20,6 +20,7 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '023_guest_token_sessions.sql'), 'guest-token/v1 要求的 023 迁移必须登记')
   // Expected 来源：主代理 2026-10-09 裁决 A3——Tropicals 浇水基线表按 v2 惯例纳入 024 迁移。
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '024_watering_baseline_policy.sql'), '浇水基线 024 迁移必须登记')
+  assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '030_user_plant_care_context_plant_light.sql'), 'Lux 存档 030 迁移必须登记')
 
   let sql = ''
   const FIRST_CAPTURE_INDEX = 1
@@ -53,6 +54,15 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       assert.deepEqual([...content.matchAll(/\bDROP CHECK `([^`]+)`/gu)].map(match => match[1]), ['ck_care_outbox_event_type'])
       assert.match(content, /ADD CONSTRAINT `ck_care_outbox_event_type` CHECK/u)
       assert.doesNotMatch(content, /\b(?:DROP\s+(?:TABLE|COLUMN|DATABASE|INDEX)|RENAME|CHANGE|MODIFY|CREATE TABLE)\b/iu)
+    }
+    // Expected 来源：user-plant-environment-profile.md plantLight（用户 2026-10-10 裁决 Lux 存档，需新增迁移 030）——
+    // 030 只允许给 user_plant_care_contexts 新增三个可空列与一条三列同空/同不空检查约束。
+    const isPlantLightColumns = entry.file === '030_user_plant_care_context_plant_light.sql'
+    if (isPlantLightColumns) {
+      assert.deepEqual([...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]), ['user_plant_care_contexts'])
+      assert.deepEqual([...content.matchAll(/ADD COLUMN `([^`]+)` [^\n]* NULL COMMENT '[^']+'/gu)].map(match => match[1]), ['plant_light_lux', 'plant_light_measured_at_ms', 'plant_light_source'])
+      assert.match(content, /ADD CONSTRAINT `ck_user_plant_care_context_plant_light` CHECK/u)
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|MODIFY|CREATE TABLE|CREATE TRIGGER)\b|NOT NULL COMMENT/iu)
     }
     if (isCarePlanExpiryIndex) {
       assert.deepEqual([...content.matchAll(/^CREATE INDEX `([^`]+)` ON `([^`]+)`/gmu)].map(match => [match[1], match[2]]), [['idx_care_plan_expiry_scan', 'care_plans']])
@@ -170,6 +180,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       assert.match(content, /^ALTER TABLE `guest_sessions`\s/mu, '游客令牌迁移只扩展既有游客会话表')
     } else if (isCareOutboxTimelineTypes) {
       assert.match(content, /^ALTER TABLE `care_outbox`\s/mu, '时间线事件迁移只扩展 care 发件箱事件类型')
+    } else if (isPlantLightColumns) {
+      assert.match(content, /^ALTER TABLE `user_plant_care_contexts`\s/mu, 'Lux 存档迁移只扩展既有养护环境表')
     } else if (isCarePlanExpiryIndex) {
       assert.match(content, /^CREATE INDEX `idx_care_plan_expiry_scan` ON `care_plans` \(`status`, `scheduled_at_ms`, `id`\);$/mu, '过期扫描迁移只新增既定二级索引')
     } else if (isSessionPolicyExtension) {
@@ -190,7 +202,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
         isDiagnosisSnapshotExtension ||
         isDiagnosisResultExtension ||
         isGuestTokenExtension ||
-        isCareOutboxTimelineTypes
+        isCareOutboxTimelineTypes ||
+        isPlantLightColumns
         ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
         : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
       `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`

@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
@@ -66,8 +67,10 @@ type CreateRequestDto = {
   readonly idempotencyKey: string
 }
 
-const jsonBodyLimitBytes = 1_048_576
-const idempotencyRetentionMs = 168 * 60 * 60 * 1000
+/** 共享 HTTP 合同正文上限（统一入口 http.json_body_limit_bytes）。 */
+const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
+/** 共享 HTTP 合同幂等保留期（统一入口 http.idempotency.retention_hours，换算为毫秒）。 */
+const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const validators = createPublicContractValidators()
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 

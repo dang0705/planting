@@ -1,8 +1,8 @@
 import pino from 'pino'
 
+import { readCareEnvironment } from '../configuration/environment.js'
 import { createCareServer } from '../care/http/server.js'
 import { createOpenMeteoRadiationFetcher } from '../care/provider/open-meteo-radiation-fetcher.js'
-import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
 import { createMysql2ConnectionSource, toSqlParameters, withReadConnection } from '../foundation/database/mysql2-connection-source.js'
 import { createResolveGuestOrUserPrincipal } from '../identity/application/resolve-guest-principal.js'
 import { createResolveUserPrincipalUseCase } from '../identity/application/resolve-user-principal.js'
@@ -11,16 +11,16 @@ import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '..
 
 /** CloudBase HTTP 云函数固定监听端口。 */
 const servicePort = 9000
-/** 配置目录 Provider `open_meteo` 已确认总时限（total=8000ms、1 次、不重试），同 identity 入口 Provider 时限约定。 */
-const openMeteoTotalDeadlineMs = 8000
+/** 环境变量层统一读取（日志级别、数据库、Open-Meteo 总时限；非法即启动失败，错误不含取值）。 */
+const environment = readCareEnvironment(process.env)
 
 /** 只记录脱敏事件；不输出连接、身份、坐标或请求正文。 */
 const logger = pino({
   base: null,
-  level: process.env.LOG_LEVEL ?? 'info',
+  level: environment.logLevel,
   redact: { paths: ['headers', 'authorization', 'body', 'env', 'config'], censor: '[已脱敏]' }
 })
-const source = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
+const source = createMysql2ConnectionSource(environment.database)
 const now = () => Date.now()
 /** guest_or_authenticated：`Bearer guest.<令牌>` 解析为游客，其他 Bearer 解析为登录用户。 */
 const resolvePrincipal = createResolveGuestOrUserPrincipal({
@@ -38,7 +38,7 @@ const server = createCareServer({
   connectionSource: source,
   now,
   resolvePrincipal,
-  fetchRadiation: createOpenMeteoRadiationFetcher({ fetch: globalThis.fetch, now, totalDeadlineMs: openMeteoTotalDeadlineMs, logger }),
+  fetchRadiation: createOpenMeteoRadiationFetcher({ fetch: globalThis.fetch, now, totalDeadlineMs: environment.openMeteoTotalDeadlineMs, logger }),
   writeAudit: event => { logger.info({ event: 'request_outcome', function: 'care', ...event }, '请求结果') },
   recordRollbackFailure: () => { logger.error({ event: 'transaction_rollback_failed', function: 'care' }, '事务回滚失败') }
 })

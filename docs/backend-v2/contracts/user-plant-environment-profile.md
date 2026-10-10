@@ -30,6 +30,8 @@ export type ProfilePatchV2 = {
   } | null
   /** 通风：不等同室外风速；省略保留，null 清除。 */
   ventilation?: { airExchange: 'closed' | 'occasional' | 'frequent'; localAirflow: 'none' | 'fan' | 'ac' | 'heater' | 'natural_draft'; directBlowing: boolean | null } | null
+  /** 植物位置最近一次 Lux 实测（2026-10-10 用户追加）；省略保留，null 清除。只存最近一次，新值覆盖旧值。 */
+  plantLight?: { lux: number; measuredAt: string; source: 'meter' | 'camera_estimate' } | null
 }
 type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' | 'bark' | 'sphagnum' | 'gritty' | 'coarse_sand'
 ```
@@ -37,16 +39,20 @@ type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' |
 - 除 `version` 外至少提供一项；未知键、错误枚举、客户端提交 DLI/透射率/持水倍率/完整度/首次完成时间等派生值一律 `400 VALIDATION_FAILED`。
 - `location.cityRef` 必须是 weather 城市目录（`city_climate_profiles.city_code`，策略版本 `v0-city-outdoor`）中存在的城市代码；不存在返回 `400 VALIDATION_FAILED`。
   城市目录读取失败返回 `503 SERVICE_UNAVAILABLE`。
+- `plantLight`（2026-10-10 用户追加「Lux 存档」）：`lux` 为非负数（与浇水建议 `lightReading.lux` 同口径）；`measuredAt` 为带 Z 的 UTC 时间
+  （与浇水建议同一格式与往返校验），晚于服务端当前时刻 → 400；`source` 为 `meter`（照度计）或 `camera_estimate`（相机估算）。
+  服务端不因读数“已过期”拒绝保存；是否仍有效由读取方按浇水策略 `luxAnchorMaxAgeDays`（当前 30 天）判定，不新造参数。
 - 与草案的差异：光照分组去掉恒为 `user_selected` 的 `source` 字段（只有一个取值，不承载信息）。
 - **2026-10-10 用户纠偏（不兼容变更）**：
   - 「盆型」= 尺寸（上口/下底/高度 + 排水），即 `measuredPot`，不是形状。删除 `potShape` 分组（`shape` 枚举与 `wallMaterial` 一并删除；盆壁材质另由待验证票 `z8v0kmvewm` 处理，不进档案）。
-  - 新版光照只收「朝向 + 城市」（城市在 `location`），外加植物位置的 Lux 实测（浇水建议请求 `lightReading`，不进档案）。`lighting` 分组只剩 `windowFacing`，删除 `glassLayers`、`distanceBand`、`obstruction`。
+  - 新版光照只收「朝向 + 城市」（城市在 `location`），外加植物位置的 Lux 实测（浇水建议请求 `lightReading`；同日追加：最近一次读数另存为档案分组 `plantLight`，见下）。`lighting` 分组只剩 `windowFacing`，删除 `glassLayers`、`distanceBand`、`obstruction`。
   - 提交已删除的字段 → 400（未知键）。数据库不做 DDL：`pot_profile_json.potShapeProfile` 及 `light_environment_json` 中的旧键不再读写、不再公开。
 
 ## 2. 落库与版本
 
 - `nickname`、`measuredPot`、`substrate` → `user_plant_profiles`（`pot_profile_json` 中 `measuredPot` / `substrateProfile` 键；刻意不用裸名 `substrate`，避免与旧 JSON 同名历史键混淆）；
-  `location` → `user_plant_care_contexts.location_json`，`lighting` → `light_environment_json`，`ventilation` → `ventilation_environment_json`。
+  `location` → `user_plant_care_contexts.location_json`，`lighting` → `light_environment_json`，`ventilation` → `ventilation_environment_json`，
+  `plantLight` → 迁移 030 新增的 `plant_light_lux` / `plant_light_measured_at_ms` / `plant_light_source` 三列（三列同空或同不空，CHECK 约束兜底）。
   未设置的环境分组以 JSON `null` 存储；本合同不写 `cultivation_method`（固定占位 `unspecified`，不公开）。
 - 公开协议只使用聚合版本 `user_plants.version`；子表版本只在内部递增，不出现在请求或响应。
 - 同一事务：幂等占位 → 归属锁（锁植物与用户行）→ 版本比对 → 子表写入 → 聚合版本 +1 → 完整度判定 →（必要时）奖励事件 → 公开读回 → 幂等完成。任一步失败整体回滚。
@@ -67,7 +73,8 @@ type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' |
 
 ## 4. 公开读回
 
-单株读取、列表与本接口的成功响应中，`profile` 在 v1（`nickname`、可选 `measuredPot`）基础上增加已设置的 `substrate`、`location`、`lighting`、`ventilation`；
+单株读取、列表与本接口的成功响应中，`profile` 在 v1（`nickname`、可选 `measuredPot`）基础上增加已设置的 `substrate`、`location`、`lighting`、`ventilation`、`plantLight`
+（`plantLight` 返回 `{ lux, measuredAt, source }`，`measuredAt` 统一为带毫秒的 UTC 文本，不附有效标记；有效与否见完整度合同 `user-plant-profile-completeness.md`）；
 未设置的分组省略（不返回 null）。不返回完整度版本、首次完成时间、子表版本、`cultivation_method` 或任何内部字段。
 有环境分组但没有档案行时，`profile.nickname` 为空字符串。
 
@@ -83,3 +90,6 @@ type SubstrateMaterial = 'general' | 'coco' | 'ceramsite' | 'peat' | 'perlite' |
 - **用户审定方向**：长期植物取天气时使用档案 `location.cityRef` 对应城市的中心坐标（`city_climate_profiles.lat/lon`），不再依赖前端传坐标。
 - **落地方式**：需要 care 合同（long-term-care/v1）修订——长期植物请求禁止再提交 `location`、care 只读上下文增加 `cityRef → 城市中心坐标`、档案无位置时的返回语义。
   该修订属于 care 域，本合同不实现，列为后续待办。
+
+- **2026-10-10 补充（Lux 存档）**：care 只读上下文同时读取 `plantLight`；长期植物浇水建议请求未带 `lightReading` 时，使用档案中仍在
+  `luxAnchorMaxAgeDays` 内的读数，过期按 `plant_light` 缺失处理（见 `watering-advice-http-contract.md`「长期植物的 Lux 存档」）。

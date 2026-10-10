@@ -227,7 +227,9 @@ export const READ_PLANT_PROJECTION_SQL = `SELECT 'read-plant' AS \`kind\`, \`p\`
               CAST(\`f\`.\`id\` AS CHAR) AS \`profile_internal_id\`, \`f\`.\`nickname\` AS \`profile_nickname\`,
               \`f\`.\`pot_profile_json\` AS \`profile_pot_json\`, \`f\`.\`_openid\` AS \`profile_openid\`,
               CAST(\`c\`.\`id\` AS CHAR) AS \`context_internal_id\`, \`c\`.\`location_json\` AS \`context_location_json\`,
-              \`c\`.\`light_environment_json\` AS \`context_light_json\`, \`c\`.\`ventilation_environment_json\` AS \`context_ventilation_json\`
+              \`c\`.\`light_environment_json\` AS \`context_light_json\`, \`c\`.\`ventilation_environment_json\` AS \`context_ventilation_json\`,
+              \`c\`.\`plant_light_lux\` AS \`context_plant_light_lux\`, CAST(\`c\`.\`plant_light_measured_at_ms\` AS CHAR) AS \`context_plant_light_measured_at_ms\`,
+              \`c\`.\`plant_light_source\` AS \`context_plant_light_source\`
        FROM \`user_plants\` AS \`p\`
        JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
        LEFT JOIN \`plant_identities\` AS \`i\` ON \`i\`.\`id\` = \`p\`.\`confirmed_identity_internal_id\`

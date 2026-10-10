@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type {
   PublishedPlantSqlExecutor,
   PublishedPlantSqlRow
@@ -17,7 +18,8 @@ export type PublishedPlantSearchRepository = {
   readonly searchPublishedPlants: (query: string) => Promise<PublishedPlantSearchRepositoryResult>
 }
 
-const maximumSearchResultItems = 20
+/** 单次最多返回条数（硬规则 `plant-knowledge.search.result_max_items`，取值见代码层注册表）。 */
+const maximumSearchResultItems = RUNTIME_PARAMETERS.plantKnowledge.searchResultMaxItems.value
 const extraLookaheadRowCount = 1
 const searchLookaheadRowLimit = maximumSearchResultItems + extraLookaheadRowCount
 const zero = 0

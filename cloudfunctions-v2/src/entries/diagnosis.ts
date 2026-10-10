@@ -1,5 +1,5 @@
 import pino from 'pino'
-import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
+import { readFunctionEnvironment } from '../configuration/environment.js'
 import {
   createMysql2ConnectionSource,
   withReadConnection,
@@ -16,13 +16,16 @@ import { createDiagnosisServer } from '../diagnosis/http/server.js'
 
 /** CloudBase HTTP运行约定的监听端口。 */
 const servicePort = 9000
+/** 环境变量层统一读取（日志级别、数据库；非法即启动失败，错误不含取值）。 */
+const environment = readFunctionEnvironment(process.env)
+
 /** 只记录脱敏事件；不输出连接、身份、提示词或请求正文。 */
 const logger = pino({
   base: null,
-  level: process.env.LOG_LEVEL ?? 'info',
+  level: environment.logLevel,
   redact: { paths: ['headers', 'authorization', 'body', 'env', 'config'], censor: '[已脱敏]' }
 })
-const source = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
+const source = createMysql2ConnectionSource(environment.database)
 /** guest_or_authenticated：`Bearer guest.<令牌>` 解析为游客（guest-token/v1 §2），其他 Bearer 解析为登录用户。 */
 const resolvePrincipal = createResolveGuestOrUserPrincipal({
   guestRepository: createMysqlGuestSessionRepository(source),

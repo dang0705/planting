@@ -1,9 +1,10 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 /**
  * 游客认领命令处理租约时长（毫秒）。
  * 配置目录硬规则 `user-plant.guest_claim.processing_lease_seconds` = 30：正确性依赖完成写入的“租约未过期且持有者匹配”条件，
  * 时长只决定崩溃后的接管等待，不做运营配置；调整须改代码与测试。
  */
-export const GUEST_CLAIM_PROCESSING_LEASE_MS = 30 * 1000
+export const GUEST_CLAIM_PROCESSING_LEASE_MS = RUNTIME_PARAMETERS.userPlant.guestClaimProcessingLeaseSeconds.value * 1000
 
 /** 租约裁决输入：事务内加锁读到的命令状态与本次请求的服务端候选持有者。 */
 export interface GuestClaimLeaseDecisionInput {

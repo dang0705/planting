@@ -31,21 +31,31 @@ export interface VentilationProfile {
   /** 风源是否直接吹到植物；未知为 null。 */ readonly directBlowing: boolean | null
 }
 
-/** 四个环境分组的键与值类型映射。 */
+/** 植物位置最近一次 Lux 实测（2026-10-10 用户追加 Lux 存档）；有效期由读取方按浇水策略 luxAnchorMaxAgeDays 判定，不在此存。 */
+export interface PlantLightProfile {
+  /** 植物位置照度（Lux，非负）。 */ readonly lux: number
+  /** 测量时间（带 Z 的 UTC；读回统一为带毫秒格式）。 */ readonly measuredAt: string
+  /** 来源：meter 照度计；camera_estimate 相机估算。 */ readonly source: 'meter' | 'camera_estimate'
+}
+
+/** 环境分组的键与值类型映射。 */
 export interface EnvironmentGroups {
   /** 基质组分分组（材料列表与主要材料）。 */ readonly substrate: SubstrateProfile
   /** 城市级位置分组。 */ readonly location: LocationProfile
   /** 光照分组（朝向、玻璃、距离、遮挡）。 */ readonly lighting: LightingProfile
   /** 通风分组（空气交换、局部风源、直吹）。 */ readonly ventilation: VentilationProfile
+  /** 植物位置最近一次 Lux 实测分组。 */ readonly plantLight: PlantLightProfile
 }
 /** 环境分组键。 */
 export type EnvironmentGroupKey = keyof EnvironmentGroups
 /** 固定顺序的分组键；存于档案 JSON 的两组与存于养护环境表的三组。 */
-export const ENVIRONMENT_GROUP_KEYS = ['substrate', 'location', 'lighting', 'ventilation'] as const satisfies readonly EnvironmentGroupKey[]
+export const ENVIRONMENT_GROUP_KEYS = ['substrate', 'location', 'lighting', 'ventilation', 'plantLight'] as const satisfies readonly EnvironmentGroupKey[]
 /** 存于 `user_plant_profiles.pot_profile_json` 的分组（2026-10-10 删除 potShape 后只剩基质）。 */
 export const PROFILE_JSON_GROUP_KEYS = ['substrate'] as const satisfies readonly EnvironmentGroupKey[]
-/** 存于 `user_plant_care_contexts` 的三个分组。 */
-export const CARE_CONTEXT_GROUP_KEYS = ['location', 'lighting', 'ventilation'] as const satisfies readonly EnvironmentGroupKey[]
+/** 存于 `user_plant_care_contexts` JSON 列的三个分组。 */
+export const CARE_CONTEXT_JSON_GROUP_KEYS = ['location', 'lighting', 'ventilation'] as const satisfies readonly EnvironmentGroupKey[]
+/** 存于 `user_plant_care_contexts` 的全部分组：三个 JSON 分组 + 迁移 030 三列承载的 plantLight。 */
+export const CARE_CONTEXT_GROUP_KEYS = [...CARE_CONTEXT_JSON_GROUP_KEYS, 'plantLight'] as const satisfies readonly EnvironmentGroupKey[]
 /**
  * 盆型/基质在 `pot_profile_json` 中的存储键。刻意不用 `substrate` 等裸名：旧档案 JSON 可能已有同名历史键（只保留、不公开），
  * 用带 Profile 后缀的新键避免把历史值误当成新合同字段。
@@ -67,8 +77,19 @@ const groupValidators = Object.fromEntries(ENVIRONMENT_GROUP_KEYS.map(key => {
   return [key, ajv.compile(branch as object)]
 })) as Record<EnvironmentGroupKey, ReturnType<typeof ajv.compile>>
 
+/** 带 Z 的 UTC 文本往返校验并统一为带毫秒 ISO；非法（如 2 月 30 日）返回 null。 */
+export function normalizeUtc(value: string): string | null {
+  const time = Date.parse(value)
+  if (!Number.isFinite(time)) { return null }
+  const canonical = new Date(time).toISOString()
+  return (value.includes('.') ? canonical : canonical.replace('.000Z', 'Z')) === value ? canonical : null
+}
+
 /** 分组的跨字段规则：主要基质必须属于组分（JSON Schema 无法表达）。 */
 export function assertEnvironmentGroupRules(key: EnvironmentGroupKey, value: unknown): void {
+  if (key === 'plantLight' && value !== null && normalizeUtc((value as PlantLightProfile).measuredAt) === null) {
+    throw new TypeError('Lux 测量时间不是合法 UTC 时间')
+  }
   if (key === 'substrate' && value !== null) {
     const substrate = value as SubstrateProfile
     if (substrate.primaryMaterial !== null && !substrate.materials.includes(substrate.primaryMaterial)) {
@@ -98,4 +119,29 @@ export function lockStoredEnvironmentGroup<TKey extends EnvironmentGroupKey>(key
 export function hasCompleteMeasuredPot(pot: Readonly<MeasuredPotProfile> | undefined): boolean {
   if (pot === undefined) { return false }
   return pot.drainageAvailable !== null && [pot.potTopDiameterCm, pot.potBottomDiameterCm, pot.potHeightCm].some(size => size !== null)
+}
+
+/** plantLight 存储三列（迁移 030）；三列同空表示未测。 */
+export interface PlantLightColumns {
+  /** 照度列（DOUBLE）。 */ readonly lux: number | null
+  /** 测量时间 UTC 毫秒列。 */ readonly measuredAtMs: number | null
+  /** 照度来源列（meter 或 camera_estimate）。 */ readonly source: string | null
+}
+
+/** 分组值 → 三列；未设置/清除为三个 null。 */
+export function plantLightToColumns(value: PlantLightProfile | null | undefined): PlantLightColumns {
+  if (value === null || value === undefined) { return { lux: null, measuredAtMs: null, source: null } }
+  const iso = normalizeUtc(value.measuredAt)
+  if (iso === null) { throw new TypeError('Lux 测量时间不是合法 UTC 时间') }
+  return { lux: value.lux, measuredAtMs: Date.parse(iso), source: value.source }
+}
+
+/** 读回三列 → 冻结分组；三列全空返回 undefined；部分为空或取值非法属于数据损坏（失败关闭）。 */
+export function plantLightFromColumns(lux: unknown, measuredAtMs: unknown, source: unknown): Readonly<PlantLightProfile> | undefined {
+  if ((lux === null || lux === undefined) && (measuredAtMs === null || measuredAtMs === undefined) && (source === null || source === undefined)) { return undefined }
+  const luxValue = typeof lux === 'string' ? Number(lux) : lux
+  const timeValue = typeof measuredAtMs === 'string' && /^(0|[1-9][0-9]*)$/u.test(measuredAtMs) ? Number(measuredAtMs) : measuredAtMs
+  if (typeof luxValue !== 'number' || !Number.isFinite(luxValue) || luxValue < 0 || typeof timeValue !== 'number' || !Number.isSafeInteger(timeValue)
+    || (source !== 'meter' && source !== 'camera_estimate')) { throw new TypeError('植物位置 Lux 存储不合法') }
+  return Object.freeze({ lux: luxValue, measuredAt: new Date(timeValue).toISOString(), source })
 }

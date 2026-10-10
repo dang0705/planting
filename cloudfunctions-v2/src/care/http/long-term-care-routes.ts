@@ -186,7 +186,7 @@ export function createLongTermCareRouteBindings(dependencies: LongTermCareRouteD
             }
           },
           nextPlan: nextPlan === null ? null : { planRef: nextPlan.planRef, planType: 'check_soil', scheduledAt: iso(nextPlan.scheduledAtMs), status: 'planned', calendar: nextPlan.calendar },
-          profileReadiness: { hasMeasuredPot: context.measuredPot !== null, hasCatalogBinding: context.catalogTaxonRef !== null }
+          profileReadiness: { ...context.profileReadiness }
         }
         return ok(summary)
       },

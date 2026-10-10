@@ -47,7 +47,12 @@
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "达到 expiresAt 后拒绝继续使用和认领",
       "decisionGroup": "identity_sessions",
-      "decisionNote": "用户 2026-10-08 裁决：游客改为后端自发令牌，有效期 7 天（168 小时），与登录用户临时案例一致；仅影响新签发令牌。"
+      "decisionNote": "用户 2026-10-08 裁决：游客改为后端自发令牌，有效期 7 天（168 小时），与登录用户临时案例一致；仅影响新签发令牌。",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/identity-session-policy.ts",
+        "cloudfunctions-v2/src/identity/application/issue-guest-session.ts"
+      ]
     },
     {
       "id": "identity.guest.proof_rotation_grace_seconds",
@@ -72,7 +77,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "上一版证明最多接受 300 秒，超时后清除摘要并拒绝",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "identity.user.session_ttl_hours",
@@ -97,7 +104,9 @@
       "phase": "P1",
       "ticketTitle": "[P2] 统一身份 Principal",
       "expected": "过期会话返回 PRINCIPAL_INVALID",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "identity.user.refresh_window_hours",
@@ -121,7 +130,9 @@
       "phase": "P1",
       "ticketTitle": "[P2] 统一身份 Principal",
       "expected": "MVP 所有续期请求均失败且不延长旧会话",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "identity.service_signature.clock_skew_seconds",
@@ -147,7 +158,13 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "请求时间与服务端 UTC 时间绝对差超过 300 秒时返回 401",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/identity/http/user-trial-anchor-route.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "identity.service_signature.nonce_ttl_seconds",
@@ -173,7 +190,13 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "同一服务的 nonce 从首次验签成功起至少保留 600 秒且只能接受一次，更换 key_id 也不得重放",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/identity/http/user-trial-anchor-route.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "identity.platform_subject.single_owner",
@@ -197,7 +220,9 @@
       "phase": "P1",
       "ticketTitle": "[P2] 统一身份 Principal",
       "expected": "同平台主体不能绑定多个 user_id",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "subscription.entitlement.precedence",
@@ -226,7 +251,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "会员优先于试用，试用优先于免费和游客",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "subscription.trial.duration_hours",
@@ -254,7 +281,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "每个 user_id 终身一次且绝对到期",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.trial.ai_points",
@@ -281,7 +310,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "发放 200 点且并发下只发一次",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.trial.ai_scopes",
@@ -309,7 +340,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "内部 CMS 与分类能力不在试用 scope",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.member.price_cny",
@@ -334,7 +367,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "客户端不能提交价格",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.member.ai_points_per_cycle",
@@ -361,7 +396,11 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "无日限额、周限额且周期结束不结转",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/member-ai-quota-policy.ts"
+      ]
     },
     {
       "id": "subscription.member.rollover_enabled",
@@ -383,7 +422,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "下一周期不继承上一周期余额",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "subscription.reward.ai_scopes",
@@ -411,7 +452,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "不含 CMS_ENRICHMENT、分类审核、天气和百度识别",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.reward.expiry_calendar_months",
@@ -434,7 +477,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "从实际入账日加三个月，会员到期不提前失效",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.points.first_profile",
@@ -458,7 +503,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "每用户终身只发一次",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.points.due_soil_check",
@@ -482,7 +529,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "浇水与暂不浇水奖励相同",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.points.due_fertilizer_check",
@@ -506,7 +555,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "无需实际施肥即可获得正确检查奖励",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.points.fixed_diagnosis",
@@ -530,7 +581,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "同植物同症状窗口内最多一次",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.points.fixed_diagnosis_window_hours",
@@ -554,7 +607,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "30×24 小时内同一植物同一症状只奖励一次",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.points.expiry_enabled",
@@ -576,7 +631,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "时间推进不减少积分",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "subscription.level.thresholds",
@@ -635,7 +692,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "五级总奖励 950 点且每级终身一次",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.redemption.catalog",
@@ -657,7 +716,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "MVP 不接受任何积分兑换",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_cost.point_base_cny",
@@ -681,7 +742,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "使用人民币微元整数计算",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_cost.safety_factor",
@@ -705,7 +768,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "点数=向上取整(costMicros/800)",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_budget.monthly_cny",
@@ -730,7 +795,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "达到 500 元停止新增 AI 消费",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_budget.warning_cny",
@@ -753,7 +820,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "累计成本达到 400 元产生告警",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_budget.restrict_cny",
@@ -777,7 +846,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "累计成本达到 450 元限制新增消费",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_reservation.ttl_seconds",
@@ -804,7 +875,9 @@
       "expected": "过期预占只能经对账结算或释放",
       "pendingReason": "合同定义 expiresAt 但未冻结时长",
       "blockingScope": "生成式 AI 调用",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "subscription.ai_action.required_budget_fields",
@@ -838,7 +911,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "所有生成式产品动作使用同一组审计字段",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "user-plant.free.active_limit",
@@ -863,7 +938,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "archived/deleted 不占 active 上限",
-      "decisionGroup": "userplant_limits"
+      "decisionGroup": "userplant_limits",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "user-plant.profile.minimum_completeness",
@@ -912,7 +989,9 @@
         "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
         "implementationTicket": "z8v0kmr9mj"
       },
-      "decisionNote": "用户 2026-10-10 纠偏：删除 potShape 分组与光照的玻璃/距离/遮挡字段，requiredFields 不变、各项含义按 user-plant-environment-profile.md 修订"
+      "decisionNote": "用户 2026-10-10 纠偏：删除 potShape 分组与光照的玻璃/距离/遮挡字段，requiredFields 不变、各项含义按 user-plant-environment-profile.md 修订",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "user-plant.profile_progress.policy",
@@ -920,17 +999,17 @@
       "domain": "user-plant",
       "layer": "domain_policy",
       "valueType": "object",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
-      "proposedValue": {
+      "status": "confirmed",
+      "currentValue": {
         "ruleVersion": "user-plant-profile-progress/v1",
         "weights": {
           "catalog_binding": 30,
           "measured_pot": 25,
-          "location": 20,
           "substrate": 15,
-          "lighting": 5,
-          "ventilation": 5
+          "location": 12,
+          "plant_light": 10,
+          "ventilation": 5,
+          "lighting": 3
         },
         "levels": {
           "starter": 0,
@@ -938,28 +1017,40 @@
           "great": 80,
           "complete": 100
         },
-        "carrier": "code_constant"
+        "plantLightValidity": "复用 care/mvp_watering 活动发布 luxAnchorMaxAgeDays（当前 30 天）"
       },
       "owner": "user-plant",
       "sourceRefs": [
-        "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md#2. 计分项与权重",
-        "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md#6. 版本化",
-        "docs/backend-v2/contracts/user-plant-environment-profile.md#3. 完整度与首株奖励事件"
+        "docs/backend-v2/contracts/user-plant-profile-completeness.md#1. 计分项（v1 正文）",
+        "docs/backend-v2/contracts/user-plant-profile-completeness.md#6. 可配置性与版本",
+        "cloudfunctions-v2/models/user-plant/profile-progress-policy.v1.md"
       ],
       "consumers": [
         "user-plant",
         "care"
       ],
-      "changePolicy": "不可变规则版本；读时现算不落库，换版本即时生效，回退到上一版本号",
-      "fallback": "未冻结前不返回 completeness / completenessPercent 字段",
+      "changePolicy": "类型化策略发布（BusinessPolicyRelease）：不可变 release + SHA-256 + 活动指针；读时现算不落库，切换活动指针即生效，回退切回上一版本",
+      "fallback": "无活动发布、记录不可信或浇水策略不可用时省略 completeness / completenessPercent，接口仍 200；不使用源码默认值",
       "phase": "P2",
       "ticketTitle": "[E03][P2] 长期植物档案完整度读取与激励",
-      "expected": "权重合计 100；percent 为已完成项权重之和；missingItems 按权重降序且每项含 reason/benefit/editTarget；nextRecommended 为最高权重缺失项；care profileReadiness 由同一评估器派生；响应不含规则版本与奖励状态",
-      "pendingReason": "草案待用户审（决策点 D1～D4、D6、D7）；子代理提交候选值，是否配置化及载体由主代理裁决",
-      "blockingScope": "单株/列表/档案保存响应中的完整度字段与 care profileReadiness 统一；不阻断首株有效档案奖励",
+      "expected": "权重合计 100（品种 30、盆 25、盆土 15、城市 12、Lux 10、通风 5、朝向 3）；percent 为已完成项权重和；Lux 在 luxAnchorMaxAgeDays 内才算完成；missingItems 按权重降序含 reason/benefit/editTarget；care profileReadiness 与同一判定一致；响应不含规则版本",
       "decisionGroup": "userplant_limits",
       "clickUpTicketId": "z8v0kmvfu1",
-      "decisionNote": "2026-10-10 user_plant_terra 起草，待用户审"
+      "decisionNote": "用户 2026-10-10 审定：草案按推荐采纳且必须可配置（类型化策略发布）；追加 Lux 计分，权重由子代理方案（城市 20→12、朝向 5→3、Lux 10）",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/profile-progress-policy.ts",
+        "cloudfunctions-v2/src/user-plant/repository/mysql-profile-progress-policy-reader.ts",
+        "cloudfunctions-v2/src/user-plant/domain/profile-progress.ts",
+        "cloudfunctions-v2/models/user-plant/profile-progress-policy.v1.json"
+      ],
+      "runtimePublication": {
+        "domainCode": "user-plant",
+        "policyCode": "profile_progress",
+        "schemaVersion": "user-plant-profile-progress/v1",
+        "contractRef": "docs/backend-v2/contracts/user-plant-profile-completeness.md",
+        "implementationTicket": "z8v0kmvfu1"
+      }
     },
     {
       "id": "subscription.points.profile_milestones",
@@ -980,7 +1071,7 @@
       },
       "owner": "subscription",
       "sourceRefs": [
-        "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md#5.2 里程碑 60% / 100%（只设计，不实现）",
+        "docs/backend-v2/contracts/user-plant-profile-completeness.md#5. 激励",
         "docs/backend-v2/contracts/care-points-and-ai-quota.md"
       ],
       "consumers": [
@@ -992,11 +1083,13 @@
       "phase": "P3",
       "ticketTitle": "[E03][P2] 长期植物档案完整度读取与激励",
       "expected": "每株每档位终身一次；降回再升不重发；发出不收回；受每用户株数或每日上限约束",
-      "pendingReason": "积分值、防刷上限未定；需先修订 reward-events.md 新事件类型（决策点 D5）",
+      "pendingReason": "用户 2026-10-10 裁决 D5：推迟到第三阶段；积分值、每用户株数上限未定，需先修订 reward-events.md 新事件类型",
       "blockingScope": "里程碑事件与积分；不阻断完整度读取与首株奖励",
       "decisionGroup": "entitlements_cost_rewards",
       "clickUpTicketId": "z8v0kmvfu1",
-      "decisionNote": "2026-10-10 user_plant_terra 起草，只设计不实现，待用户审"
+      "decisionNote": "用户 2026-10-10 审定：保持 pending（D5 推迟到第三阶段）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "user-plant.assets.max_count_per_plant",
@@ -1023,7 +1116,13 @@
       "expected": "每株最多 1 张有效封面；换封面时旧封面转 pending_cleanup，不产生第二张 active",
       "decisionGroup": "userplant_limits",
       "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）",
-      "clickUpTicketId": "z8v0kmr9mj"
+      "clickUpTicketId": "z8v0kmr9mj",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/cover-asset.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "user-plant.assets.replaced_cover_cleanup_days",
@@ -1049,7 +1148,13 @@
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "userplant_limits",
-      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）"
+      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/cover-asset.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "user-plant.timeline.page_size",
@@ -1076,7 +1181,12 @@
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "hard_business_rule",
-      "decisionNote": "用户 2026-10-10 审定时间线草案按推荐通过（单独登记同值分页，便于将来与列表分开调整）"
+      "decisionNote": "用户 2026-10-10 审定时间线草案按推荐通过（单独登记同值分页，便于将来与列表分开调整）",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/timeline.ts"
+      ]
     },
     {
       "id": "user-plant.authenticated_ephemeral.case_ttl_hours",
@@ -1105,7 +1215,11 @@
       "expected": "创建已登录临时案例前必须取得已冻结有效期策略；不得隐式继承游客会话的 24 小时；已创建案例的失效时间不随策略变更而漂移",
       "decisionGroup": "userplant_limits",
       "allowed": "168",
-      "decisionNote": "用户 2026-10-08 裁决：已登录临时案例保留 7 天（168 小时），与游客 24 小时会话独立。"
+      "decisionNote": "用户 2026-10-08 裁决：已登录临时案例保留 7 天（168 小时），与游客 24 小时会话独立。",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/user-plant-limits-policy.ts"
+      ]
     },
     {
       "id": "user-plant.lifecycle.owner_guard",
@@ -1128,7 +1242,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "跨用户访问不泄露对象存在性",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "user-plant.guest_claim.once",
@@ -1152,7 +1268,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "事务内不重复建植物或绑定临时对象",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.cms.identity_reward_points",
@@ -1177,7 +1295,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "首次实际发布且全局唯一",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.cms.content_reward_points",
@@ -1202,7 +1322,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "同身份同内容结构版本全局只奖励一次",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.taxonomy.authority_priority",
@@ -1238,7 +1360,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "模型不得裁决权威来源冲突",
-      "decisionGroup": "taxonomy_governance"
+      "decisionGroup": "taxonomy_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.identity.baidu_candidate_thresholds",
@@ -1262,7 +1386,9 @@
       "expected": "阈值变化不能越过人工身份准入",
       "pendingReason": "真实百度响应和映射尚未 S4 验证",
       "blockingScope": "自动候选排序",
-      "decisionGroup": "taxonomy_governance"
+      "decisionGroup": "taxonomy_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.cms.content_schema_version",
@@ -1289,7 +1415,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "展示内容只允许简介、外观、分布和 1 至 3 条问答；奖励主题键包含结构版本；分类、养护、安全和诊断字段拒绝",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.cms.qa_target_count",
@@ -1315,7 +1443,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "只生成简短展示型问答",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.cms.forbidden_fields",
@@ -1364,7 +1494,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "任一分类、养护、安全、食药用、病虫害、诊断治疗、审核或发布字段出现时整份草稿拒绝",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.enrichment.queue_lease_seconds",
@@ -1390,7 +1522,9 @@
       "expected": "租约过期可接管且不重复发布",
       "pendingReason": "数值子项仍 CONTRACT_STOP",
       "blockingScope": "自动 CMS 补全",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.enrichment.max_attempts",
@@ -1414,7 +1548,9 @@
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "同一任务自动尝试最多 3 次",
       "allowed": "3",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.enrichment.monthly_budget_cny",
@@ -1439,7 +1575,9 @@
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "未经独立批准不得产生真实模型成本",
       "allowed": "0",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "plant-knowledge.search.query_max_code_points",
@@ -1463,7 +1601,12 @@
       "phase": "P2",
       "ticketTitle": "[P2] 已发布植物身份公开搜索纵向切片",
       "expected": "首尾空白裁剪并做 NFC 归一化后，查询词为 1 至 64 个 Unicode 码点",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/plant-knowledge/application/search-published-plants.ts"
+      ]
     },
     {
       "id": "plant-knowledge.search.result_max_items",
@@ -1487,7 +1630,12 @@
       "phase": "P2",
       "ticketTitle": "[P2] 已发布植物身份公开搜索纵向切片",
       "expected": "响应 items 不超过 20 条；超出时 truncated=true，排序稳定",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/plant-knowledge/repository/mysql-published-plant-search-repository.ts"
+      ]
     },
     {
       "id": "plant-knowledge.identity.release_required",
@@ -1513,7 +1661,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 植物分类与身份准入硬门",
       "expected": "百度和 Qwen 均不能直接创建分类事实",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.environment.atomic_facts_immutable",
@@ -1537,7 +1687,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "算法升级或证据修正不得改写原子环境事实",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.environment.weather_scope_must_be_outdoor",
@@ -1562,7 +1714,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "weather_adapter 不得冒充 indoor 或 plant_zone 实测",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.environment.derivation_must_not_overwrite_fact",
@@ -1585,7 +1739,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "新算法只能基于已锁定快照追加新派生结果",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.reference_profile.release",
@@ -1612,7 +1768,9 @@
       "expected": "Reference Profile 的每个植物级值都能追溯 Structured Trait Evidence、归一规则、审核 release 或显式 fallback",
       "pendingReason": "结构已冻结，但植物级 cultivation reference 当前缺 substrate_preference 等已审核性状；VPD/light 参考也尚未形成正式 release",
       "blockingScope": "植物级 Reference Profile 正式运行与相关浇水个性化",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.environment.derivation_algorithm_release",
@@ -1638,7 +1796,9 @@
       "expected": "每条 Estimated Indoor、Window Plane、PPFD/DLI、Air VPD、AirMovement、EnvironmentDemand、CultivationRetention、GrowthActivity、DryProgress 均可回放输入快照、算法 release 与结果哈希",
       "pendingReason": "派生类型与职责已冻结，但各算法实现 release、映射参数和真实数据验收尚未完成",
       "blockingScope": "Care v2 确定性派生运行时",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.environment.factor_freshness_policy_release",
@@ -1663,7 +1823,9 @@
       "expected": "光照、温湿度、空气运动、盆器基质与盆土证据按来源显式判断新鲜度",
       "pendingReason": "不同证据类型有效窗口尚未通过真实数据验证",
       "blockingScope": "原子证据过期判定",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.soil_evidence.ttl_hours",
@@ -1691,7 +1853,9 @@
       "expected": "过期证据不得参与浇水决策",
       "decisionGroup": "care_algorithms",
       "allowed": "24",
-      "decisionNote": "随 care-watering-mvp/v1 发布：室内盆土约一天内显著变化（Reading 2024 日耗水 35～68 g/株），低置信。 仅适用于 care-watering-mvp/v1 与视觉证据；care-watering-mvp/v2 起手动/请求盆土观察改按干湿循环（见 care.watering.soil_evidence_fallback_hours 与 care.watering.soil_evidence_max_hours）。"
+      "decisionNote": "随 care-watering-mvp/v1 发布：室内盆土约一天内显著变化（Reading 2024 日耗水 35～68 g/株），低置信。 仅适用于 care-watering-mvp/v1 与视觉证据；care-watering-mvp/v2 起手动/请求盆土观察改按干湿循环（见 care.watering.soil_evidence_fallback_hours 与 care.watering.soil_evidence_max_hours）。",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.weather.current_freshness_minutes",
@@ -1717,7 +1881,9 @@
       "expected": "过期天气明确标记 stale",
       "pendingReason": "和风实时接口与业务新鲜度尚未真实验证",
       "blockingScope": "依赖实时天气的养护结论",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.weather.forecast_freshness_minutes",
@@ -1743,7 +1909,9 @@
       "expected": "新鲜度进入 evidenceSummary",
       "pendingReason": "预报边界未冻结",
       "blockingScope": "天气增强养护",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.algorithm_version",
@@ -1770,7 +1938,9 @@
       "expected": "实现必须符合 watering-decision-model/v1 的 Baseline → DryUnit/DryProgress → Soil Gate 顺序；Watering 一级决策不得消费 indoorEqHours",
       "decisionGroup": "care_algorithms",
       "allowed": "care-watering-mvp/v1",
-      "decisionNote": "用户 2026-10-08 授权以文献/公开数据标定 MVP 先实现，真实标定列为后续优化；发布正文固定 confidence=low。"
+      "decisionNote": "用户 2026-10-08 授权以文献/公开数据标定 MVP 先实现，真实标定列为后续优化；发布正文固定 confidence=low。",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.fertilizing.algorithm_version",
@@ -1794,7 +1964,9 @@
       "expected": "计划不等同已施肥事实",
       "pendingReason": "v2 算法尚未冻结",
       "blockingScope": "v2 施肥实现",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.lighting.algorithm_version",
@@ -1819,7 +1991,9 @@
       "expected": "DNI/DHI/GHI → 太阳几何 → 窗面 Direct/Diffuse → 室内传播 → PPFD(t) → DLI 可回放，朝向名称不直接决定直射",
       "pendingReason": "算法release尚未发布；MVP允许单双层近似且保留专业参数，不以型号光谱或现场精细校准作为统一前置；必要换算、适用范围及运行验证仍待完成",
       "blockingScope": "v2 光照正式评估与 DLI 生产派生",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.ventilation.algorithm_version",
@@ -1843,7 +2017,9 @@
       "expected": "室外风速不得直接等同室内通风",
       "pendingReason": "v2 算法尚未冻结",
       "blockingScope": "v2 通风实现",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.output.contract_version",
@@ -1867,7 +2043,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "算法变化不改变稳定外壳",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.recommendation.write_fact_directly",
@@ -1892,7 +2070,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "建议不能自动创建养护事件、计划或提醒",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.model.family",
@@ -1917,7 +2097,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "产品层锁定 Qwen 3.5 Flash，真实调用仍校验 Provider 精确 model_code",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.prompt.release_sha256",
@@ -1942,7 +2124,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "调用审计只记录 diagnosis-visual/v1 与规范化 SHA-256，不记录 Prompt 全文；哈希不匹配时拒绝调用",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.result.schema_version",
@@ -1967,7 +2151,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "只接受证据、候选结论、不确定性和需用户确认的建议动作；校验失败整份拒绝，原始模型输出不进入公开响应",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.visual.max_images",
@@ -1995,7 +2181,9 @@
       "expected": "图片上限与最大成本同时校验",
       "pendingReason": "动作上限和真实成本未冻结",
       "blockingScope": "视觉问诊",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.fixed_packages.release_refs",
@@ -2022,7 +2210,9 @@
       "expected": "只读取已发布题包",
       "pendingReason": "V1复用内容与发布数据库保护已验证；正式发布审核、激活及创建运行入口尚未验收",
       "blockingScope": "固定问诊正式运行入口",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.knowledge.bundle_release_ref",
@@ -2048,7 +2238,9 @@
       "expected": "黄叶、萎蔫和虫害结果的每个可见结论及行动均可回溯已发布来源与兼容版本；禁忌动作被抑制",
       "pendingReason": "P1 诊断知识来源增量合同、旧资产审计与首版内容审核尚未冻结",
       "blockingScope": "黄叶、萎蔫和虫害诊断知识发布与结果验收",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.dynamic_pest.max_rounds",
@@ -2073,7 +2265,9 @@
       "expected": "循环有上限且可恢复",
       "pendingReason": "动态题包合同尚未冻结",
       "blockingScope": "动态虫害问诊",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.advice.direct_fact_write",
@@ -2097,7 +2291,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "诊断结束不自动生成养护事实",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "storage.upload.allowed_mime_types",
@@ -2129,7 +2325,13 @@
       "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
       "expected": "文件魔数与声明 MIME 一致",
       "decisionGroup": "retention_security",
-      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）"
+      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/cover-asset.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "storage.upload.max_image_bytes",
@@ -2158,7 +2360,13 @@
       "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
       "expected": "超限在处理前拒绝",
       "decisionGroup": "retention_security",
-      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）"
+      "decisionNote": "用户 2026-10-10 审定（E03 封面资产草案按推荐通过）",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/cover-asset.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "storage.read_url.ttl_seconds",
@@ -2183,7 +2391,9 @@
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "retention_security",
-      "decisionNote": "用户 2026-10-10 裁决：不引入 SDK、用云存储 HTTP API，链接有效期改为以平台默认为准（原 600 秒作废）"
+      "decisionNote": "用户 2026-10-10 裁决：不引入 SDK、用云存储 HTTP API，链接有效期改为以平台默认为准（原 600 秒作废）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "storage.upload.credential_ttl_seconds",
@@ -2209,7 +2419,9 @@
       "expected": "凭证过期、跨路径和跨用户均拒绝",
       "pendingReason": "短时有效期尚未冻结",
       "blockingScope": "客户端直传",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "storage.unbound_retention_hours",
@@ -2232,7 +2444,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "到期后标记删除、清理和对账",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "storage.failed_retention_days",
@@ -2255,7 +2469,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "7 天后执行可审计清理",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "storage.raw_evidence_retention_days",
@@ -2280,7 +2496,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "业务结果与原始资产分开治理",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "storage.user_delete_cleanup_days",
@@ -2304,7 +2522,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "先标记删除、禁新写、清理、对账",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "storage.private_assets.public_cms_allowed",
@@ -2329,7 +2549,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "任何用户私图均不能成为公共内容资产",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "provider.baidu_plant.timeout_ms",
@@ -2354,7 +2576,9 @@
       "expected": "有限超时且不无限重试",
       "pendingReason": "真实接口 S4 未验证",
       "blockingScope": "百度识别真实接入",
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "provider.baidu_plant.max_attempts",
@@ -2379,7 +2603,9 @@
       "expected": "重试有上限且计入平台预算",
       "pendingReason": "错误分类和幂等性未实测",
       "blockingScope": "百度识别真实接入",
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "provider.qweather.timeout_ms",
@@ -2404,7 +2630,9 @@
       "expected": "超时不伪造天气成功",
       "pendingReason": "真实调用未 S4 验证",
       "blockingScope": "天气增强能力",
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "provider.bailian.model_code",
@@ -2430,7 +2658,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "产品家族固定 qwen3.5-flash，供应商 model_code 固定 qwen3.5-flash-2026-02-23；真实调用仍须独立验证凭证、endpoint、配额和账单",
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "observability.ai.total_deadline_max_seconds",
@@ -2454,7 +2684,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "业务请求总 deadline 不超过 60 秒",
-      "decisionGroup": "slo_capacity"
+      "decisionGroup": "slo_capacity",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "provider.wechat_pay.enabled_platforms",
@@ -2479,7 +2711,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "抖音和小红书不绕行微信支付",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "provider.wechat_pay.timeout_ms",
@@ -2504,7 +2738,9 @@
       "expected": "超时不会重复创建订单或授予权益",
       "pendingReason": "sandbox 真实回放未完成",
       "blockingScope": "订阅支付",
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "provider.notification.max_attempts",
@@ -2529,7 +2765,9 @@
       "expected": "失败可审计且重试有上限",
       "pendingReason": "平台通知范围尚未证伪",
       "blockingScope": "主动通知",
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "provider.credentials.storage_mode",
@@ -2552,7 +2790,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "配置、数据库、日志和响应均不出现密钥原文",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.env_id",
@@ -2578,7 +2818,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "所有云端证据显式记录 EnvId，且不称为生产",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.region",
@@ -2601,7 +2843,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "环境与地域同时核验",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "http.json_body_limit_bytes",
@@ -2632,7 +2876,20 @@
         "schemaVersion": "http-request-write-policy/v1",
         "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
         "implementationTicket": "z8v0kmr9mj"
-      }
+      },
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/http/watering-advice-route.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/foundation/http/authenticated-json-route.ts",
+        "cloudfunctions-v2/src/identity/http/json-request.ts",
+        "cloudfunctions-v2/src/server.ts",
+        "cloudfunctions-v2/src/user-plant/http/claim-guest-plant-case-route.ts",
+        "cloudfunctions-v2/src/user-plant/http/create-temporary-case-route.ts",
+        "cloudfunctions-v2/src/user-plant/http/transition-user-plant-route.ts",
+        "cloudfunctions-v2/src/user-plant/http/create-user-plant-route.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "id": "http.list.default_page_size",
@@ -2655,7 +2912,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "响应分页字段稳定",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "http.list.max_page_size",
@@ -2678,7 +2937,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "客户端不能绕过最大值",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "http.agent_tool_token_ttl_seconds",
@@ -2702,7 +2963,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "令牌绑定用户范围和工具 allowlist",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "http.processing_order.fixed",
@@ -2725,7 +2988,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "大小/MIME→认证→主体→归属→DTO→用例→领域→事务→脱敏",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "reliable-events.dispatch.interval_seconds",
@@ -2751,7 +3016,9 @@
       "expected": "派发停止不回滚业务事实",
       "pendingReason": "数值子项仍 CONTRACT_STOP",
       "blockingScope": "跨域奖励自动入账",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "reliable-events.dispatch.lease_seconds",
@@ -2777,7 +3044,9 @@
       "expected": "租约过期可接管且消费端幂等",
       "pendingReason": "真实故障注入未完成",
       "blockingScope": "跨域奖励自动入账",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "reliable-events.backlog.alert_count",
@@ -2803,7 +3072,9 @@
       "expected": "积压可见且不丢事件",
       "pendingReason": "容量基线未测量",
       "blockingScope": "跨域奖励运维",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "reliable-events.delivery.semantics",
@@ -2827,7 +3098,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
       "expected": "不得宣称 exactly-once",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "observability.api.non_ai_p95_ms",
@@ -2851,7 +3124,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "真实环境 p95 不超过 800ms",
-      "decisionGroup": "slo_capacity"
+      "decisionGroup": "slo_capacity",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "observability.api.non_ai_p99_ms",
@@ -2875,7 +3150,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "真实环境 p99 不超过 1500ms",
-      "decisionGroup": "slo_capacity"
+      "decisionGroup": "slo_capacity",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "observability.ai.first_visible_event_p95_ms",
@@ -2900,7 +3177,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "真实流式调用 p95 不超过 3 秒",
-      "decisionGroup": "slo_capacity"
+      "decisionGroup": "slo_capacity",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "observability.sql.slow_query_ms",
@@ -2924,7 +3203,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "SQL 参数与敏感值不进入日志",
-      "decisionGroup": "slo_capacity"
+      "decisionGroup": "slo_capacity",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "observability.db.connection_safety_ratio",
@@ -2948,7 +3229,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "实例数×池上限 < 数据库总连接上限×70%",
-      "decisionGroup": "slo_capacity"
+      "decisionGroup": "slo_capacity",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "observability.db.pool_size",
@@ -2975,7 +3258,9 @@
       "expected": "满足 70% 安全不等式",
       "pendingReason": "CloudBase MySQL 当前 max_connections=1000 已读回；云函数最大实例数及其他连接占用未核实",
       "blockingScope": "真实并发部署",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "configuration.request_snapshot.immutable",
@@ -2997,7 +3282,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "同一请求内不得混用两个策略或 Provider 版本",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "configuration.release.sha256_required",
@@ -3020,7 +3307,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "release 内容不可原地修改",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "configuration.last_known_good.max_age_seconds",
@@ -3045,7 +3334,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "最近有效配置最多复用 300 秒；身份、权限、支付、AI 成本和写操作在无安全版本时失败关闭",
-      "decisionGroup": "configuration_governance"
+      "decisionGroup": "configuration_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "configuration.emergency_switch.max_ttl_minutes",
@@ -3069,7 +3360,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "无 owner、原因、解除条件或 expiresAt 的开关拒绝发布；最长 240 分钟后自动失效",
-      "decisionGroup": "configuration_governance"
+      "decisionGroup": "configuration_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "configuration.generic_kv_allowed",
@@ -3091,7 +3384,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "任意字符串键值表无法通过架构检查",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "configuration.active_pointer.atomic",
@@ -3114,7 +3409,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "不能出现半发布或同键双 active",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "configuration.cache.ttl_seconds",
@@ -3138,7 +3435,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "缓存最多 30 秒且必须校验版本和哈希；过期后重新解析 active release",
-      "decisionGroup": "configuration_governance"
+      "decisionGroup": "configuration_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "configuration.snapshot.retention_days",
@@ -3163,7 +3462,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "配置快照至少保留 365 天，且所有引用解除前不得物理删除，使业务结果可回放其策略与 Provider 版本",
-      "decisionGroup": "configuration_governance"
+      "decisionGroup": "configuration_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "configuration.release.approval_policy",
@@ -3200,7 +3501,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "标准发布至少一名 owner；高风险发布还须显式用户批准；发布记录包含审批人、原因和生效时间",
-      "decisionGroup": "configuration_governance"
+      "decisionGroup": "configuration_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "configuration.rollback.allowed_window_hours",
@@ -3224,7 +3527,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "发布后 24 小时内可快速切回已验证兼容版本；回滚追加审计且不覆盖历史",
-      "decisionGroup": "configuration_governance"
+      "decisionGroup": "configuration_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.mysql.connection_deadline_ms",
@@ -3249,7 +3554,9 @@
       "expected": "建连超时可观测且不无限等待",
       "pendingReason": "真实网络和数据库基线未测量",
       "blockingScope": "真实 MySQL 部署",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.mysql.transaction_deadline_ms",
@@ -3275,7 +3582,9 @@
       "expected": "超时事务完整回滚",
       "pendingReason": "真实事务时延未测量",
       "blockingScope": "真实写入部署",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.function.max_instances",
@@ -3301,7 +3610,9 @@
       "expected": "与连接池共同满足 70% 安全不等式",
       "pendingReason": "套餐与真实容量未读回",
       "blockingScope": "真实并发部署",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.storage.access_mode",
@@ -3325,7 +3636,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "用户图片只通过短时授权访问",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "id": "deployment.cloudbase.credential_resolver_ref",
@@ -3349,7 +3662,9 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "Adapter 只依赖 cloudbase-runtime-credential-resolver/v1；解析失败时调用失败关闭，任何公开或审计制品不含凭证原文",
-      "decisionGroup": "deployment_environment"
+      "decisionGroup": "deployment_environment",
+      "configurationTier": "env",
+      "codeLocations": []
     },
     {
       "owner": "identity",
@@ -3372,7 +3687,9 @@
       "changePolicy": "发布新的不可变领域策略版本，只向前生效",
       "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
       "expected": "游客请求先获得可验证的匿名主体",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -3400,7 +3717,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "游客 Principal 不能获得正式用户资产",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -3530,7 +3849,9 @@
       "fallback": "只开放单独已冻结的能力，不把 ALL_PAID_CAPABILITIES 当作运行值",
       "expected": "十个 capabilityCode 逐项明确层级、是否扣 AI 点和消费 scope；未知能力失败关闭",
       "decisionGroup": "entitlements_cost_rewards",
-      "allowed": "subscription-capability-catalog/v1 精确白名单；禁止通配符和目录外能力"
+      "allowed": "subscription-capability-catalog/v1 精确白名单；禁止通配符和目录外能力",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -3553,7 +3874,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "同一 user_id 无论平台和设备都只能获得一次试用",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -3576,7 +3899,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "只按服务端统一用户创建时间起算",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -3599,7 +3924,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "任何上下文变化都不重置试用",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "user-plant",
@@ -3627,7 +3954,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "暂未识别是合法状态，当前状态不含 superseded",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "user-plant",
@@ -3651,7 +3980,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "superseded 不能成为当前身份状态",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "user-plant",
@@ -3681,7 +4012,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "只允许合同定义的状态迁移",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "user-plant",
@@ -3704,7 +4037,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "deleted 不可恢复或接受新写入",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "user-plant",
@@ -3728,7 +4063,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "认领只增加归属，不追溯奖励",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "user-plant",
@@ -3753,7 +4090,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "认领不改变候选、结果和建议语义",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3780,7 +4119,9 @@
       "changePolicy": "发布新的不可变领域策略版本，只向前生效",
       "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
       "expected": "新增来源必须经过独立证据审计",
-      "decisionGroup": "taxonomy_governance"
+      "decisionGroup": "taxonomy_governance",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3803,7 +4144,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "同一权威分类键只能有一个实体",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3825,7 +4168,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "除 family 外缺父链不得 ACTIVE",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3847,7 +4192,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "spp. 只能表示属级或物种组",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3869,7 +4216,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "冲突进入人工审核和 QUARANTINE",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3895,7 +4244,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "外部来源不能写权威分类事实或 active release",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3918,7 +4269,9 @@
       "changePolicy": "发布新的不可变领域策略版本，只向前生效",
       "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
       "expected": "同一时刻只有一个 Worker 生成",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3946,7 +4299,9 @@
       "changePolicy": "发布新的不可变领域策略版本，只向前生效",
       "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
       "expected": "相同输入产生稳定排序",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3969,7 +4324,9 @@
       "changePolicy": "发布新的不可变领域策略版本，只向前生效",
       "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
       "expected": "同一用户对同一候选每天最多贡献一次计数",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -3995,7 +4352,9 @@
       "expected": "达到阈值告警并阻止无界积压",
       "pendingReason": "容量基线尚未测量",
       "blockingScope": "自动 CMS 补全",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "plant-knowledge",
@@ -4020,7 +4379,9 @@
       "expected": "只有独立批准且预算恢复后才调用真实模型",
       "pendingReason": "当前预算固定为 0，恢复值未获批准",
       "blockingScope": "真实 CMS 模型生成",
-      "decisionGroup": "cms_worker_content"
+      "decisionGroup": "cms_worker_content",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "care",
@@ -4048,7 +4409,11 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "模型只能输出四态之一",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/watering/map-mvp-soil-observation.ts"
+      ]
     },
     {
       "owner": "care",
@@ -4076,7 +4441,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "证据不足不能伪装成 ready",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "care",
@@ -4104,7 +4471,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "不得伪造精确概率分数",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "care",
@@ -4130,7 +4499,9 @@
       "pendingReason": "不同盆土状态和环境的窗口尚未冻结",
       "blockingScope": "v2 浇水建议",
       "decisionGroup": "care_algorithms",
-      "decisionNote": "维持 pending，不阻断（MVP 模型自算检查窗口）。"
+      "decisionNote": "维持 pending，不阻断（MVP 模型自算检查窗口）。",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "care",
@@ -4155,7 +4526,9 @@
       "expected": "综合用户环境、植物需求和天气证据",
       "pendingReason": "v2 光照算法阈值尚未冻结",
       "blockingScope": "v2 光照建议",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "care",
@@ -4180,7 +4553,9 @@
       "expected": "综合换气、开放度、局部风源、闷湿和直吹",
       "pendingReason": "v2 通风算法阈值尚未冻结",
       "blockingScope": "v2 通风建议",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "care",
@@ -4206,7 +4581,9 @@
       "expected": "只在用户时区的允许窗口发送",
       "pendingReason": "提醒时段和免打扰规则尚未冻结",
       "blockingScope": "主动养护提醒",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "diagnosis",
@@ -4230,7 +4607,9 @@
       "expected": "固定黄叶/萎蔫和动态虫害按稳定规则选择",
       "pendingReason": "题包路由优先级尚未冻结",
       "blockingScope": "问诊会话路由",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "diagnosis",
@@ -4256,7 +4635,9 @@
       "expected": "补拍达到上限后返回明确不确定结果",
       "pendingReason": "视觉证据合同尚未冻结",
       "blockingScope": "视觉问诊",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "diagnosis",
@@ -4284,7 +4665,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "未知、拒答、非法输入和暂不可用必须显式表达",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "diagnosis",
@@ -4309,7 +4692,9 @@
       "expected": "有效期内恢复同一题包/策略/证据快照",
       "pendingReason": "恢复期限尚未冻结",
       "blockingScope": "问诊中断恢复",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4340,7 +4725,19 @@
         "schemaVersion": "http-request-write-policy/v1",
         "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
         "implementationTicket": "z8v0kmr9mj"
-      }
+      },
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/http/watering-advice-route.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/diagnosis/http/answer-route.ts",
+        "cloudfunctions-v2/src/diagnosis/http/create-session-route.ts",
+        "cloudfunctions-v2/src/foundation/http/authenticated-json-route.ts",
+        "cloudfunctions-v2/src/user-plant/http/create-temporary-case-route.ts",
+        "cloudfunctions-v2/src/user-plant/http/transition-user-plant-route.ts",
+        "cloudfunctions-v2/src/user-plant/http/create-user-plant-route.ts"
+      ],
+      "configurationTierNote": "主代理 2026-10-10 裁定：保持代码层常量，不允许环境变量覆盖；将来如需运行时切换再升级为策略发布。"
     },
     {
       "owner": "shared-infrastructure",
@@ -4369,7 +4766,9 @@
       "changePolicy": "取得真实证据后发布不可变领域策略版本",
       "fallback": "未冻结前停止对应范围，不从旧实现猜值",
       "expected": "Agent、Job 和 Callback API 均在验签和 JSON 解析前拒绝超过 262144 字节的请求",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4397,7 +4796,9 @@
       "expected": "正常用户无感，异常机器流量被限流",
       "pendingReason": "缺少真实游客流量基线",
       "blockingScope": "游客公开能力",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4422,7 +4823,9 @@
       "expected": "批次有界且失败可重放",
       "pendingReason": "真实容量未测量",
       "blockingScope": "自动奖励事件派发",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4447,7 +4850,9 @@
       "expected": "超过上限进入人工对账而不丢事件",
       "pendingReason": "故障注入未完成",
       "blockingScope": "自动奖励事件派发",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4472,7 +4877,9 @@
       "expected": "重试有界且不形成热循环",
       "pendingReason": "故障注入未完成",
       "blockingScope": "自动奖励事件派发",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4498,7 +4905,9 @@
       "expected": "窗口外进入人工对账",
       "pendingReason": "审计保留和运营响应尚未冻结",
       "blockingScope": "自动历史重放",
-      "decisionGroup": "reliability_ops"
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -4524,7 +4933,9 @@
       "expected": "按适用法规和支付合同治理",
       "pendingReason": "法定期限尚未完成专项确认",
       "blockingScope": "支付记录物理清理",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "shared-infrastructure",
@@ -4550,7 +4961,9 @@
       "expected": "按记录类别分别保留",
       "pendingReason": "审计类别和法定期限尚未冻结",
       "blockingScope": "审计物理清理",
-      "decisionGroup": "retention_security"
+      "decisionGroup": "retention_security",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -4573,7 +4986,9 @@
       "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
       "fallback": "违反时拒绝请求、发布或状态转换",
       "expected": "不可变账本不套用普通资产 TTL",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -4600,7 +5015,9 @@
       "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
       "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
       "blockingScope": "生成式动作 USER_AGENT_TEXT",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -4627,7 +5044,9 @@
       "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
       "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
       "blockingScope": "生成式动作 USER_DIAGNOSIS_TEXT",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -4654,7 +5073,9 @@
       "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
       "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
       "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "owner": "subscription",
@@ -4681,7 +5102,9 @@
       "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
       "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
       "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
-      "decisionGroup": "entitlements_cost_rewards"
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "subscription",
@@ -4709,7 +5132,9 @@
         "subscription",
         "游客业务入口"
       ],
-      "expected": "游客只有四类临时基础能力且不扣用户 AI 点"
+      "expected": "游客只有四类临时基础能力且不扣用户 AI 点",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "subscription",
@@ -4740,7 +5165,9 @@
         "subscription",
         "登录业务入口"
       ],
-      "expected": "免费用户继承游客能力并增加用户植物、积分等级查询和有效奖励额度"
+      "expected": "免费用户继承游客能力并增加用户植物、积分等级查询和有效奖励额度",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "care",
@@ -4765,7 +5192,9 @@
       "fallback": "有室内实测时不需要估算；无实测且无有效估算 release 时返回 insufficient_evidence",
       "expected": "Estimated Indoor 明确 estimated 标记、来源与置信度，永不冒充实测",
       "pendingReason": "输入结构已冻结，热响应映射与真实数据校准未完成",
-      "blockingScope": "无室内实测时的 Air VPD 与依赖它的浇水增强"
+      "blockingScope": "无室内实测时的 Air VPD 与依赖它的浇水增强",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "care",
@@ -4790,7 +5219,9 @@
       "fallback": "低置信度、冲突或 release 不可用时返回 UNKNOWN 并回退安全 baseline",
       "expected": "只输出 ACTIVE/SLOWED/DORMANT/UNKNOWN + confidence + evidenceRefs，不直接修改 EnvironmentDemand",
       "pendingReason": "状态合同已冻结，但知识 release、Prompt/Schema 与真实样本回归尚未完成",
-      "blockingScope": "条件性/季节性 watering baseline 选择"
+      "blockingScope": "条件性/季节性 watering baseline 选择",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "care",
@@ -4814,7 +5245,9 @@
       "fallback": "缺少足够高质量周期时 PersonalCalibration=合同允许的中性值，不伪造个体学习",
       "expected": "PersonalCalibration 不重新读取 DLI/VPD/基质，只由预测残差形成",
       "pendingReason": "最小有效周期数、稳健统计窗口与上下界需影子数据校准",
-      "blockingScope": "个体历史校准；不阻断无个体校准的基础 DryProgress"
+      "blockingScope": "个体历史校准；不阻断无个体校准的基础 DryProgress",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "care",
@@ -4839,7 +5272,9 @@
       "fallback": "算法不可用时不以朝向经验表替代，返回 insufficient_evidence",
       "expected": "AOI>=90° 时直射不为负；低纬/季节/不同窗向由同一太阳几何自然处理",
       "pendingReason": "数学结构已冻结，具体实现与回归集尚未形成 release",
-      "blockingScope": "Window Plane Irradiance 与 DLI 正式运行"
+      "blockingScope": "Window Plane Irradiance 与 DLI 正式运行",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "domain": "plant-knowledge",
@@ -4863,7 +5298,11 @@
       "chineseName": "目录搜索默认返回条数",
       "currentValue": 10,
       "expected": "未提供 limit 时固定返回至多 10 条",
-      "fallback": "不存在隐式运营降级"
+      "fallback": "不存在隐式运营降级",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ]
     },
     {
       "domain": "plant-knowledge",
@@ -4887,7 +5326,11 @@
       "chineseName": "目录搜索最小返回条数",
       "currentValue": 1,
       "expected": "limit 必须为 1 至 20 的整数",
-      "fallback": "非法 limit 返回 400 VALIDATION_FAILED"
+      "fallback": "非法 limit 返回 400 VALIDATION_FAILED",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ]
     },
     {
       "id": "plant-knowledge.encyclopedia.reference_max_code_points",
@@ -4910,7 +5353,12 @@
       "phase": "P2",
       "ticketTitle": "[P2] CMS 分类、百科和发布",
       "expected": "分类引用与 slug 均为 1 至 512 个 Unicode 码点",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/plant-knowledge/application/get-plant-encyclopedia.ts"
+      ]
     },
     {
       "id": "care.lighting.interval_unit_definitions",
@@ -4936,7 +5384,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "expected": "100 PPFD 一小时积分 0.36 mol；有效零值与缺失区分",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.lighting.window_direct_geometry",
@@ -4981,7 +5431,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "expected": "竖窗正对高度60度太阳，600 DNI 投影为300 W/m²；背面截断；时刻错配拒绝；连窗墙体不当作玻璃，距离参与射线可达性而非平方衰减；区间平均DNI只乘同一完整区间的可靠投影上下界，不以均值乘均值冒充精确结果；NOAA近似太阳方向仅供离线实验，UTC、闰年、未定义方位与瞬时/均值语义不得混用；完整时段界限由谐波导数全局上界构造，跨UTC年分段，地平线门单独处理；只覆盖近似模型",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.lighting.open_meteo_interval_semantics",
@@ -5011,7 +5463,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "expected": "Unix秒不加地点偏移；标签为此前小时或15分钟均值的结束时刻，缺段不补零",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.cultivation.pot_safety",
@@ -5034,7 +5488,9 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "27种三值组合匹配独立准入合同；未知排水不得当有效",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.lighting.mvp_glass_selection",
@@ -5072,7 +5528,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "expected": "单层/双层按有效版本取对应值；摘要或时间非法拒绝，未知层数不猜默认；专业参数保留",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.dynamic_pest.tier_question_limits",
@@ -5106,7 +5564,9 @@
       "pendingReason": null,
       "blockingScope": "动态虫害限题与直判，不阻断无数值的确定性素材筛选",
       "decisionGroup": "diagnosis_releases",
-      "sourceConfirmation": "本会话用户批准保留这组题数上限；不批准旧置信度阈值、自动直判或发布上线"
+      "sourceConfirmation": "本会话用户批准保留这组题数上限；不批准旧置信度阈值、自动直判或发布上线",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.result.record_schema_version",
@@ -5129,7 +5589,9 @@
       "ticketId": "z8v0kmr974",
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "完整公开结果与回放记录一同锁定和计算摘要；旧行保持missing_record",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.result.replay_contract_versions",
@@ -5155,7 +5617,9 @@
       "ticketId": "z8v0kmr974",
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "输入证据摘要及发生时间可核验；公开建议与四门通过轨迹逐项一致",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.knowledge.publication_contract",
@@ -5180,7 +5644,9 @@
       "ticketId": "z8v0kmr974",
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "发布/指针/审计原子持久化；独立审核撤销与发布共享审核锁；重复命令不重复切换或撤销；失败不遗留部分写入",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "diagnosis.result.public_read",
@@ -5203,7 +5669,9 @@
       "ticketId": "z8v0kmr974",
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "仅本人可读；公开响应不含replay或内部键；读取不生成事实或新结果",
-      "decisionGroup": "diagnosis_releases"
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.watering.root_zone_water_deficit",
@@ -5225,7 +5693,9 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "独立体积含水率定义与区间端点手算；盆容积、表土与任意百分数不冒充有效证据",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.watering.local_calendar_dates",
@@ -5247,7 +5717,9 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "跨日/夏令时/单侧窗口独立Expected；覆盖终点不冒充检查日期；湿土仍否决",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "identity.guest.issuance_rate_per_hour",
@@ -5273,7 +5745,12 @@
       "ticketTitle": "[P2] 统一身份 Principal",
       "expected": "每小时游客签发上限 10 次，只对带抖音匿名信号（anonymous_openid 的 HMAC 摘要）的请求按信号计数；无信号请求（小红书、抖音未带或换取失败）不在应用层按来源计数，issuance_source_hash 写空串，由 CloudBase 网关路由 /api/v2/identity/guest-sessions 的单客户端限频（ClientIP，1 QPS）兜底",
       "decisionGroup": "identity_sessions",
-      "decisionNote": "用户 2026-10-08 按建议值确认。 用户 2026-10-09 裁决：应用代码不读取任何 IP 请求头（CDN 默认域名下 x-forwarded-for 最左段可伪造、其余段为 CDN 节点，测试环境实测）；IP 维度防刷交给网关单客户端限频。"
+      "decisionNote": "用户 2026-10-08 按建议值确认。 用户 2026-10-09 裁决：应用代码不读取任何 IP 请求头（CDN 默认域名下 x-forwarded-for 最左段可伪造、其余段为 CDN 节点，测试环境实测）；IP 维度防刷交给网关单客户端限频。",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/identity-session-policy.ts",
+        "cloudfunctions-v2/src/identity/application/issue-guest-session.ts"
+      ]
     },
     {
       "id": "user-plant.guest.max_cases_per_session",
@@ -5302,7 +5779,11 @@
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "同一游客会话第 6 个临时案例创建被拒绝，已有案例不受影响",
       "decisionGroup": "userplant_limits",
-      "decisionNote": "用户 2026-10-08 按建议值确认。"
+      "decisionNote": "用户 2026-10-08 按建议值确认。",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/user-plant-limits-policy.ts"
+      ]
     },
     {
       "id": "identity.guest.douyin_anonymous_signal_enabled",
@@ -5328,7 +5809,12 @@
       "ticketTitle": "[P2] 统一身份 Principal",
       "expected": "抖音签发时 anonymous_openid 只以 HMAC 摘要保存为防刷键，不作为业务主键",
       "decisionGroup": "identity_sessions",
-      "decisionNote": "用户 2026-10-08 按建议值确认。"
+      "decisionNote": "用户 2026-10-08 按建议值确认。",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/identity-session-policy.ts",
+        "cloudfunctions-v2/src/identity/http/guest-session-route.ts"
+      ]
     },
     {
       "id": "care.lighting.open_meteo_request_window_days",
@@ -5356,7 +5842,13 @@
       "clickUpTicketId": "z8v0kmr973",
       "expected": "请求回看不超过 92 天、预报不超过 16 天；超出覆盖的时段返回缺证据而非估算",
       "decisionGroup": "hard_business_rule",
-      "decisionNote": "主代理 2026-10-09 登记：取 Open-Meteo 接口上限作为硬边界。"
+      "decisionNote": "主代理 2026-10-09 登记：取 Open-Meteo 接口上限作为硬边界。",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/provider/open-meteo-radiation-client.ts",
+        "cloudfunctions-v2/src/care/watering/watering-advice-hard-rules.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ]
     },
     {
       "id": "care.watering.baseline_policy_version",
@@ -5382,7 +5874,11 @@
       "clickUpTicketId": "z8v0kmr973",
       "expected": "浇水建议只读取 watering_baseline_policy.policy_version='v1' 且 is_active=1 的基线",
       "decisionGroup": "hard_business_rule",
-      "decisionNote": "主代理 2026-10-09 登记：测试库现存唯一版本 v1（22 行）。"
+      "decisionNote": "主代理 2026-10-09 登记：测试库现存唯一版本 v1（22 行）。",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/watering/watering-advice-hard-rules.ts"
+      ]
     },
     {
       "id": "user-plant.guest_claim.processing_lease_seconds",
@@ -5408,7 +5904,12 @@
       "clickUpTicketId": "z8v0kmr9mj",
       "expected": "取得租约时 processing_lease_expires_at_ms = now + 30000；未过期时非持有者不能接管，过期后可接管且 attempt_count+1",
       "decisionGroup": "hard_business_rule",
-      "decisionNote": "用户 2026-10-09 授权主代理决定；主代理裁决 30 秒硬规则。"
+      "decisionNote": "用户 2026-10-09 授权主代理决定；主代理裁决 30 秒硬规则。",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/guest-claim-lease.ts"
+      ]
     },
     {
       "id": "user-plant.list.page_size",
@@ -5435,6 +5936,13 @@
       "decisionNote": "用户 2026-10-10 裁决列表采用游标分页、默认 20 条；主代理 2026-10-10 裁定为 hard_rule（默认 20、上限 50），与 care.plans.page_size、http.list.* 保持一致",
       "sourceRefs": [
         "docs/backend-v2/contracts/user-plant.md#列表公开接口（2026-10-10 用户裁决冻结）"
+      ],
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/user-plant/domain/user-plant-list-query.ts",
+        "cloudfunctions-v2/src/contracts/user-plant-list-delete-contract.ts",
+        "cloudfunctions-v2/src/user-plant/repository/mysql-catalog-binding-presence-reader.ts"
       ]
     },
     {
@@ -5462,6 +5970,11 @@
       "decisionNote": "用户 2026-10-09 裁决 主代理 2026-10-09 改登记为硬规则：由代码常量与测试共同锁定，不另发策略版本。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ],
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/long-term-care-rules.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
       ]
     },
     {
@@ -5487,6 +6000,11 @@
       "decisionNote": "用户 2026-10-09 裁决 主代理 2026-10-09 改登记为硬规则：由代码常量与测试共同锁定，不另发策略版本。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ],
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/long-term-care-rules.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
       ]
     },
     {
@@ -5512,6 +6030,11 @@
       "decisionNote": "用户 2026-10-09 裁决 主代理 2026-10-09 改登记为硬规则：由代码常量与测试共同锁定，不另发策略版本。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ],
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/long-term-care-rules.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
       ]
     },
     {
@@ -5539,6 +6062,11 @@
       "decisionNote": "主代理 2026-10-09 裁决 T5（硬规则）；用户 2026-10-09 认可",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ],
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/long-term-care-rules.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
       ]
     },
     {
@@ -5565,7 +6093,9 @@
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md",
         "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
-      ]
+      ],
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.soil_evidence_max_hours",
@@ -5591,7 +6121,9 @@
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md",
         "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
-      ]
+      ],
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.plans.expiry_grace_hours",
@@ -5617,6 +6149,11 @@
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md#12. 计划过期",
         "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
+      ],
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/care-plan-expiry-rules.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
       ]
     },
     {
@@ -5647,7 +6184,27 @@
       "decisionNote": "主代理 2026-10-09 配置裁决：每小时一次；单次批量 500，分批直到清空或达到单次运行时长上限（函数超时的一半）。主代理 2026-10-09 裁定改为 hard_rule：MVP 阶段极少变更，引入类型化策略 release 的复杂度大于收益，由代码常量 + 目录一致性测试 + 合同 §12 共同保证；将来需要调整时再升级为 domain_policy。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md#12. 计划过期"
-      ]
+      ],
+      "configurationTier": "env_overridable",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/care-plan-expiry-rules.ts",
+        "cloudfunctions-v2/src/care/repository/mysql-care-plan-expiry-repository.ts",
+        "cloudfunctions-v2/src/configuration/environment.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ],
+      "environmentOverrides": [
+        {
+          "field": "batchSize",
+          "environmentName": "V2_CARE_PLAN_EXPIRY_BATCH_SIZE",
+          "defaultValue": 500,
+          "minimum": 100,
+          "maximum": 2000,
+          "unit": "行",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败"
+        }
+      ],
+      "configurationTierNote": "代码层默认值见 runtime-parameters.ts；仅 environmentOverrides 列出的字段可由部署环境变量在登记范围内覆盖，其余字段（cron、maxAttempts、intervalHours、runBudgetFractionOfFunctionTimeout）仍为不可覆盖硬规则。"
     },
     {
       "id": "care.outbox_dispatch",
@@ -5677,7 +6234,37 @@
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "reliability_ops",
-      "decisionNote": "用户 2026-10-10 裁决（定时事件函数每分钟、租约 30 秒、每批 100、最多重试 5 次后死信）；主代理 2026-10-10 裁定为 hard_rule"
+      "decisionNote": "用户 2026-10-10 裁决（定时事件函数每分钟、租约 30 秒、每批 100、最多重试 5 次后死信）；主代理 2026-10-10 裁定为 hard_rule",
+      "configurationTier": "env_overridable",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/domain/care-outbox-dispatch-rules.ts",
+        "cloudfunctions-v2/src/configuration/environment.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/entries/care-outbox-dispatch.ts"
+      ],
+      "environmentOverrides": [
+        {
+          "field": "leaseSeconds",
+          "environmentName": "V2_CARE_OUTBOX_LEASE_SECONDS",
+          "defaultValue": 30,
+          "minimum": 10,
+          "maximum": 120,
+          "unit": "秒",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败"
+        },
+        {
+          "field": "batchSize",
+          "environmentName": "V2_CARE_OUTBOX_BATCH_SIZE",
+          "defaultValue": 100,
+          "minimum": 20,
+          "maximum": 500,
+          "unit": "条",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败"
+        }
+      ],
+      "configurationTierNote": "代码层默认值见 runtime-parameters.ts；仅 environmentOverrides 列出的字段可由部署环境变量在登记范围内覆盖，其余字段（cron、maxAttempts、intervalHours、runBudgetFractionOfFunctionTimeout）仍为不可覆盖硬规则。"
     },
     {
       "id": "care.watering.cultivation_reference_pot",
@@ -5710,7 +6297,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "decisionGroup": "care_algorithms",
-      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.cultivation_reference_available_water",
@@ -5737,7 +6326,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "decisionGroup": "care_algorithms",
-      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.plant_demand_volume_exponent",
@@ -5767,7 +6358,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "decisionGroup": "care_algorithms",
-      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.porous_wall_evaporation_ratio",
@@ -5799,7 +6392,9 @@
       "clickUpTicketId": "z8v0kmvewm",
       "decisionGroup": "care_algorithms",
       "decisionNote": "用户 2026-10-10 审定：盆壁材质须经严格验证、开票并实现后才能进入模型；验证票 z8v0kmvewm",
-      "blockingScope": "盆壁材质参与干燥窗口（κ、wallMaterial 字段、织物盆）；不阻断已审定的 v3 盆体积/基质模型"
+      "blockingScope": "盆壁材质参与干燥窗口（κ、wallMaterial 字段、织物盆）；不阻断已审定的 v3 盆体积/基质模型",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.pot_wall_material_classes",
@@ -5834,7 +6429,9 @@
       "clickUpTicketId": "z8v0kmvewm",
       "decisionGroup": "care_algorithms",
       "decisionNote": "用户 2026-10-10 审定：盆壁材质须经严格验证、开票并实现后才能进入模型；验证票 z8v0kmvewm",
-      "blockingScope": "盆壁材质参与干燥窗口（κ、wallMaterial 字段、织物盆）；不阻断已审定的 v3 盆体积/基质模型"
+      "blockingScope": "盆壁材质参与干燥窗口（κ、wallMaterial 字段、织物盆）；不阻断已审定的 v3 盆体积/基质模型",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.cultivation_retention_fallback",
@@ -5864,7 +6461,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "decisionGroup": "care_algorithms",
-      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.substrate_mix_drying_rule",
@@ -5891,7 +6490,9 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
       "decisionGroup": "hard_business_rule",
-      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "configurationTier": "code",
+      "codeLocations": []
     },
     {
       "id": "care.watering.no_drainage_drying_upper_bound",
@@ -5920,7 +6521,9 @@
       "clickUpTicketId": "z8v0kmr973",
       "decisionGroup": "care_algorithms",
       "decisionNote": "用户 2026-10-10 裁决盆型与基质须参与干湿循环；本项为草案参数，待用户审定",
-      "blockingScope": "无孔/排水未知盆的内部窗口上端（公开结果不受影响，已按既有安全顺序处理）"
+      "blockingScope": "无孔/排水未知盆的内部窗口上端（公开结果不受影响，已按既有安全顺序处理）",
+      "configurationTier": "policy",
+      "codeLocations": []
     },
     {
       "id": "care.watering.drying_gap_fill_max_hours",
@@ -5945,7 +6548,12 @@
       "decisionNote": "用户 2026-10-10 审定（主代理转达）",
       "layer": "hard_rule",
       "status": "hard_rule",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/care/watering/fill-mvp-drying-gaps.ts",
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ]
     },
     {
       "id": "care.watering.cultivation_geometry_relation",
@@ -5972,7 +6580,37 @@
       "decisionNote": "用户 2026-10-10 审定（主代理转达）",
       "layer": "hard_rule",
       "status": "hard_rule",
-      "decisionGroup": "hard_business_rule"
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": []
+    },
+    {
+      "id": "weather.city_climate.recommend_top_max",
+      "chineseName": "城市气候推荐 top 上限",
+      "domain": "weather",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "hard_rule",
+      "currentValue": 50,
+      "owner": "weather",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/weather-city-climate-fit.md"
+      ],
+      "consumers": [
+        "weather"
+      ],
+      "changePolicy": "接口 Schema 边界；变更需同步 weather-city-climate-fit 合同、注册表与测试，不作为运营开关",
+      "fallback": "top 超过 50 返回 400 VALIDATION_FAILED",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "GET /api/v2/weather/city-climate/recommendations 的 top 允许 1–50 的整数，51 被拒绝",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "主代理 2026-10-10 裁定：登记为代码层硬规则（接口 Schema 边界）；top 默认 10 仍由合同固定。",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ],
+      "configurationTier": "code"
     }
   ],
   "providerProfiles": [
@@ -6294,7 +6932,19 @@
       "effectiveAt": "2026-10-10T00:00:00+08:00",
       "expiresAt": null,
       "releaseStatus": "active",
-      "decisionNote": "用户 2026-10-10 裁决：不引入 @cloudbase/node-sdk，用 Node 22 原生 fetch 调云存储 HTTP API；API Key 由用户在控制台创建并写入环境变量，credentialRef 只引用变量名。时限值为代理推荐（同 open_meteo 量级，下载 5 MiB 放宽到 10 秒总时限），待主代理复核。"
+      "decisionNote": "用户 2026-10-10 裁决：不引入 @cloudbase/node-sdk，用 Node 22 原生 fetch 调云存储 HTTP API；API Key 由用户在控制台创建并写入环境变量，credentialRef 只引用变量名。时限值为代理推荐（同 open_meteo 量级，下载 5 MiB 放宽到 10 秒总时限），待主代理复核。",
+      "environmentOverrides": [
+        {
+          "field": "totalDeadlineMs",
+          "environmentName": "V2_CLOUDBASE_STORAGE_TOTAL_DEADLINE_MS",
+          "defaultValue": 10000,
+          "minimum": 2000,
+          "maximum": 20000,
+          "unit": "毫秒",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败；下限取档案 connectTimeoutMs"
+        }
+      ]
     },
     {
       "providerCode": "cloudbase_cms",
@@ -6482,7 +7132,19 @@
         "docs/backend-v2/contracts/principal-and-capability.md"
       ],
       "decisionGroup": "provider_runtime",
-      "decisionNote": "用户 2026-10-08 批准：wx.login code 一次性消费，故只调用 1 次不重试，失败由小程序重新取 code；接口免费；审计不存 OpenID 明文。credentialRef 只引用环境变量名，不含凭证值。"
+      "decisionNote": "用户 2026-10-08 批准：wx.login code 一次性消费，故只调用 1 次不重试，失败由小程序重新取 code；接口免费；审计不存 OpenID 明文。credentialRef 只引用环境变量名，不含凭证值。",
+      "environmentOverrides": [
+        {
+          "field": "totalDeadlineMs",
+          "environmentName": "V2_WECHAT_LOGIN_TOTAL_DEADLINE_MS",
+          "defaultValue": 5000,
+          "minimum": 2000,
+          "maximum": 10000,
+          "unit": "毫秒",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败；下限取档案 connectTimeoutMs"
+        }
+      ]
     },
     {
       "providerCode": "open_meteo",
@@ -6518,7 +7180,19 @@
       "effectiveAt": "2026-10-08T00:00:00+08:00",
       "expiresAt": null,
       "releaseStatus": "active",
-      "decisionNote": "用户 2026-10-08 确认：开发与上线均使用 Open-Meteo 免费接口；太阳辐射主来源，和风仅提供普通天气。只调用一次不重试，按地点×小时缓存以控制免费额度。"
+      "decisionNote": "用户 2026-10-08 确认：开发与上线均使用 Open-Meteo 免费接口；太阳辐射主来源，和风仅提供普通天气。只调用一次不重试，按地点×小时缓存以控制免费额度。",
+      "environmentOverrides": [
+        {
+          "field": "totalDeadlineMs",
+          "environmentName": "V2_OPEN_METEO_TOTAL_DEADLINE_MS",
+          "defaultValue": 8000,
+          "minimum": 2000,
+          "maximum": 15000,
+          "unit": "毫秒",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败；下限取档案 connectTimeoutMs"
+        }
+      ]
     },
     {
       "providerCode": "douyin_miniprogram_login",
@@ -6555,7 +7229,19 @@
       "effectiveAt": "2026-10-09T00:00:00+08:00",
       "expiresAt": null,
       "releaseStatus": "active",
-      "decisionNote": "用户 2026-10-09 按微信同标准批准（连接 2s/读取 3s/总 5s、单次不重试、预算 0、审计 180 天）。抖音 code 与 anonymous_code 均一次性；anonymous_openid 只以 HMAC 摘要作游客防刷键"
+      "decisionNote": "用户 2026-10-09 按微信同标准批准（连接 2s/读取 3s/总 5s、单次不重试、预算 0、审计 180 天）。抖音 code 与 anonymous_code 均一次性；anonymous_openid 只以 HMAC 摘要作游客防刷键",
+      "environmentOverrides": [
+        {
+          "field": "totalDeadlineMs",
+          "environmentName": "V2_DOUYIN_LOGIN_TOTAL_DEADLINE_MS",
+          "defaultValue": 5000,
+          "minimum": 2000,
+          "maximum": 10000,
+          "unit": "毫秒",
+          "decidedAt": "2026-10-10",
+          "reason": "主代理 2026-10-10 裁定（依据用户「配置总入口=代码层+环境变量层，用于后期调整各种参数」）：运维参数允许部署环境变量在登记范围内覆盖，越界启动失败；下限取档案 connectTimeoutMs"
+        }
+      ]
     },
     {
       "providerCode": "xiaohongshu_miniprogram_login",

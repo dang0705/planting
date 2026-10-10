@@ -168,7 +168,7 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "4c2fd0f265aa061ab9c181d8123acac0d80e03add72ffb0a49ff6c176e906fc0"
+      "sha256": "e48429bd615bf2cbd70c01fb84b1b8382aa2781d82e1347a3ee62b9dcafee0c9"
     },
     {
       "id": "diagnosis-cms-review-exchange",
@@ -229,7 +229,7 @@
       "version": "user-plant-environment-profile/v1",
       "file": "user-plant-environment-profile.md",
       "owner": "user-plant",
-      "sha256": "c3bb6c33c047b6bd77a205a17e7485acc91ea07790200cc1ecc36f0d386ece86"
+      "sha256": "c292c0f7cdb058eb0119439131970a1e599437b3e303a8c2158f477c13bbbe62"
     },
     {
       "id": "user-plant-timeline",
@@ -243,7 +243,14 @@
       "version": "user-plant-cover-asset/v1",
       "file": "user-plant-cover-asset.md",
       "owner": "user-plant",
-      "sha256": "c20915ffd82223ea850585608750c27baf912acab6c51230bb33d676cde02a2d"
+      "sha256": "ab8a1bfe60d52391ba902cc2f35febd9b46c9dc46b4068943a386cf4404bd3a2"
+    },
+    {
+      "id": "user-plant-profile-completeness",
+      "version": "user-plant-profile-completeness/v1",
+      "file": "user-plant-profile-completeness.md",
+      "owner": "user-plant",
+      "sha256": "81c2876d56d785a91b7770b6aeee1e3febc5ae8ba22caf74ecd4b6e7f45f2ba3"
     }
   ]
 }

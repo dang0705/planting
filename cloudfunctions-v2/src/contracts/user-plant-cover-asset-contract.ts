@@ -56,3 +56,22 @@ export const publicCoverSchema = {
     urlExpiresAt: { type: 'string', nullable: true, pattern: isoUtcPattern }
   }
 }
+
+/** 封面上传路径成功数据（user-plant-cover-asset/v1 §2.1）。 */
+export type CoverUploadTargetResponseDto = {
+  /** 第一期固定 profile（封面）。 */ purpose: 'profile'
+  /** 本次上传路径（不含扩展名）；含本人用户公开编号，仅本人可见。 */ cloudPath: string
+  /** 允许的图片类型。 */ allowedMimeTypes: Array<'image/jpeg' | 'image/png' | 'image/webp'>
+  /** 单张上限字节数。 */ maxBytes: number
+}
+
+/** 封面上传路径 Schema：不允许单独的用户编号字段、桶名或环境 ID。 */
+export const coverUploadTargetResponseSchema = {
+  type: 'object', additionalProperties: false, required: ['purpose', 'cloudPath', 'allowedMimeTypes', 'maxBytes'],
+  properties: {
+    purpose: { type: 'string', const: 'profile' },
+    cloudPath: { type: 'string', pattern: '^user-plant/usr_[A-Za-z0-9_-]{8,60}/covers/upl_[A-Za-z0-9_-]{8,60}-[a-f0-9]{32}$' },
+    allowedMimeTypes: { type: 'array', minItems: 1, maxItems: 3, uniqueItems: true, items: { type: 'string', enum: ['image/jpeg', 'image/png', 'image/webp'] } },
+    maxBytes: { type: 'integer', minimum: 1 }
+  }
+} as unknown as JSONSchemaType<CoverUploadTargetResponseDto>

@@ -57,6 +57,8 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
           profileReadiness: { hasMeasuredPot, hasCatalogBinding } } }
 ```
 只读，不计算、不调用外部服务；归档植物可读。
+`profileReadiness` 两项与档案完整度同一判定（`user-plant-profile-completeness.md` §4，2026-10-10 用户审定）：`hasMeasuredPot` 要求已存实测盆器
+且至少一项尺寸 + 排水状态非空（原为“有记录即可”，口径收紧）；`hasCatalogBinding` 为存在品种绑定。
 
 ## 5. 计划列表 `GET /api/v2/care/user-plants/{userPlantRef}/plans`（T5）
 

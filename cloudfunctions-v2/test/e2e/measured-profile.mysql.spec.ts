@@ -69,6 +69,8 @@ beforeAll(async () => {
     const start = ddl.indexOf('CREATE TABLE `' + name + '`')
     await db.query(ddl.slice(start, ddl.indexOf(';\n', start) + 1))
   }
+  // 030（Lux 存档）：单株读取投影与环境写入使用养护环境表新增的三列。
+  await db.query(readFileSync(join(root, 'docs/backend-v2/schema/030_user_plant_care_context_plant_light.sql'), 'utf8').split('\n').filter(line => !line.startsWith('--')).join('\n'))
   // 定向准入见E03-measured-profile-application-context；只提取当前测试需要的一张表。
   const foundation = readFileSync(join(root, 'docs/backend-v2/schema/008_foundation.sql'), 'utf8')
   const idemStart = foundation.indexOf('CREATE TABLE `http_idempotency_records`')

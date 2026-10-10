@@ -3,9 +3,10 @@ import type { UserPlantDto, UserPlantProfileDto } from './types.js'
 import potSchema from '../../models/user-plant/measured-pot-profile.v1.schema.json'
 import patchV2Schema from '../../models/user-plant/profile-patch.v2.schema.json'
 import { publicCoverSchema } from './user-plant-cover-asset-contract.js'
+import { completenessPercentSchema, profileCompletenessSchema } from './user-plant-profile-completeness-contract.js'
 
 /** 公开投影中的环境分组只出现“对象分支”（未设置时省略，不返回 null）；规则复用 profile-patch/v2 唯一事实源。 */
-const groupObjectSchema = (key: 'substrate' | 'location' | 'lighting' | 'ventilation') =>
+const groupObjectSchema = (key: 'substrate' | 'location' | 'lighting' | 'ventilation' | 'plantLight') =>
   ({ ...(patchV2Schema.properties[key].oneOf[1] as object), nullable: true, not: { type: 'null' } })
 
 /** 既有公开引用和UTC时间合同，不是新的可配置规则。 */
@@ -21,7 +22,8 @@ const publicProfileSchema = {
     substrate: groupObjectSchema('substrate'),
     location: groupObjectSchema('location'),
     lighting: groupObjectSchema('lighting'),
-    ventilation: groupObjectSchema('ventilation')
+    ventilation: groupObjectSchema('ventilation'),
+    plantLight: groupObjectSchema('plantLight')
   }
 } as unknown as JSONSchemaType<UserPlantProfileDto>
 
@@ -49,6 +51,8 @@ export const userPlantSchema = {
         profile: publicProfileSchema,
         cover: publicCoverSchema,
         hasCover: { type: 'boolean', nullable: true, not: { type: 'null' } },
+        completeness: profileCompletenessSchema,
+        completenessPercent: completenessPercentSchema,
       },
     },
     {
@@ -74,6 +78,8 @@ export const userPlantSchema = {
         profile: publicProfileSchema,
         cover: publicCoverSchema,
         hasCover: { type: 'boolean', nullable: true, not: { type: 'null' } },
+        completeness: profileCompletenessSchema,
+        completenessPercent: completenessPercentSchema,
       },
     },
   ],

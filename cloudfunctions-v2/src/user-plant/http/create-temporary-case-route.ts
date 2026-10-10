@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
@@ -57,9 +58,9 @@ interface TemporaryCaseRequestDto {
 }
 
 /** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），与创建用户植物路由同一约定。 */
-const jsonBodyLimitBytes = 1_048_576
+const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
 /** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），与创建用户植物路由同一约定。 */
-const idempotencyRetentionMs = 168 * 60 * 60 * 1000
+const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 /** 严格空对象的规范请求文本；同键请求摘要以此计算。 */
 const canonicalEmptyBody = '{}'
 const validators = createPublicContractValidators()

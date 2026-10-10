@@ -4,7 +4,8 @@
 - 所有者：`user-plant`（云存储能力经受控存储适配器）；所属票据：E03 / `z8v0kmr9mj`。
 - 冻结：2026-10-10 用户审定（草案按推荐通过）；同日用户裁决实现方案：不引入 SDK，用 Node 22 原生 `fetch` 调 CloudBase 云存储 HTTP API；
   临时链接有效期以平台默认为准；前端直传目录按 `user-plant/{用户公开编号}/` 隔离。
-- 路由：`POST /api/v2/user-plants/{userPlantRef}/assets`（operationId `bindUserPlantAsset`，`authenticated`，`required_header`）。
+- 路由：`POST /api/v2/user-plants/{userPlantRef}/assets`（operationId `bindUserPlantAsset`，`authenticated`，`required_header`）；
+  `GET /api/v2/user-plants/{userPlantRef}/cover-upload-target`（operationId `getUserPlantCoverUploadTarget`，`authenticated`，只读，2026-10-10 用户追加）。
 - 依据：`schema/003_user_plant.sql` 的 `user_plant_assets`；配置目录 `user-plant.assets.max_count_per_plant`、`storage.upload.allowed_mime_types`、
   `storage.upload.max_image_bytes`、`storage.read_url.ttl_seconds`、`user-plant.assets.replaced_cover_cleanup_days`；Provider `cloudbase_storage`；
   依赖审查 `.codex/backend-v2/evidence/E03-cover-sdk-dependency-review-2026-10-10.md`。
@@ -18,6 +19,7 @@
 
 ## 2. 上传流程：前端直传私有目录 + 服务端登记校验
 
+0. 前端先调用 `GET /api/v2/user-plants/{userPlantRef}/cover-upload-target` 取本次上传路径（见 §2.1），不自己拼目录。
 1. 前端用小程序云存储能力把图片上传到私有目录 `user-plant/{用户公开编号}/covers/{文件名}`（用户公开编号即 `usr_…`）。
    存储安全规则见 `docs/backend-v2/storage/user-plant-cover-storage-rules.json`：只允许已登录用户写入该目录形状且只能写自己上传的文件，客户端一律不可读。
    规则无法把目录里的用户公开编号与登录身份绑定，因此“目录属于谁”由服务端登记时校验（见第 3 步）。
@@ -53,6 +55,29 @@ export type UserPlantAssetResponse = {
    - 同一文件已登记给其他植物或其他用户 → 400（`uq_user_plant_storage_file` 兜底）。
 4. 云存储 Provider 不可用（未配置凭证、网络失败、超时、HTTP 错误、响应非法）→ `503 SERVICE_UNAVAILABLE`，不落库。
 
+### 2.1 获取上传路径 `GET …/cover-upload-target`（2026-10-10 用户追加）
+
+解决的问题：上传目录里要用用户公开编号，但身份合同不单独返回它。本接口按植物直接给出“这次传到哪”，前端不需要知道、也拿不到单独的用户编号字段。
+
+```ts
+export type CoverUploadTargetResponse = {
+  /** 固定 profile。 */
+  purpose: 'profile'
+  /** 本次可用的云存储路径（不含扩展名）：user-plant/{本人用户公开编号}/covers/{userPlantRef}-{32 位随机十六进制}。前端在末尾追加 .jpg / .png / .webp 后作为 cloudPath 上传。 */
+  cloudPath: string
+  /** 允许的图片类型（配置目录 storage.upload.allowed_mime_types）。 */
+  allowedMimeTypes: Array<'image/jpeg' | 'image/png' | 'image/webp'>
+  /** 单张上限字节数（配置目录 storage.upload.max_image_bytes）。 */
+  maxBytes: number
+}
+```
+
+- 归属：只对本人 `active` / `archived` 植物返回；跨用户、删除中/已删除、不存在 → 404 `USER_PLANT_NOT_FOUND`。不接受查询参数（有则 400）。
+- 只读、不落库、不预占：每次调用生成新的随机文件名；没登记的上传由孤儿文件清理任务回收。登记时仍按 §2 第 3 步校验“目录 = 本人”，
+  所以即使前端改了路径，传到别人目录的文件也无法登记。
+- 唯一例外披露：`cloudPath` 中含本人用户公开编号（只给本人、仅此路径形状），不进入日志、审计或其他响应；不返回桶名与环境 ID。
+- 存储安全规则不变：仍只允许已登录非匿名用户写 `user-plant/usr_…/covers/{文件名}` 形状、且只能写自己上传的文件。
+
 ## 3. 规则
 
 - 归属：事务内按 `user_id + user_plant_id` 加锁；跨用户、`deleting`/`deleted` → 404 `USER_PLANT_NOT_FOUND`；归档植物允许换封面。
@@ -75,4 +100,4 @@ export type UserPlantAssetResponse = {
 
 ## 5. 错误集合
 
-`VALIDATION_FAILED`、`PRINCIPAL_INVALID`、`USER_PLANT_NOT_FOUND`、`IDEMPOTENCY_CONFLICT`、`PAYLOAD_TOO_LARGE`、`UNSUPPORTED_MEDIA_TYPE`、`SERVICE_UNAVAILABLE`。
+`VALIDATION_FAILED`、`PRINCIPAL_INVALID`、`USER_PLANT_NOT_FOUND`（两个接口）、`IDEMPOTENCY_CONFLICT`、`PAYLOAD_TOO_LARGE`、`UNSUPPORTED_MEDIA_TYPE`、`SERVICE_UNAVAILABLE`。

@@ -1,6 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { UserRef } from '../../contracts/types.js'
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
@@ -56,8 +57,12 @@ const keyIdFormat = /^[A-Za-z0-9._-]{1,64}$/u
 const nonceFormat = /^[A-Za-z0-9_-]{8,128}$/u
 const timestampFormat = /^(?:0|[1-9][0-9]*)$/u
 const signatureFormat = /^[A-Za-z0-9_-]{43}$/u
-const clockSkewMs = 300_000
-const nonceRetentionMs = 600_000
+/** 每秒毫秒数（单位换算）。 */
+const millisecondsPerSecond = 1000
+/** 签名时钟偏差上限毫秒（`identity.service_signature.clock_skew_seconds`，取值见代码层注册表）。 */
+const clockSkewMs = RUNTIME_PARAMETERS.identity.serviceSignatureClockSkewSeconds.value * millisecondsPerSecond
+/** nonce 防重放保留毫秒（`identity.service_signature.nonce_ttl_seconds`，取值见代码层注册表）。 */
+const nonceRetentionMs = RUNTIME_PARAMETERS.identity.serviceSignatureNonceTtlSeconds.value * millisecondsPerSecond
 const invalidInput = new TrialAnchorRouteError(400, 'VALIDATION_FAILED')
 const invalidPrincipal = new TrialAnchorRouteError(401, 'PRINCIPAL_INVALID')
 const unavailable = new TrialAnchorRouteError(503, 'SERVICE_UNAVAILABLE')

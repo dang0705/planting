@@ -6,10 +6,10 @@
   },
   "date": "2026-10-10",
   "agent": "user_plant_terra",
-  "kind": "design_draft",
+  "kind": "design_draft → implemented (round2)",
   "tdd": "未启动：本票本轮只出合同草案，不改产品行为，无 RED/GREEN",
   "artifacts": {
-    "contractDraft": "cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md",
+    "contractDraft": "已删除：cloudfunctions-v2/models/user-plant/profile-completeness-contract-draft.md（替代物 docs/backend-v2/contracts/user-plant-profile-completeness.md，用户 2026-10-10 审定；草案仍可从 git f2c4fdb5 回看）",
     "catalogEntries": [
       "user-plant.profile_progress.policy",
       "subscription.points.profile_milestones"
@@ -59,8 +59,75 @@
   ],
   "verification": {
     "typecheck": "0 errors",
-    "lint": "oxlint src test：0 errors（既有 warnings）",
-    "vitest": "297 files / 3205 passed / 5 skipped / 0 failed（含配置目录 p1-configuration-architecture 结构、sourceRef 片段与 ticketBindings 校验）",
-    "mysql": "本轮未改 SQL/Repository，未复跑"
+    "lint": "oxlint src test 0 errors",
+    "build": "ok",
+    "vitest": "303 files / 3261 passed / 5 skipped / 0 failed",
+    "mysql": "66 files / 649 passed / 0 failed"
+  },
+  "round2": {
+    "date": "2026-10-10",
+    "userDecisions": [
+      "完整度按推荐采纳且必须可配置（类型化策略发布 user-plant/profile_progress）",
+      "Lux 存档（30 天，复用 luxAnchorMaxAgeDays）计入完整度、长期植物浇水建议使用存档",
+      "新增获取上传目录接口",
+      "D5 里程碑推迟到第三阶段"
+    ],
+    "finalWeights": {
+      "catalog_binding": 30,
+      "measured_pot": 25,
+      "substrate": 15,
+      "location": 12,
+      "plant_light": 10,
+      "ventilation": 5,
+      "lighting": 3
+    },
+    "contracts": [
+      "docs/backend-v2/contracts/user-plant-profile-completeness.md（新，registry 登记）",
+      "docs/backend-v2/contracts/user-plant-environment-profile.md（plantLight）",
+      "docs/backend-v2/contracts/user-plant-cover-asset.md §2.1（cover-upload-target）",
+      "cloudfunctions-v2/models/care/watering-advice-http-contract.md（长期植物的 Lux 存档）",
+      "cloudfunctions-v2/models/care/long-term-care-contract.md §4（profileReadiness 收紧）",
+      "cloudfunctions-v2/models/user-plant/profile-patch.v2.schema.json（plantLight）",
+      "route-registry + openapi.p1.json（getUserPlantCoverUploadTarget、ProfileCompleteness）"
+    ],
+    "policyRelease": [
+      "cloudfunctions-v2/models/user-plant/profile-progress-policy.v1.json",
+      "profile-progress-policy.v1.schema.json",
+      "profile-progress-policy.v1.md（发布到数据库由主代理执行，未发布）"
+    ],
+    "migration": "docs/backend-v2/schema/030_user_plant_care_context_plant_light.sql（只写文件不执行；manifest order 29）",
+    "tdd": {
+      "classicRed": [
+        "test/user-plant/profile-progress.spec.ts（模块不存在）",
+        "test/user-plant/cover-upload-target-route.spec.ts（模块不存在）",
+        "test/p1-total-ddl.spec.ts「Lux 存档 030 迁移必须登记」",
+        "test/configuration/runtime-parameters.spec.ts 与 configuration-entry-source-scan.spec.ts（统一入口迁移，白名单清空）"
+      ],
+      "counterfactualRed": "MySQL e2e 首跑即绿（RED 在模块缺失层）；随后受控突变三处产品代码（禁用 Lux 存档采用、profileReadiness 回退旧口径、PATCH 不传 plantLight）→ 12 条用例变红（long-term-care-http 3 条、user-plant-profile-completeness 9 条），恢复后全绿"
+    },
+    "configurationEntryMigration": "user-plant 写接口正文上限/幂等保留期、认领租约 30s、列表/时间线分页、封面资产规则、care watering-advice-route 正文上限/幂等保留期 → src/configuration/runtime-parameters.ts；扫描白名单清空；目录 codeLocations 同步",
+    "verification": {
+      "typecheck": "0 errors",
+      "lint": "oxlint src test 0 errors",
+      "build": "ok",
+      "vitest": "303 files / 3261 passed / 5 skipped / 0 failed",
+      "mysql": "66 files / 649 passed / 0 failed"
+    },
+    "testLayers": {
+      "unit_fake": [
+        "cover-upload-target-route.spec.ts（真实 node:http + 假会话/用例）"
+      ],
+      "unit_real_data": [
+        "profile-progress.spec.ts（仓库正文 + 目录）",
+        "user-plant-profile-completeness.mysql.spec.ts",
+        "long-term-care-http.mysql.spec.ts Lux 存档段"
+      ]
+    },
+    "notCovered": [
+      "线上策略发布",
+      "云端 MySQL 执行 030",
+      "真实云存储上传",
+      "CloudBase 网关"
+    ]
   }
 }

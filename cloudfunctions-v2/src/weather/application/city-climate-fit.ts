@@ -2,6 +2,7 @@ import type { IncomingMessage } from 'node:http'
 
 import Ajv, { type JSONSchemaType } from 'ajv'
 
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -89,7 +90,7 @@ const recommendQuerySchema: JSONSchemaType<RecommendQuery> = {
   required: ['cityCode', 'top'],
   properties: {
     cityCode: { type: 'string', minLength: 2, maxLength: 64, pattern: cityCodePattern },
-    top: { type: 'integer', minimum: 1, maximum: 50 }
+    top: { type: 'integer', minimum: 1, maximum: RUNTIME_PARAMETERS.weather.recommendTopMaxItems.value }
   }
 }
 

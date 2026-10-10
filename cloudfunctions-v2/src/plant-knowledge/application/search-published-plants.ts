@@ -2,6 +2,7 @@ import type { IncomingMessage } from 'node:http'
 
 import Ajv, { type JSONSchemaType } from 'ajv'
 
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -38,7 +39,8 @@ export type SearchPublishedPlantsDependencies = {
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
 
-const maximumQueryCodePoints = 64
+/** 搜索关键词最大码点数（硬规则 `plant-knowledge.search.query_max_code_points`，取值见代码层注册表）。 */
+const maximumQueryCodePoints = RUNTIME_PARAMETERS.plantKnowledge.searchQueryMaxCodePoints.value
 const badRequestStatus = 400
 const publicRouteReason = 'public 路由：http-api/v1 §2 规定只返回已发布非个性化内容，不解析任何主体'
 

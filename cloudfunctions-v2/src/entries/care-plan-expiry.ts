@@ -3,7 +3,7 @@ import pino from 'pino'
 import { createExpireCarePlansJob } from '../care/application/expire-care-plans.js'
 import { createCarePlanExpiryEventHandler } from '../care/event/care-plan-expiry-handler.js'
 import { expireDueCarePlans } from '../care/repository/mysql-care-plan-expiry-repository.js'
-import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
+import { readCarePlanExpiryEnvironment } from '../configuration/environment.js'
 import { createMysqlTransactionDriver } from '../foundation/database/mysql-transaction-driver.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 import { runDatabaseTransaction } from '../foundation/database/transaction-runner.js'
@@ -16,19 +16,23 @@ import { runDatabaseTransaction } from '../foundation/database/transaction-runne
  * 不监听端口、不挂 HTTP 网关、不承载其他业务。
  */
 
+/** 环境变量层统一读取（日志级别、数据库、过期扫描每批运维覆盖；非法即启动失败，错误不含取值）。 */
+const environment = readCarePlanExpiryEnvironment(process.env)
+
 /** 只输出白名单计数事件；不输出连接、身份、计划或错误原文。 */
 const logger = pino({
   base: null,
-  level: process.env.LOG_LEVEL ?? 'info',
+  level: environment.logLevel,
   redact: { paths: ['headers', 'authorization', 'body', 'env', 'config'], censor: '[已脱敏]' }
 })
-const source = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
+const source = createMysql2ConnectionSource(environment.database)
 const driver = createMysqlTransactionDriver(source, () => {
   logger.error({ event: 'transaction_rollback_failed', function: 'care-plan-expiry' }, '事务回滚失败')
 })
 
 const job = createExpireCarePlansJob({
   now: () => Date.now(),
+  batchSize: environment.expiryBatchSize,
   // 每批一个独立短事务：失败只回滚本批，已提交批次保留（§12.5）。
   runBatch: input => runDatabaseTransaction(driver, transaction => expireDueCarePlans(transaction, input)),
   log: event => {

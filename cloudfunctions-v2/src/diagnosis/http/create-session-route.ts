@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import type { IncomingMessage, IncomingHttpHeaders } from 'node:http'
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createPublicContractValidators } from '../../contracts/index.js'
 import type { UserPrincipalDto, GuestPrincipalDto } from '../../contracts/types.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
@@ -66,8 +67,9 @@ type Restricted = {
   readonly path: RoutePathParameters
 }
 /** 与共享HTTP目录已确认值一致，不新增诊断策略。 */
-const bodyLimitBytes = 1_048_576
-const retentionMs = 168 * 60 * 60 * 1000
+const bodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
+/** 幂等结果保留毫秒（`http.idempotency.retention_hours` 换算）。 */
+const retentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const keyPattern = /^[\x20-\x7e]{8,128}$/u
 const validators = createPublicContractValidators()
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')

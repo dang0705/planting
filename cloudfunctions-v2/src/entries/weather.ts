@@ -1,20 +1,23 @@
 import pino from 'pino'
 
-import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
+import { readFunctionEnvironment } from '../configuration/environment.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 import { createWeatherServer } from '../weather/http/server.js'
 
 /** CloudBase HTTP 云函数固定监听端口。 */
 const servicePort = 9000
 
+/** 环境变量层统一读取（日志级别、数据库；非法即启动失败，错误不含取值）。 */
+const environment = readFunctionEnvironment(process.env)
+
 /** 日志只记录固定白名单字段，禁止记录请求头、请求体、连接参数和运行环境。 */
 const logger = pino({
   base: null,
-  level: process.env.LOG_LEVEL ?? 'info',
+  level: environment.logLevel,
   redact: { paths: ['req.headers', 'request.headers', 'body', 'env', 'config'], censor: '[已脱敏]' }
 })
 
-const connectionSource = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
+const connectionSource = createMysql2ConnectionSource(environment.database)
 
 const server = createWeatherServer({
   connectionSource,

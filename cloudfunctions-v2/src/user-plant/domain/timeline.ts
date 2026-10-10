@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash } from 'node:crypto'
 
 /**
@@ -6,7 +7,7 @@ import { createHash } from 'node:crypto'
  */
 
 /** 硬规则 `user-plant.timeline.page_size`：缺省 20、上限 50；与配置目录一致性由测试锁定。 */
-export const USER_PLANT_TIMELINE_PAGE_SIZE = Object.freeze({ default: 20, max: 50 })
+export const USER_PLANT_TIMELINE_PAGE_SIZE = RUNTIME_PARAMETERS.userPlant.timelinePageSize.value
 
 /** 第一期收录的时间线类型。 */
 export type TimelineItemType = 'care_watering' | 'care_plan_completed' | 'plant_archived' | 'plant_restored'

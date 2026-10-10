@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
@@ -99,9 +100,9 @@ type LifecycleCommand = UserPlantLifecycleApplicationInput & {
 }
 
 /** 单次 JSON 请求体上限，与用户植物创建入口一致。 */
-const bodyLimitBytes = 1_048_576
+const bodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
 /** 幂等结果保留七天；同键重试在此期间必须读回首次结果。 */
-const idempotencyRetentionMs = 604_800_000
+const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 /** 只用于公开 HTTP 协议转换，不参与领域状态机判断。 */
 const validationFailureStatus = 400
 const unauthenticatedStatus = 401

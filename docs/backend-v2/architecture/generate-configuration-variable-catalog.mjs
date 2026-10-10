@@ -13,6 +13,7 @@ const 领域名称 = {
   'user-plant': '用户植物',
   'plant-knowledge': '植物知识、分类与 CMS',
   care: '养护、天气与算法',
+  weather: '城市气候适配',
   diagnosis: '问诊与视觉 AI',
   storage: '云存储与数据生命周期',
   http: 'HTTP 公共合同',
@@ -22,6 +23,7 @@ const 领域名称 = {
 }
 
 const 状态名称 = { confirmed: '已冻结', pending: '待冻结', hard_rule: '不可配置硬规则' }
+const 所在层名称 = { code: '代码层', env: '环境变量层', policy: '策略发布层', env_overridable: '代码层默认 + 环境变量可覆盖' }
 const 层级名称 = {
   domain_policy: '领域策略',
   provider_runtime: '第三方运行配置',
@@ -48,8 +50,9 @@ const lines = [
   '',
   '1. `已冻结`：实现必须从类型化不可变策略或受控部署配置读取，不得另写隐式常量。',
   '2. `待冻结`：只能补证据、合同和测试；其 `blockingScope` 对应功能禁止进入实现或发布。',
-  '3. `不可配置硬规则`：必须由代码、数据库约束和测试共同保证，任何 CMS、数据库策略或环境变量都不能覆盖。',
+  '3. `不可配置硬规则`：必须由代码、数据库约束和测试共同保证，任何 CMS、数据库策略或环境变量都不能覆盖；唯一例外是主代理裁定并在 `environmentOverrides` 中逐字段登记范围的运维参数（所在层＝代码层默认 + 环境变量可覆盖），未登记字段仍不可覆盖。',
   '4. 每次变更必须同步 JSON、重新生成本文件、更新架构 SHA-256 清单，并执行 P1 配置架构测试。',
+  '5. `所在层`（configuration-layers/v1）：代码层＝`src/configuration/runtime-parameters.ts` 随版本发布；环境变量层＝`src/configuration/environment.ts` 部署时读取；策略发布层＝数据库 BusinessPolicyRelease 运行时切换。代码位置见 JSON `codeLocations`。',
   '',
 ]
 
@@ -77,12 +80,13 @@ for (const [domain, title] of Object.entries(领域名称)) {
   const items = 目录.variables.filter((item) => item.domain === domain)
   if (items.length === 0) continue
   lines.push(`## ${title}`, '')
-  lines.push('| 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |')
+  lines.push('| 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 / 所在层 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |')
   lines.push('|---|---|---|---|---|---|---|---|---|')
   for (const item of items) {
     const value = 显示值(item.currentValue).replaceAll('|', '\\|')
-    const boundary = `${item.changePolicy}；失败：${item.fallback}${item.pendingReason ? `；待冻结原因：${item.pendingReason}；阻断：${item.blockingScope}` : ''}`.replaceAll('|', '\\|')
-    lines.push(`| \`${item.id}\` | ${item.chineseName} | \`${item.decisionGroup}\` | ${层级名称[item.layer]} / ${状态名称[item.status]} | ${value}${item.unit ? ` ${item.unit}` : ''} | ${item.owner} | ${item.consumers.join('、')} | ${boundary} | ${item.phase} / ${item.ticketTitle} |`)
+    const overrides = (item.environmentOverrides ?? []).map((o) => `${o.field}←${o.environmentName}（${o.minimum}–${o.maximum}，${o.decidedAt}）`).join('、')
+    const boundary = `${item.changePolicy}；失败：${item.fallback}${item.pendingReason ? `；待冻结原因：${item.pendingReason}；阻断：${item.blockingScope}` : ''}${overrides ? `；环境变量覆盖：${overrides}` : ''}${item.configurationTierNote ? `；所在层说明：${item.configurationTierNote}` : ''}`.replaceAll('|', '\\|')
+    lines.push(`| \`${item.id}\` | ${item.chineseName} | \`${item.decisionGroup}\` | ${层级名称[item.layer]} / ${状态名称[item.status]} / ${所在层名称[item.configurationTier] ?? '未标注'} | ${value}${item.unit ? ` ${item.unit}` : ''} | ${item.owner} | ${item.consumers.join('、')} | ${boundary} | ${item.phase} / ${item.ticketTitle} |`)
   }
   lines.push('')
 }
@@ -94,7 +98,8 @@ lines.push('| Provider | 能力 | 状态 | 端点 / 凭证 | 超时 / 重试 | �
 lines.push('|---|---|---|---|---|---|---|---|')
 for (const profile of 目录.providerProfiles) {
   const endpoint = `${profile.endpointProfile} / ${profile.credentialRef}`
-  const timeouts = `connect=${profile.connectTimeoutMs}, read=${profile.readTimeoutMs}, total=${profile.totalDeadlineMs}, attempts=${profile.maxAttempts}, backoff=${profile.backoffPolicy}`
+  const envOverride = (profile.environmentOverrides ?? []).map((o) => `; ${o.field}←${o.environmentName}(${o.minimum}–${o.maximum})`).join('')
+  const timeouts = `connect=${profile.connectTimeoutMs}, read=${profile.readTimeoutMs}, total=${profile.totalDeadlineMs}, attempts=${profile.maxAttempts}, backoff=${profile.backoffPolicy}${envOverride}`
   const guard = `rate=${profile.rateLimitPolicy}, circuit=${profile.circuitBreakerPolicy}`
   const cost = `policy=${profile.costPolicy}, month=${profile.monthlyBudgetCny}, warn=${profile.warningThresholdCny}`
   lines.push(`| \`${profile.providerCode}\` ${profile.chineseName} | ${profile.capabilityCodes.join('、')} | ${profile.status} | ${endpoint} | ${timeouts} | ${guard} | ${cost} | ${profile.fallback}；阻断：${profile.blockingScope} |`)

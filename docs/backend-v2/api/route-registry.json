@@ -318,6 +318,23 @@
     },
     {
       "method": "GET",
+      "path": "/api/v2/user-plants/{userPlantRef}/cover-upload-target",
+      "operationId": "getUserPlantCoverUploadTarget",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "UserPlantPath",
+      "responseContract": "CoverUploadTargetResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/api/v2/user-plants/{userPlantRef}/timeline",
       "operationId": "listUserPlantTimeline",
       "owner": "user-plant",

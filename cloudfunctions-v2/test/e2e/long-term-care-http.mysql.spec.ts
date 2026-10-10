@@ -334,3 +334,51 @@ describe('确认建议 → 计划 → 完成', () => {
     }
   })
 })
+
+/**
+ * Expected：watering-advice-http-contract.md「长期植物的 Lux 存档」、long-term-care-contract.md §4 与
+ * user-plant-profile-completeness.md §4（用户 2026-10-10 审定）：请求未带 lightReading 时使用档案中仍在 luxAnchorMaxAgeDays（30 天）内的 Lux；
+ * 过期按 plant_light 缺失；请求带读数时以请求为准；profileReadiness.hasMeasuredPot 收紧为“至少一项尺寸 + 排水非空”。
+ * 层次：L3 / unit_real_data（真实 care + user-plant HTTP、真实 030 列读回）。室外辐射替身不可用，所以有 Lux 时只缺 outdoor_radiation。
+ */
+describe('长期植物 Lux 存档与档案就绪口径', () => {
+  const storeLight = (lux: number, measuredAtMs: number, source = 'meter') =>
+    sql(`UPDATE user_plant_care_contexts SET plant_light_lux = ${lux}, plant_light_measured_at_ms = ${measuredAtMs}, plant_light_source = '${source}' WHERE user_plant_internal_id = 1;`)
+  const manifestLight = (resultRef: string) =>
+    sql(`SELECT IFNULL(CONCAT(JSON_EXTRACT(input_manifest_json, '$.lightReading.lux'), '|', JSON_EXTRACT(input_manifest_json, '$.lightReading.measuredAtMs')), 'null') FROM care_capability_results WHERE result_ref = ${quote(resultRef)};`)
+
+  test('请求未带 Lux、档案有 30 天内读数 → 使用存档：输入清单记录读数，缺失码不含 plant_light', async () => {
+    await bind('upl_ltc_active_0001', 'bind-key-00000060')
+    storeLight(2400, now - 3 * day)
+    const response = await advice('upl_ltc_active_0001', 'advice-key-light01', { soil: null })
+    expect(response.status).toBe(200)
+    expect(manifestLight(response.body.data!.resultRef)).toBe(`2400|${now - 3 * day}`)
+    expect(response.body.data?.result.details.missingEvidence).toContain('outdoor_radiation')
+    expect(response.body.data?.result.details.missingEvidence).not.toContain('plant_light')
+  })
+
+  test('档案读数恰好 30 天仍可用；超过 30 天 → 按未测处理（缺失码含 plant_light，输入清单无读数）', async () => {
+    await bind('upl_ltc_active_0001', 'bind-key-00000061')
+    storeLight(2400, now - 30 * day)
+    expect(manifestLight((await advice('upl_ltc_active_0001', 'advice-key-light02', { soil: null })).body.data!.resultRef)).toBe(`2400|${now - 30 * day}`)
+    storeLight(2400, now - 30 * day - 1)
+    const stale = await advice('upl_ltc_active_0001', 'advice-key-light03', { soil: null })
+    expect(manifestLight(stale.body.data!.resultRef)).toBe('null')
+    expect(stale.body.data?.result.details.missingEvidence).toContain('plant_light')
+  })
+
+  test('请求带 lightReading 时以请求为准，不读存档也不写回档案', async () => {
+    await bind('upl_ltc_active_0001', 'bind-key-00000062')
+    storeLight(2400, now - 3 * day)
+    const response = await advice('upl_ltc_active_0001', 'advice-key-light04', { soil: null, lightReading: { lux: 900, measuredAt: new Date(now - hour).toISOString(), source: 'camera_estimate' } })
+    expect(manifestLight(response.body.data!.resultRef)).toBe(`900|${now - hour}`)
+    expect(sql('SELECT CONCAT(plant_light_lux, \'|\', plant_light_source) FROM user_plant_care_contexts WHERE user_plant_internal_id = 1;')).toBe('2400|meter')
+  })
+
+  test('摘要 hasMeasuredPot：排水状态为空 → false（口径收紧）；有尺寸与排水 → true', async () => {
+    const summary = async () => (await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/summary'), undefined)).body.data?.profileReadiness
+    expect(await summary()).toEqual({ hasMeasuredPot: true, hasCatalogBinding: false })
+    sql(`UPDATE user_plant_profiles SET pot_profile_json = CAST(${quote(JSON.stringify({ measuredPot: { ...pot, drainageAvailable: null } }))} AS JSON) WHERE user_plant_internal_id = 1;`)
+    expect(await summary()).toEqual({ hasMeasuredPot: false, hasCatalogBinding: false })
+  })
+})

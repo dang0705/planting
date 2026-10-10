@@ -1,0 +1,18 @@
+{
+  "contractVersion": "user-plant-profile-progress/v1",
+  "items": [
+    { "code": "catalog_binding", "weight": 30, "editTarget": "catalogBinding", "reason": "还没绑定具体品种，浇水建议没有基线可依，只能告诉你“证据不足”。", "benefit": "绑定品种后，可以按这个品种的喜水习性给出浇水时机。" },
+    { "code": "measured_pot", "weight": 25, "editTarget": "measuredPot", "reason": "还不知道盆有多大、能不能排水，浇水量只能给很宽的范围。", "benefit": "补上尺寸和排水情况后，可以告诉你大概浇多少水，并提示积水风险。" },
+    { "code": "substrate", "weight": 15, "editTarget": "substrate", "reason": "还不知道用的什么土，干得快慢只能按默认土估算。", "benefit": "补上盆土配方后，干燥时间的估算会更窄、更准。" },
+    { "code": "location", "weight": 12, "editTarget": "location", "reason": "还不知道植物在哪个城市，拿不到当地的日照和时间。", "benefit": "设置城市后，可以结合当地天气估算每天的光照。" },
+    { "code": "plant_light", "weight": 10, "editTarget": "plantLight", "reason": "最近没有在植物位置测过光照（超过有效期也算没有）。", "benefit": "在白天明亮时段测一次光照，可以更准确地判断土干得多快。" },
+    { "code": "ventilation", "weight": 5, "editTarget": "ventilation", "reason": "还不知道通风情况，以后做健康诊断时会少一条线索。", "benefit": "补上通风情况，后续诊断闷根、叶尖干枯时更有依据。" },
+    { "code": "lighting", "weight": 3, "editTarget": "lighting", "reason": "还不知道主窗朝向；目前浇水计算不用它，但能帮助解释光照。", "benefit": "补上朝向，方便你和我们理解这株植物的采光条件。" }
+  ],
+  "levels": [
+    { "level": "starter", "minPercent": 0 },
+    { "level": "good", "minPercent": 50 },
+    { "level": "great", "minPercent": 80 },
+    { "level": "complete", "minPercent": 100 }
+  ]
+}

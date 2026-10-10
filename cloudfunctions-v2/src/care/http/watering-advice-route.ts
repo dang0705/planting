@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
@@ -114,9 +115,9 @@ interface AdviceDto {
 }
 
 /** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），同既有路由约定（裁决 7）。 */
-const jsonBodyLimitBytes = 1_048_576
+const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
 /** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），同既有路由约定（裁决 7）。 */
-const idempotencyRetentionMs = 168 * 60 * 60 * 1000
+const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const validators = createPublicContractValidators()
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 /** 应用用例允许原样公开的确定错误。 */
@@ -200,6 +201,18 @@ function withUserPlantContext(command: WateringAdviceCommand, context: UserPlant
     pot: pot === null
       ? { actualInnerPotConfirmed: null, drainageAvailable: null, potTopDiameterCm: null, potBottomDiameterCm: null, potHeightCm: null }
       : { ...pot } }
+}
+
+/** 一天的毫秒数（Lux 存档有效期换算）。 */
+const millisecondsPerDay = 86_400_000
+
+/** 请求未带 Lux 时取档案存档；只在策略可用且读数未过期（含恰好到期）时采用，请求带读数时以请求为准。 */
+function withStoredPlantLight(command: WateringAdviceCommand, context: UserPlantCareContext | null, policy: PublishedWateringPolicy | null, nowMs: number): WateringAdviceCommand {
+  const stored = context?.plantLight ?? null
+  if (command.lightReading !== null || stored === null || policy === null) { return command }
+  const ageMs = nowMs - stored.measuredAtMs
+  if (ageMs < 0 || ageMs > policy.snapshot.luxAnchorMaxAgeDays * millisecondsPerDay) { return command }
+  return { ...command, lightReading: { lux: stored.lux, measuredAtMs: stored.measuredAtMs, source: stored.source } }
 }
 
 /** 应用结果白名单投影。 */
@@ -286,6 +299,8 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
             policy = await dependencies.readWateringPolicy(new Date(nowMs).toISOString())
             baseline = command.catalogTaxonRef === null ? null : await dependencies.readPlantBaseline(command.catalogTaxonRef)
           } catch { throw unavailable() }
+          // 长期植物 Lux 存档（2026-10-10 用户裁决）：请求未带读数时用档案中仍在 luxAnchorMaxAgeDays 内的读数；过期按未测处理（plant_light）。
+          command = withStoredPlantLight(command, userPlant?.context ?? null, policy, nowMs)
           const window = resolveOpenMeteoRequestWindow({ nowMs, evidenceTimesMs: [command.soil?.observedAt ?? null, command.lastWateringAtMs, command.lightReading?.measuredAtMs ?? null] })
           let radiation: NormalizedOutdoorRadiation | null
           const location = command.location

@@ -1,4 +1,5 @@
 import { createSecretKey } from 'node:crypto'
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import {
   createVerifyPlatformCredentialUseCase,
   PlatformCredentialEvidenceError,
@@ -7,8 +8,13 @@ import {
 import { createDouyinMiniprogramCredentialProvider } from './douyin-miniprogram-credential-provider.js'
 import { createWechatLoginVerifier } from './wechat-login-verifier.js'
 
-/** 已批准档案的总时限（毫秒），三个平台同标准（用户 2026-10-09）。 */
-const providerTotalDeadlineMs = 5000
+/** 各平台登录 Provider 总时限（毫秒）；未注入时取代码层注册表默认（已批准档案 5000，用户 2026-10-09 三平台同标准）。 */
+export interface PlatformLoginDeadlines {
+  /** 微信 code2Session 总时限毫秒；入口从环境变量层读取（白名单运维覆盖）。 */
+  readonly wechatTotalDeadlineMs?: number
+  /** 抖音 code2Session 总时限毫秒；入口从环境变量层读取（白名单运维覆盖）。 */
+  readonly douyinTotalDeadlineMs?: number
+}
 /** 平台主体 HMAC 密钥最少字节数（256 位）。 */
 const minimumHmacKeyBytes = 32
 
@@ -38,13 +44,13 @@ function failClosed(): (code: string) => Promise<VerifiedPlatformIdentityEvidenc
 }
 
 /** 抖音登录验真：抖音适配器＋同一把平台主体 HMAC 密钥。 */
-function createDouyinLoginVerifier(environment: PlatformLoginEnvironment, fetchImplementation: typeof globalThis.fetch) {
+function createDouyinLoginVerifier(environment: PlatformLoginEnvironment, fetchImplementation: typeof globalThis.fetch, totalDeadlineMs: number) {
   const appId = environment.DOUYIN_APPID?.trim()
   const appSecret = environment.DOUYIN_APP_SECRET?.trim()
   const keyBytes = Buffer.from(environment.PLATFORM_SUBJECT_HMAC_KEY_V1?.trim() ?? '', 'base64')
   if (!appId || !appSecret || keyBytes.length < minimumHmacKeyBytes) { throw configurationInvalid() }
   const verify = createVerifyPlatformCredentialUseCase({
-    provider: createDouyinMiniprogramCredentialProvider({ fetch: fetchImplementation, appId, appSecret, totalDeadlineMs: providerTotalDeadlineMs }),
+    provider: createDouyinMiniprogramCredentialProvider({ fetch: fetchImplementation, appId, appSecret, totalDeadlineMs }),
     keyRing: { current: { keyVersion: 'v1', secretKey: createSecretKey(keyBytes) }, retiring: [] },
   })
   return (code: string) => verify({ platform: 'douyin', appScope: appId, credential: code })
@@ -56,14 +62,16 @@ function createDouyinLoginVerifier(environment: PlatformLoginEnvironment, fetchI
  */
 export function createPlatformLoginDispatcher(
   environment: PlatformLoginEnvironment,
-  fetchImplementation: typeof globalThis.fetch
+  fetchImplementation: typeof globalThis.fetch,
+  deadlines: PlatformLoginDeadlines = {}
 ): (platform: LoginPlatform, code: string) => Promise<VerifiedPlatformIdentityEvidence> {
   const build = (factory: () => (code: string) => Promise<VerifiedPlatformIdentityEvidence>) => {
     try { return factory() } catch { return failClosed() }
   }
   const verifiers: Record<LoginPlatform, (code: string) => Promise<VerifiedPlatformIdentityEvidence>> = {
-    wechat: build(() => createWechatLoginVerifier(environment, fetchImplementation)),
-    douyin: build(() => createDouyinLoginVerifier(environment, fetchImplementation)),
+    wechat: build(() => createWechatLoginVerifier(environment, fetchImplementation, deadlines.wechatTotalDeadlineMs)),
+    douyin: build(() => createDouyinLoginVerifier(environment, fetchImplementation,
+      deadlines.douyinTotalDeadlineMs ?? RUNTIME_PARAMETERS.identity.douyinLoginTotalDeadlineMs.value)),
     xiaohongshu: failClosed(),
   }
   return (platform, code) => {

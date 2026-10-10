@@ -1,7 +1,7 @@
 import type { UserPlantProfileDto } from '../../contracts/types.js'
 import { lockMeasuredPotProfile } from './measured-pot-profile.js'
 import { serializeCanonicalJson, type CanonicalJsonValue } from '../../foundation/json/canonical-json-sha256.js'
-import { CARE_CONTEXT_GROUP_KEYS, lockStoredEnvironmentGroup, PROFILE_JSON_GROUP_KEYS, PROFILE_JSON_STORAGE_KEY } from './environment-profile.js'
+import { CARE_CONTEXT_JSON_GROUP_KEYS, lockStoredEnvironmentGroup, plantLightFromColumns, PROFILE_JSON_GROUP_KEYS, PROFILE_JSON_STORAGE_KEY } from './environment-profile.js'
 
 /** 同用户/同植物联合SQL关联后的档案行；内部字段仅用于核验，绝不返回。 */
 export interface PublicProfileRow {
@@ -13,6 +13,9 @@ export interface PublicProfileRow {
   /** 养护环境行的位置 JSON；JSON null 表示未设置。 */ readonly context_location_json?: unknown
   /** 养护环境行的光照 JSON；JSON null 表示未设置。 */ readonly context_light_json?: unknown
   /** 养护环境行的通风 JSON；JSON null 表示未设置。 */ readonly context_ventilation_json?: unknown
+  /** 植物位置最近一次 Lux（迁移 030）；未测为 null。 */ readonly context_plant_light_lux?: unknown
+  /** 该次 Lux 测量时间 UTC 毫秒文本；未测为 null。 */ readonly context_plant_light_measured_at_ms?: unknown
+  /** 该次 Lux 来源；未测为 null。 */ readonly context_plant_light_source?: unknown
 }
 
 const contextColumn = { location: 'context_location_json', lighting: 'context_light_json', ventilation: 'context_ventilation_json' } as const
@@ -23,10 +26,12 @@ export function projectPublicProfile(row: PublicProfileRow): Readonly<UserPlantP
   if (hasContext && (typeof row.context_internal_id !== 'string' || !/^[1-9][0-9]*$/u.test(row.context_internal_id))) { throw new TypeError('养护环境关联无效') }
   const environment: Record<string, unknown> = {}
   if (hasContext) {
-    for (const key of CARE_CONTEXT_GROUP_KEYS) {
+    for (const key of CARE_CONTEXT_JSON_GROUP_KEYS) {
       const group = lockStoredEnvironmentGroup(key, row[contextColumn[key]])
       if (group !== undefined) { environment[key] = group }
     }
+    const plantLight = plantLightFromColumns(row.context_plant_light_lux, row.context_plant_light_measured_at_ms, row.context_plant_light_source)
+    if (plantLight !== undefined) { environment.plantLight = plantLight }
   }
   if (row.profile_internal_id === null) {
     if (row.profile_nickname !== null || row.profile_pot_json !== null || row.profile_openid !== null) { throw new TypeError('档案关联不完整') }

@@ -3,16 +3,19 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import Ajv, { type JSONSchemaType } from "ajv";
 import pino from "pino";
 
+import { readLogLevel } from "./configuration/environment.js";
+import { RUNTIME_PARAMETERS } from "./configuration/runtime-parameters.js";
+
 /**
  * P0 只建立可部署、可测试的 HTTP 基线，不在此处承载任何业务领域规则。
  * 后续六个业务云函数复用相同的接入顺序，但必须各自拥有独立入口和领域实现。
  */
 const servicePort = 9000;
 /**
- * 普通 JSON 请求体上限，来自已确认配置项 `http.json_body_limit_bytes`。
- * 当前 P1 合同冻结为 1,048,576 字节；变更必须先更新合同与配置目录，再同步此接入层常量。
+ * 普通 JSON 请求体上限，来自已确认配置项 `http.json_body_limit_bytes`（取值只在代码层注册表定义）。
+ * 变更必须先更新合同与配置目录，再同步注册表。
  */
-const requestBodyLimitBytes = 1_048_576;
+const requestBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value;
 
 type ProbeRequest = {
   /** 仅用于证明 JSON DTO 接收链路生效；必须是 1 至 32 个字符的字符串，不持久化、不记日志且不回显。 */
@@ -40,7 +43,7 @@ const dtoValidator = new Ajv({ allErrors: true }).compile(probeRequestShape);
 /** 日志只记录固定白名单字段，禁止记录请求头、请求体、凭证和运行环境。 */
 const logger = pino({
   base: null,
-  level: process.env.LOG_LEVEL ?? "info",
+  level: readLogLevel(process.env),
   redact: { paths: ["req.headers", "request.headers", "body", "env"], censor: "[已脱敏]" },
 });
 

@@ -1,4 +1,5 @@
 import Ajv, { type JSONSchemaType } from 'ajv'
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -68,13 +69,15 @@ export type GetPlantEncyclopediaDependencies = {
   /** 固定请求链的脱敏结果审计。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
+/** 分类引用与 slug 最大码点数（硬规则 `plant-knowledge.encyclopedia.reference_max_code_points`，取值见代码层注册表）。 */
+const referenceMaxCodePoints = RUNTIME_PARAMETERS.plantKnowledge.encyclopediaReferenceMaxCodePoints.value
 const querySchema: JSONSchemaType<PlantEncyclopediaQuery> = {
   type: 'object',
   additionalProperties: false,
   required: ['scientificNameSlug', 'catalogTaxonRef'],
   properties: {
-    scientificNameSlug: { type: 'string', minLength: 1, maxLength: 512 },
-    catalogTaxonRef: { type: 'string', minLength: 1, maxLength: 512 }
+    scientificNameSlug: { type: 'string', minLength: 1, maxLength: referenceMaxCodePoints },
+    catalogTaxonRef: { type: 'string', minLength: 1, maxLength: referenceMaxCodePoints }
   }
 }
 const validate = new Ajv({ allErrors: true }).compile(querySchema)

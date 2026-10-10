@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
@@ -66,7 +67,7 @@ interface ClaimCommand {
 }
 
 /** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），同既有路由约定。 */
-const jsonBodyLimitBytes = 1_048_576
+const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
 const validators = createPublicContractValidators()
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 const digest = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')

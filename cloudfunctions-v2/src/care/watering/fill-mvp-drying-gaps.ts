@@ -1,10 +1,12 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { DryingInterval } from './replay-dry-progress.js'
 
 /**
  * 环境数据缺段可保守补齐的最长小时数（用户 2026-10-10 审定；目录 `care.watering.drying_gap_fill_max_hours`，hard_rule）。
- * 硬规则：它是证据连续性的准入边界，不随策略发布调整；改动须同步合同 8.11、目录与锁定测试。
+ * 硬规则：它是证据连续性的准入边界，不随策略发布调整、不允许环境变量覆盖；取值只在代码层注册表定义，
+ * 改动须同步合同 8.11、目录与锁定测试。
  */
-export const MVP_DRYING_GAP_FILL_MAX_HOURS = 6
+export const MVP_DRYING_GAP_FILL_MAX_HOURS = RUNTIME_PARAMETERS.care.dryingGapFillMaxHours.value
 
 /** 每小时毫秒数。 */
 const millisecondsPerHour = 3_600_000
