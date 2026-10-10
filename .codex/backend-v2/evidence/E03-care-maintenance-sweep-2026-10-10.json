@@ -64,5 +64,30 @@
   "expectedRevisions": [
     "test/e2e/care-plan-expiry.mysql.spec.ts 并发用例：按 §12.3 新裁决，已超时计划完成一律 409、扫描恰好写一次（旧的“完成先赢”分支不再可达）",
     "runtime-parameters / environment / care-plan-expiry-rules / user-plant-timeline-contract 测试中的 cron 与白名单十三项"
-  ]
+  ],
+  "liveRollout20261010": {
+    "deployed": [
+      "v2-care（同请求派发，提交 c49cfc62 干净构建，全量 3509 通过，密钥扫描无命中）",
+      "care-maintenance-sweep（新建，Nodejs20.19，60s，VPC，触发器 care-maintenance-sweep-timer：0 25 0,4,7,11,14,16,19,21 * * * *）"
+    ],
+    "manualInvoke": {
+      "outbox": "drained，0 条",
+      "expiry": "drained，0 条，94ms",
+      "timeLimitAvailable": "两阶段均已运行，说明 time_limit_in_ms 可读"
+    },
+    "oldTriggersRemoved": [
+      "care-outbox-dispatch-timer（每分钟）",
+      "care-plan-expiry-hourly（每小时）"
+    ],
+    "oldFunctionsKept": "care-outbox-dispatch、care-plan-expiry 函数保留，无触发器；观察 2 天后按退役清单删除",
+    "rollback": "重新创建旧触发器即可（cron 分别为 0 * * * * * * 与 0 0 * * * * *）",
+    "coverSync": {
+      "function": "plant-knowledge-tropicals-cover-sync",
+      "before": "tropicals-cover-minute：0 * * * * * *（每分钟）",
+      "after": "tropicals-cover-hourly：0 25 * * * * *（每小时 :25）",
+      "authorizedBy": "用户 2026-10-10「现在就把它的触发器改低频」",
+      "note": "该函数属 Tropicals 外部流程；同步吞吐降为原来约 1/60，若封面补齐变慢需另调"
+    },
+    "smoke": "v2-care 计划列表无凭证 401（在线）"
+  }
 }
