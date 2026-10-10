@@ -42,7 +42,8 @@ export function asIndexConnection(database: Connection): VisualFilterIndexConnec
     query: async (sql, parameters) =>
       (await database.query(sql, parameters as unknown[]))[0] as never,
     execute: async (sql, parameters) => {
-      await database.query(sql, parameters as unknown[])
+      const [header] = await database.query(sql, parameters as unknown[])
+      return { affectedRows: Number((header as { affectedRows?: number }).affectedRows ?? 0) }
     },
     beginTransaction: () => database.beginTransaction(),
     commit: () => database.commit(),

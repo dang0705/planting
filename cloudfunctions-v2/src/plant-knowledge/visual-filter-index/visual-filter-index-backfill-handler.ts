@@ -1,9 +1,11 @@
 import type { VisualAxisSources } from '../../configuration/business-policies/index.js'
 import { PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY } from '../../configuration/business-policies/index.js'
 import publicSearchV2Release from '../../../models/policy-releases/plant-knowledge.public_search.v2.release.json'
-import type {
-  VisualFilterIndexBuildInput,
-  VisualFilterIndexBuildReport
+import {
+  VisualFilterIndexBuildError,
+  type VisualFilterIndexBuildInput,
+  type VisualFilterIndexBuildReport,
+  type VisualFilterIndexBuildStage
 } from './build-visual-filter-index.js'
 
 /**
@@ -60,6 +62,20 @@ export type VisualFilterIndexBackfillResult =
       readonly status: 'rejected' | 'not_started'
       /** 稳定原因代码，不含事件内容。 */
       readonly reason: 'INVALID_EVENT' | 'TIME_LIMIT_UNKNOWN'
+    }
+  | {
+      /** 回填过程中失败；已提交的批次保留，修复后用同样参数重调即可续跑。 */
+      readonly status: 'failed'
+      /** 固定为 INTERNAL_ERROR。 */
+      readonly reason: 'INTERNAL_ERROR'
+      /** 失败阶段（如 write_batch）；无法归类时为 unknown。 */
+      readonly stage: VisualFilterIndexBuildStage | 'unknown'
+      /** MySQL 驱动错误码（如 ER_DUP_ENTRY）；非数据库错误为 null。 */
+      readonly errorCode: string | null
+      /** MySQL 数字错误号（如 1062）；非数据库错误为 null。 */
+      readonly errno: number | null
+      /** SQLSTATE（如 23000）；非数据库错误为 null。 */
+      readonly sqlState: string | null
     }
 
 /** 已校验事件。 */
@@ -138,13 +154,28 @@ export function createVisualFilterIndexBackfillHandler(
     }
     const startedAt = dependencies.now()
     const deadline = startedAt + Math.min(...budgets)
-    const report = await dependencies.build({
-      sources: parsed.sources,
-      batchSize: parsed.batchSize,
-      apply: parsed.apply,
-      nowMs: startedAt,
-      shouldContinue: () => dependencies.now() < deadline
-    })
+    let report: VisualFilterIndexBuildReport
+    try {
+      report = await dependencies.build({
+        sources: parsed.sources,
+        batchSize: parsed.batchSize,
+        apply: parsed.apply,
+        nowMs: startedAt,
+        shouldContinue: () => dependencies.now() < deadline
+      })
+    } catch (error: unknown) {
+      // 只返回阶段与驱动错误码，不返回原始 message（可能含 taxon 等数据）。
+      const known = error instanceof VisualFilterIndexBuildError
+      const tagged = known ? error : new VisualFilterIndexBuildError('read_catalog', error)
+      return {
+        status: 'failed',
+        reason: 'INTERNAL_ERROR',
+        stage: known ? tagged.stage : 'unknown',
+        errorCode: tagged.errorCode,
+        errno: tagged.errno,
+        sqlState: tagged.sqlState
+      }
+    }
     return {
       status: report.status,
       sourceKey: report.sourceKey,

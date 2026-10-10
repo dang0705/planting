@@ -285,5 +285,74 @@
       "函数实际网络 / VPC 配置与权限",
       "timeBudgetFraction 0.7 为一次性工具代码常量，未登记配置目录（主代理任务说明给定）"
     ]
+  },
+  "backfillIncident20261010": {
+    "observed": {
+      "invocations": [
+        "20:23:09 dry_run 正常（55 批）",
+        "20:23:17 A：40.1 s 后 failed（errorName=Error），已提交 0–54999 共 11 批（created_at_ms 1791634997663）",
+        "20:24:01 B：同一温容器，7 ms 即 failed",
+        "20:24:05 C：85.2 s 后 failed，已提交 55000–134999 共 16 批（created_at_ms 1791635045342）",
+        "20:25:10 D：新容器冷启动，与 C 并发运行，3.7 s failed"
+      ],
+      "source": "CloudBase CLS 只读检索 + 只读 SQL（plant_visual_filter_sets / entries 按 created_at_ms 分组）",
+      "currentState": "sets id=1 building next_encyclopedia_id=135000；entries 覆盖 0–134999；主代理先前看到的 125000 是并发调用 D 把断点回退后的中间状态，随后 C 推进到 135000"
+    },
+    "rootCause": {
+      "confirmed": [
+        "同一索引批次被两次调用并发回填（C 与 D 重叠）：互相删写同区间、无条件推进断点会回退，旧代码无互斥",
+        "失败日志只记 errorName，无法定位驱动错误（A/B/C 的原始错误码已不可追溯）"
+      ],
+      "ruledOut": [
+        "排序规则冲突：entries.taxon_id 取自百科表 taxon_id（同为 utf8mb4_unicode_ci 且百科表有唯一键），不可能在 unicode_ci 下撞键；回填代码没有任何跨排序规则比较；1267 只出现在人工把 results.taxon_id（0900_ai_ci）与 entries 比较的查询里。[125000,140000) 区间数据只读核验正常（无空 taxon、无首尾空白、无非 ASCII、values_json 全为数组）",
+        "预处理语句占位符 / 包大小：本机 MySQL 8.0.43 预处理 INSERT 100–8000 行全部成功；测试库 max_allowed_packet=1 GiB、max_prepared_stmt_count=16382、当前 Prepared_stmt_count=1"
+      ],
+      "unknown": "A（40 s）与 B（7 ms）的具体驱动错误码：旧日志未记录，推测为数据库连接层的瞬时错误；新版本会记录 stage / errorCode / errno / sqlState"
+    },
+    "fix": [
+      "build-visual-filter-index.ts：MySQL 会话级命名锁 GET_LOCK('qhz_visual_filter_index_<sourceKey 前 32 位>', 0)，拿不到返回 busy；拿锁后重读状态",
+      "断点条件推进：WHERE next_encyclopedia_id = 本批起点，影响 0 行即回滚并以 checkpoint_conflict 失败",
+      "每步标注阶段（read_catalog / read_set / lock / write_set / write_bits / compute_batch / write_batch / checkpoint_conflict / finalize），失败包装为 VisualFilterIndexBuildError，只保留 code / errno / sqlState，丢弃原始 message",
+      "多行 INSERT 拆为每条 1000 行",
+      "handler：失败返回 {status:'failed', reason, stage, errorCode, errno, sqlState}，入口日志原样记录这些字段"
+    ],
+    "ddl": "不需要新迁移：taxon_id 排序规则已与百科表一致，冲突假设已排除",
+    "existingRows": "不需要重建：每批是「先删本区间再写确定性结果」的事务，并发交错后各区间最终内容仍等于确定性计算结果；断点 135000 与条目上界 134999 一致。续跑后用核对 SQL 逐区间对照结果表",
+    "tdd": {
+      "classicRed": [
+        "test/plant-knowledge/visual-filter-index-build-failure.spec.ts：4 条失败（无阶段与错误码、无 busy、无 checkpoint_conflict）",
+        "test/e2e/visual-filter-index-backfill.mysql.spec.ts 并发用例失败：Duplicate entry … uk_visual_filter_set_source（两次调用同时创建批次）"
+      ],
+      "green": "plant-knowledge 164 / Docker 18 通过",
+      "counterfactualRed": [
+        {
+          "mutation": "F1 去掉命名锁（拿不到锁也继续）",
+          "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+          "failedTests": [
+            "回填失败可定位、并发互斥 同一索引批次已有调用在跑（拿不到命名锁）→ busy，不写任何数据",
+            "一次性回填事件函数：时长预算、断点与续跑（真实 MySQL） 两个调用同时回填同一索引：只有一个干活，另一个返回 busy；结果与一次跑完逐行一致"
+          ]
+        },
+        {
+          "mutation": "F2 断点推进不再校验本批起点",
+          "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+          "failedTests": [
+            "回填失败可定位、并发互斥 断点被别的调用改动（条件推进影响 0 行）→ 回滚本批并以 checkpoint_conflict 失败"
+          ]
+        },
+        {
+          "mutation": "F3 失败结果丢弃 errno",
+          "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+          "failedTests": [
+            "回填失败可定位、并发互斥 写批次失败：返回失败阶段与 MySQL 错误码，不含错误原文与数据"
+          ]
+        }
+      ]
+    },
+    "verification": {
+      "vitestFull": "317 文件中 1 个失败、3458 通过：失败的是 test/p1-contract-foundation.spec.ts（他人未提交的 diagnosis-context-summary 合同登记）；oxlint 唯一 error 在 test/scripts/visual-diagnosis-eval.spec.ts（他人未提交）；本次改动相关全部通过",
+      "typecheck": "0",
+      "build": "通过，dist/functions/visual-filter-index-backfill/index.js 已包含命名锁逻辑"
+    }
   }
 }

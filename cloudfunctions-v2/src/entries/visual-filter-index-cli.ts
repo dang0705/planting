@@ -53,7 +53,8 @@ async function connect(config: {
     query: async (sql, parameters) =>
       (await connection.query(sql, parameters as unknown[]))[0] as never,
     execute: async (sql, parameters) => {
-      await connection.query(sql, parameters as unknown[])
+      const [header] = await connection.query(sql, parameters as unknown[])
+      return { affectedRows: Number((header as { affectedRows?: number }).affectedRows ?? 0) }
     },
     beginTransaction: () => connection.beginTransaction(),
     commit: () => connection.commit(),

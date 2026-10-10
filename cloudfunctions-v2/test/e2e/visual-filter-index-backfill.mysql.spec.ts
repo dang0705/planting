@@ -223,4 +223,33 @@ describe('一次性回填事件函数：时长预算、断点与续跑（真实 
     const [afterRows] = await database!.query(entriesSnapshot)
     expect(afterRows).toEqual(expectedRows)
   })
+
+  test('两个调用同时回填同一索引：只有一个干活，另一个返回 busy；结果与一次跑完逐行一致', async () => {
+    await resetIndex()
+    const full = await buildVisualFilterIndex(asIndexConnection(database!), {
+      sources,
+      batchSize,
+      apply: true,
+      nowMs: 1
+    })
+    const [expectedRows] = await database!.query(entriesSnapshot)
+    await resetIndex()
+    const handler = createVisualFilterIndexBackfillHandler({
+      build: input => viaFunctionChannel(connection => buildVisualFilterIndex(connection, input)),
+      now: () => Date.now()
+    })
+    const event = {
+      release: 'plant-knowledge-public-search/v2.0.0',
+      batchSize: 10,
+      apply: true,
+      maxRunMs: 600_000
+    }
+    const results = (await Promise.all([handler(event, {}), handler(event, {})])) as Array<
+      Record<string, unknown>
+    >
+    expect(results.map(result => result.status).sort()).toEqual(['built', 'busy'])
+    const [rows] = await database!.query(entriesSnapshot)
+    expect(rows).toEqual(expectedRows)
+    expect(results.find(result => result.status === 'built')?.plantCount).toBe(full.plantCount)
+  })
 })

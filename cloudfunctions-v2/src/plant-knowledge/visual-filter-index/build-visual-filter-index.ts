@@ -26,8 +26,14 @@ export type VisualFilterIndexConnection = {
     sql: string,
     parameters: readonly unknown[]
   ) => Promise<readonly Record<string, unknown>[]>
-  /** 参数化写语句（INSERT / UPDATE / DELETE），不关心返回行。 */
-  readonly execute: (sql: string, parameters: readonly unknown[]) => Promise<unknown>
+  /** 参数化写语句（INSERT / UPDATE / DELETE），返回受影响行数。 */
+  readonly execute: (
+    sql: string,
+    parameters: readonly unknown[]
+  ) => Promise<{
+    /** 本次语句实际影响的行数。 */
+    readonly affectedRows: number
+  }>
   /** 开始一个批次事务。 */
   readonly beginTransaction: () => Promise<void>
   /** 提交当前批次事务。 */
@@ -55,8 +61,8 @@ export type VisualFilterIndexBuildInput = {
 
 /** 回填结果报告（不含连接参数与数据正文）。 */
 export type VisualFilterIndexBuildReport = {
-  /** built 本次建成 / paused 预算到期已保存断点 / already_ready 已就绪无需操作 / dry_run 只读演练。 */
-  readonly status: 'built' | 'paused' | 'already_ready' | 'dry_run'
+  /** built 本次建成 / paused 预算到期已保存断点 / busy 另一调用正在回填 / already_ready 已就绪无需操作 / dry_run 只读演练。 */
+  readonly status: 'built' | 'paused' | 'busy' | 'already_ready' | 'dry_run'
   /** 索引批次定位键。 */
   readonly sourceKey: string
   /** 索引批次内部 id；演练且尚未创建时为 null。 */
@@ -207,6 +213,68 @@ WHERE encyclopedia_id >= ? AND encyclopedia_id < ? AND status = 'EXTRACTED'
 }
 
 /** 构建（或续建）三轴筛选索引。 */
+/** 回填失败阶段：定位在哪一步出错（不含数据）。 */
+export type VisualFilterIndexBuildStage =
+  | 'read_catalog'
+  | 'read_set'
+  | 'lock'
+  | 'write_set'
+  | 'write_bits'
+  | 'compute_batch'
+  | 'write_batch'
+  | 'checkpoint_conflict'
+  | 'finalize'
+
+/**
+ * 带阶段的回填错误：只携带阶段与 MySQL 驱动错误码（code / errno / sqlState），
+ * 不保留原始 message（MySQL 的重复键等报错原文会包含 taxon 等数据）。
+ */
+export class VisualFilterIndexBuildError extends Error {
+  /** 失败阶段。 */
+  readonly stage: VisualFilterIndexBuildStage
+  /** MySQL 驱动错误码（如 ER_DUP_ENTRY）；非数据库错误为 null。 */
+  readonly errorCode: string | null
+  /** MySQL 数字错误号（如 1062）；非数据库错误为 null。 */
+  readonly errno: number | null
+  /** SQLSTATE（如 23000）；非数据库错误为 null。 */
+  readonly sqlState: string | null
+
+  constructor(stage: VisualFilterIndexBuildStage, cause: unknown) {
+    super(`三轴筛选索引回填失败：${stage}`)
+    this.name = 'VisualFilterIndexBuildError'
+    this.stage = stage
+    const record =
+      cause !== null && typeof cause === 'object' ? (cause as Record<string, unknown>) : {}
+    this.errorCode =
+      typeof record.code === 'string' && /^[A-Z0-9_]{1,64}$/u.test(record.code) ? record.code : null
+    this.errno =
+      typeof record.errno === 'number' && Number.isSafeInteger(record.errno) ? record.errno : null
+    this.sqlState =
+      typeof record.sqlState === 'string' && /^[0-9A-Z]{5}$/u.test(record.sqlState)
+        ? record.sqlState
+        : null
+  }
+}
+
+/** 在指定阶段执行；失败统一包装为带阶段的错误（已包装的原样抛出）。 */
+async function inStage<T>(stage: VisualFilterIndexBuildStage, work: () => Promise<T>): Promise<T> {
+  try {
+    return await work()
+  } catch (error: unknown) {
+    if (error instanceof VisualFilterIndexBuildError) {
+      throw error
+    }
+    throw new VisualFilterIndexBuildError(stage, error)
+  }
+}
+
+/** 单条多行 INSERT 的行数：控制语句大小与占位符数量（1000 × 8 = 8000 个）。 */
+const insertChunkRows = 1_000
+
+/** 同一索引批次的会话级命名锁名（≤ 64 字符）；连接断开时 MySQL 自动释放。 */
+const lockNameOf = (sourceKey: string) => `qhz_visual_filter_index_${sourceKey.slice(0, 32)}`
+
+/** 构建（或续建）三轴筛选索引。 */
 export async function buildVisualFilterIndex(
   connection: VisualFilterIndexConnection,
   input: VisualFilterIndexBuildInput
@@ -219,126 +287,154 @@ export async function buildVisualFilterIndex(
     throw new Error(`三轴筛选索引回填：batchSize 须为 1–${maximumBatchSize} 的整数`)
   }
   const sourceKey = visualFilterSourceKey(input.sources)
-  const catalog = await createMysqlPlantVisualAxisRepository(connection).readCatalog(
-    input.sources.valueCatalogVersion
+  const catalog = await inStage('read_catalog', () =>
+    createMysqlPlantVisualAxisRepository(connection).readCatalog(input.sources.valueCatalogVersion)
   )
   assertCompleteCatalog(catalog)
   const bits = assignVisualValueBits(catalog)
   const bitCounts = Object.fromEntries(
     VISUAL_FILTER_AXES.map(axis => [axis.axisCode, bits.get(axis.axisCode)?.size ?? 0])
   ) as Record<VisualAxisCode, number>
-  let set = await readSet(connection, sourceKey)
-  if (set?.status === 'ready') {
-    return {
-      status: 'already_ready',
-      sourceKey,
-      filterSetId: set.id,
-      batches: 0,
-      plantCount: null,
-      nextEncyclopediaId: null,
-      bitCounts
-    }
-  }
-  const maxRows = await connection.query(
-    'SELECT MAX(id) AS max_id FROM tropicals_species_encyclopedia_ref',
-    []
-  )
-  const maxId =
-    maxRows[0]?.max_id === null || maxRows[0]?.max_id === undefined
-      ? 0
-      : asId(maxRows[0].max_id, 'max_id')
-  const startId = set?.nextId ?? 0
-  const plannedBatches = maxId < startId ? 0 : Math.ceil((maxId + 1 - startId) / input.batchSize)
-  if (!input.apply) {
-    return {
-      status: 'dry_run',
-      sourceKey,
-      filterSetId: set?.id ?? null,
-      batches: plannedBatches,
-      plantCount: null,
-      nextEncyclopediaId: startId,
-      bitCounts
-    }
-  }
-  if (set === null) {
-    await connection.execute(
-      `INSERT INTO plant_visual_filter_sets (source_key, sources_json, status, next_encyclopedia_id, plant_count, built_at_ms, created_at_ms, updated_at_ms)
-       VALUES (?, CAST(? AS JSON), 'building', 0, 0, NULL, ?, ?)`,
-      [sourceKey, JSON.stringify(input.sources), input.nowMs, input.nowMs]
-    )
-    set = await readSet(connection, sourceKey)
-    if (set === null) {
-      throw new Error('三轴筛选索引回填：批次创建后读回失败')
-    }
-  }
-  const filterSetId = set.id
-  await ensureBits(connection, filterSetId, bits, input.nowMs)
-  let batches = 0
-  let next = set.nextId
-  for (let low = set.nextId; low <= maxId; low += input.batchSize) {
-    if (batches > 0 && input.shouldContinue && !input.shouldContinue()) {
-      return {
-        status: 'paused',
-        sourceKey,
-        filterSetId,
-        batches,
-        plantCount: null,
-        nextEncyclopediaId: next,
-        bitCounts
-      }
-    }
-    const high = low + input.batchSize
-    const entries = await computeBatch(connection, input.sources, bits, low, high)
-    await connection.beginTransaction()
-    try {
-      await connection.execute(
-        'DELETE FROM plant_visual_filter_entries WHERE filter_set_id = ? AND encyclopedia_id >= ? AND encyclopedia_id < ?',
-        [filterSetId, low, high]
-      )
-      if (entries.length > 0) {
-        const columns = VISUAL_FILTER_AXES.map(axis => maskColumns[axis.axisCode])
-        await connection.execute(
-          `INSERT INTO plant_visual_filter_entries (filter_set_id, taxon_id, encyclopedia_id, ${columns.join(', ')}, created_at_ms, updated_at_ms)
-           VALUES ${entries.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ')}`,
-          entries.flatMap(item => [
-            filterSetId,
-            item.taxonId,
-            item.id,
-            ...VISUAL_FILTER_AXES.map(axis => item.entry[axis.axisCode].toString()),
-            input.nowMs,
-            input.nowMs
-          ])
-        )
-      }
-      await connection.execute(
-        `UPDATE plant_visual_filter_sets SET next_encyclopedia_id = ?, updated_at_ms = GREATEST(updated_at_ms, ?) WHERE id = ? AND status = 'building'`,
-        [high, input.nowMs, filterSetId]
-      )
-      await connection.commit()
-    } catch (error: unknown) {
-      await connection.rollback().catch(() => undefined)
-      throw error
-    }
-    batches += 1
-    next = high
-  }
-  const countRows = await connection.query(
-    'SELECT COUNT(*) AS plant_count FROM plant_visual_filter_entries WHERE filter_set_id = ?',
-    [filterSetId]
-  )
-  const plantCount = asId(countRows[0]?.plant_count, 'plant_count')
-  await connection.execute(
-    `UPDATE plant_visual_filter_sets SET status = 'ready', plant_count = ?, built_at_ms = ?, updated_at_ms = GREATEST(updated_at_ms, ?) WHERE id = ? AND status = 'building'`,
-    [plantCount, input.nowMs, input.nowMs, filterSetId]
-  )
-  return {
-    status: 'built',
+  const report = (
+    status: VisualFilterIndexBuildReport['status'],
+    fields: Partial<VisualFilterIndexBuildReport>
+  ): VisualFilterIndexBuildReport => ({
+    status,
     sourceKey,
-    filterSetId,
-    batches,
-    plantCount,
-    nextEncyclopediaId: next,
-    bitCounts
+    filterSetId: null,
+    batches: 0,
+    plantCount: null,
+    nextEncyclopediaId: null,
+    bitCounts,
+    ...fields
+  })
+  const readState = async () => {
+    const set = await readSet(connection, sourceKey)
+    const maxRows = await connection.query(
+      'SELECT MAX(id) AS max_id FROM tropicals_species_encyclopedia_ref',
+      []
+    )
+    const maxId =
+      maxRows[0]?.max_id === null || maxRows[0]?.max_id === undefined
+        ? 0
+        : asId(maxRows[0].max_id, 'max_id')
+    return { set, maxId }
+  }
+  const before = await inStage('read_set', readState)
+  if (before.set?.status === 'ready') {
+    return report('already_ready', { filterSetId: before.set.id })
+  }
+  if (!input.apply) {
+    const startId = before.set?.nextId ?? 0
+    return report('dry_run', {
+      filterSetId: before.set?.id ?? null,
+      batches:
+        before.maxId < startId ? 0 : Math.ceil((before.maxId + 1 - startId) / input.batchSize),
+      nextEncyclopediaId: startId
+    })
+  }
+  // 并发保护：同一索引批次同一时刻只允许一个调用写入；拿不到锁立即返回 busy（不等待）。
+  const lockName = lockNameOf(sourceKey)
+  const lockRows = await inStage('lock', () =>
+    connection.query('SELECT GET_LOCK(?, 0) AS acquired', [lockName])
+  )
+  if (Number(lockRows[0]?.acquired) !== 1) {
+    return report('busy', {
+      filterSetId: before.set?.id ?? null,
+      nextEncyclopediaId: before.set?.nextId ?? null
+    })
+  }
+  try {
+    // 拿到锁后重读：另一调用可能刚刚完成或推进了断点。
+    const { set: current, maxId } = await inStage('read_set', readState)
+    if (current?.status === 'ready') {
+      return report('already_ready', { filterSetId: current.id })
+    }
+    let set = current
+    if (set === null) {
+      await inStage('write_set', () =>
+        connection.execute(
+          `INSERT INTO plant_visual_filter_sets (source_key, sources_json, status, next_encyclopedia_id, plant_count, built_at_ms, created_at_ms, updated_at_ms)
+       VALUES (?, CAST(? AS JSON), 'building', 0, 0, NULL, ?, ?)`,
+          [sourceKey, JSON.stringify(input.sources), input.nowMs, input.nowMs]
+        )
+      )
+      set = await inStage('read_set', () => readSet(connection, sourceKey))
+      if (set === null) {
+        throw new VisualFilterIndexBuildError('write_set', new Error('批次创建后读回失败'))
+      }
+    }
+    const filterSetId = set.id
+    await inStage('write_bits', () => ensureBits(connection, filterSetId, bits, input.nowMs))
+    let batches = 0
+    let next = set.nextId
+    for (let low = set.nextId; low <= maxId; low += input.batchSize) {
+      if (batches > 0 && input.shouldContinue && !input.shouldContinue()) {
+        return report('paused', { filterSetId, batches, nextEncyclopediaId: next })
+      }
+      const high = low + input.batchSize
+      const entries = await inStage('compute_batch', () =>
+        computeBatch(connection, input.sources, bits, low, high)
+      )
+      await inStage('write_batch', async () => {
+        await connection.beginTransaction()
+        try {
+          await connection.execute(
+            'DELETE FROM plant_visual_filter_entries WHERE filter_set_id = ? AND encyclopedia_id >= ? AND encyclopedia_id < ?',
+            [filterSetId, low, high]
+          )
+          const columns = VISUAL_FILTER_AXES.map(axis => maskColumns[axis.axisCode])
+          for (let offset = 0; offset < entries.length; offset += insertChunkRows) {
+            const chunk = entries.slice(offset, offset + insertChunkRows)
+            await connection.execute(
+              `INSERT INTO plant_visual_filter_entries (filter_set_id, taxon_id, encyclopedia_id, ${columns.join(', ')}, created_at_ms, updated_at_ms)
+           VALUES ${chunk.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ')}`,
+              chunk.flatMap(item => [
+                filterSetId,
+                item.taxonId,
+                item.id,
+                ...VISUAL_FILTER_AXES.map(axis => item.entry[axis.axisCode].toString()),
+                input.nowMs,
+                input.nowMs
+              ])
+            )
+          }
+          // 条件推进断点：只在断点仍等于本批起点时前进，防止并发或重入把断点回退。
+          const advanced = await connection.execute(
+            `UPDATE plant_visual_filter_sets SET next_encyclopedia_id = ?, updated_at_ms = GREATEST(updated_at_ms, ?)
+           WHERE id = ? AND status = 'building' AND next_encyclopedia_id = ?`,
+            [high, input.nowMs, filterSetId, low]
+          )
+          if (advanced.affectedRows !== 1) {
+            throw new VisualFilterIndexBuildError(
+              'checkpoint_conflict',
+              new Error('断点已被其他调用改动')
+            )
+          }
+          await connection.commit()
+        } catch (error: unknown) {
+          await connection.rollback().catch(() => undefined)
+          throw error
+        }
+      })
+      batches += 1
+      next = high
+    }
+    const plantCount = await inStage('finalize', async () => {
+      const countRows = await connection.query(
+        'SELECT COUNT(*) AS plant_count FROM plant_visual_filter_entries WHERE filter_set_id = ?',
+        [filterSetId]
+      )
+      const count = asId(countRows[0]?.plant_count, 'plant_count')
+      await connection.execute(
+        `UPDATE plant_visual_filter_sets SET status = 'ready', plant_count = ?, built_at_ms = ?, updated_at_ms = GREATEST(updated_at_ms, ?) WHERE id = ? AND status = 'building'`,
+        [count, input.nowMs, input.nowMs, filterSetId]
+      )
+      return count
+    })
+    return report('built', { filterSetId, batches, plantCount, nextEncyclopediaId: next })
+  } finally {
+    await connection.query('SELECT RELEASE_LOCK(?) AS released', [lockName]).catch(() => undefined)
   }
 }
 
@@ -349,11 +445,14 @@ export type PreparedStatementConnection = {
     sql: string,
     parameters: readonly (string | number | null)[]
   ) => Promise<readonly Record<string, unknown>[]>
-  /** 参数化写语句（INSERT / UPDATE / DELETE）。 */
+  /** 参数化写语句（INSERT / UPDATE / DELETE），返回受影响行数。 */
   readonly execute: (
     sql: string,
     parameters: readonly (string | number | null)[]
-  ) => Promise<unknown>
+  ) => Promise<{
+    /** 本次语句实际影响的行数。 */
+    readonly affectedRows: number
+  }>
   /** 开始一个批次事务。 */
   readonly beginTransaction: () => Promise<void>
   /** 提交当前批次事务。 */
