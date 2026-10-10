@@ -22,6 +22,14 @@ import {
 import { createTemporaryCaseRequestSchema, temporaryCaseResponseSchema } from "./temporary-case-schemas.js";
 import { careCapabilityResponseSchema } from "./care-capability-schemas.js";
 import {
+  deleteUserPlantRequestSchema,
+  userPlantDeletionResponseSchema,
+  userPlantListResponseSchema,
+  type DeleteUserPlantRequestDto,
+  type UserPlantDeletionResponseDto,
+  type UserPlantListResponseDto,
+} from "./user-plant-list-delete-contract.js";
+import {
   putCatalogBindingRequestSchema,
   catalogBindingResponseSchema,
   createCareFactRequestSchema,
@@ -118,6 +126,12 @@ export function createPublicContractValidators(): {
   servicePrincipal: ValidateFunction<ServicePrincipalDto>;
   /** 用户植物公开投影校验器；保证未确认态与已确认身份引用互斥。 */
   userPlant: ValidateFunction<UserPlantDto>;
+  /** 用户植物列表成功数据校验器；逐项复用单株公开投影，最多 50 项。 */
+  userPlantListResponse: ValidateFunction<UserPlantListResponseDto>;
+  /** 删除请求校验器；只接受正安全整数 expectedVersion。 */
+  deleteUserPlantRequest: ValidateFunction<DeleteUserPlantRequestDto>;
+  /** 删除成功数据校验器；lifecycle 固定 deleting，禁止额外字段。 */
+  userPlantDeletionResponse: ValidateFunction<UserPlantDeletionResponseDto>;
   /** 创建用户植物请求校验器；只接受严格空 JSON 对象。 */
   createUserPlantRequest: ValidateFunction<CreateUserPlantRequestDto>;
   /** 创建用户植物响应校验器；只接受服务端生成的固定初始投影。 */
@@ -199,6 +213,9 @@ export function createPublicContractValidators(): {
     userPrincipal: ajv.compile(userPrincipalSchema),
     servicePrincipal: ajv.compile(servicePrincipalSchema),
     userPlant: ajv.compile(userPlantSchema),
+    userPlantListResponse: ajv.compile(userPlantListResponseSchema),
+    deleteUserPlantRequest: ajv.compile(deleteUserPlantRequestSchema),
+    userPlantDeletionResponse: ajv.compile(userPlantDeletionResponseSchema),
     createUserPlantRequest: ajv.compile(createUserPlantRequestSchema),
     createUserPlantResponse: ajv.compile(createUserPlantResponseSchema),
     createTemporaryCaseRequest: ajv.compile(createTemporaryCaseRequestSchema),

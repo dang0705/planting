@@ -73,6 +73,8 @@ const requestSchemaRefByContract = {
   CompleteCarePlanRequest: '#/components/schemas/CompleteCarePlanRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
+  /** 删除（user-plant.md「删除公开接口」，2026-10-10 冻结）：只允许 expectedVersion。 */
+  DeleteUserPlantRequest: '#/components/schemas/DeleteUserPlantRequest',
 }
 
 const successSchemaRefByContract = {
@@ -90,6 +92,18 @@ const successSchemaRefByContract = {
   CarePlanListResponse: '#/components/schemas/CarePlanListSuccess',
   CareConfirmationResponse: '#/components/schemas/CareConfirmationSuccess',
   CarePlanResponse: '#/components/schemas/CarePlanSuccess',
+  /** 用户植物列表与删除（user-plant.md，2026-10-10 冻结）。 */
+  UserPlantListResponse: '#/components/schemas/UserPlantListSuccess',
+  UserPlantDeletionResponse: '#/components/schemas/UserPlantDeletionSuccess',
+}
+
+/** 列表查询参数（user-plant.md「列表公开接口」）；分页默认/上限来自 hard_rule user-plant.list.page_size。 */
+const queryParametersByOperation = {
+  listUserPlants: [
+    { name: 'lifecycle', in: 'query', required: false, schema: { enum: ['active', 'archived'] }, description: '省略表示 active 与 archived 都返回；deleting/deleted 永不可见。' },
+    { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本。' },
+    { name: 'cursor', in: 'query', required: false, schema: { type: 'string', minLength: 1, maxLength: 200 }, description: '只能原样回传上一页的 nextCursor。' },
+  ],
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
@@ -122,7 +136,7 @@ for (const route of registry.routes) {
     ...(isAnswer ? { 'x-response-variant': 'answers_recorded' } : {}),
     'x-idempotency': route.idempotency,
     'x-errors': route.errors,
-    parameters: parametersByPath(route.path),
+    parameters: [...parametersByPath(route.path), ...(queryParametersByOperation[route.operationId] ?? [])],
     responses: {
       '200': {
         description: isCreate ? '创建已锁定的V1黄叶或萎蔫题包；虫害由独立动态选题承接' : isAnswer ? '整包答案已记录；首次与重放相同，不代表诊断完成' : '成功；具体 data 结构由 x-response-contract 指向的合同冻结',
@@ -582,6 +596,43 @@ const openapi = {
             description: '调用方最后读到的用户植物版本，必须是正安全整数。',
           },
         },
+      },
+      DeleteUserPlantRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['expectedVersion'],
+        properties: {
+          expectedVersion: {
+            type: 'integer',
+            minimum: 1,
+            maximum: Number.MAX_SAFE_INTEGER,
+            description: '调用方最后读到的用户植物版本，必须是正安全整数。',
+          },
+        },
+      },
+      UserPlant: {
+        type: 'object', additionalProperties: false,
+        required: ['user_plant_id', 'lifecycle', 'identityStatus', 'version', 'createdAt', 'updatedAt'],
+        properties: {
+          user_plant_id: { type: 'string', pattern: '^upl_[A-Za-z0-9_-]{8,}$' },
+          lifecycle: { enum: ['active', 'archived'] },
+          identityStatus: { enum: ['unidentified', 'candidate_pending', 'confirmed'] },
+          confirmedIdentityRef: { type: 'string', pattern: '^pid_[A-Za-z0-9_-]{8,}$', description: '仅 confirmed 时存在。' },
+          profile: { type: 'object', description: '公开档案投影，见 cloudfunctions-v2/models/user-plant/public-profile-contract.md。' },
+          version: { type: 'integer', minimum: 1 },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      UserPlantListSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'object', additionalProperties: false, required: ['items', 'nextCursor'],
+          properties: { items: { type: 'array', maxItems: 50, items: { $ref: '#/components/schemas/UserPlant' } }, nextCursor: { type: ['string', 'null'] } } } },
+      },
+      UserPlantDeletionSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'object', additionalProperties: false, required: ['user_plant_id', 'lifecycle', 'version', 'updatedAt'],
+          properties: { user_plant_id: { type: 'string', pattern: '^upl_[A-Za-z0-9_-]{8,}$' }, lifecycle: { const: 'deleting' }, version: { type: 'integer', minimum: 2 }, updatedAt: { type: 'string', format: 'date-time' } } } },
       },
       CreateUserPlantResponse: {
         type: 'object',

@@ -9,6 +9,7 @@ import type { FrozenRoute, RouteHandler } from '../../foundation/http/route-disp
 import type { ResolveUserPrincipalCommand } from '../../identity/application/resolve-user-principal.js'
 import { UnifiedUserPrincipalResolveError } from '../../identity/domain/resolve-user-principal.js'
 import { extractBearerToken } from '../../identity/http/request-identity.js'
+import { CapabilitySnapshotExpiredError } from '../../subscription/repository/mysql-capability-snapshot-reader.js'
 import type { ClaimGuestPlantCaseApplicationInput, ClaimGuestPlantCaseApplicationResult } from '../application/claim-guest-plant-case.js'
 import type { GuestCaseObjectKindsQuery } from '../repository/mysql-guest-case-object-kinds-reader.js'
 
@@ -130,6 +131,8 @@ export function createClaimGuestPlantCaseRouteHandler(dependencies: ClaimGuestPl
     const nowMs = dependencies.now()
     let candidateClaimRef = ''
     let claimed: { sessionRef: string; caseRef: string } = { sessionRef: '', caseRef: '' }
+    /** 新建目标读取能力快照时是否明确“已过期”（区别于暂时读不到）；只用于把缺快照导致的失败映射为 409。 */
+    let snapshotExpired = false
     return createNodeRequestChainHandler<RestrictedRequest, ResolveUserPrincipalCommand, UserPrincipalDto, ClaimDto, ClaimCommand, ClaimCommand, ClaimGuestPlantCaseApplicationResult, GuestClaimResultDto>({
       requestLimits: { kind: 'execute', run: readRestrictedRequest },
       identityValidate: {
@@ -170,7 +173,10 @@ export function createClaimGuestPlantCaseRouteHandler(dependencies: ClaimGuestPl
           }
           if (dto.body.target.type === 'new_user_plant') {
             let capabilitySnapshot: UserCapabilitySnapshotDto | null = null
-            try { capabilitySnapshot = (await dependencies.resolveCapabilitySnapshot?.(principal)) ?? null } catch { /* 缺能力不猜测授权，由完成事务判定。 */ }
+            try { capabilitySnapshot = (await dependencies.resolveCapabilitySnapshot?.(principal)) ?? null } catch (error: unknown) {
+              // 缺能力不猜测授权，由完成事务判定（已成功的同键重放仍可返回原收据）；只记录是否属于“已过期”。
+              snapshotExpired = error instanceof CapabilitySnapshotExpiredError
+            }
             return { candidateClaimRef, input: { ...base, target: { type: 'new_user_plant' }, newUserPlantRef: createRef('plant'), capabilitySnapshot } }
           }
           return { candidateClaimRef, input: { ...base, target: { type: 'existing_user_plant', user_plant_id: dto.body.target.user_plant_id } } }
@@ -182,6 +188,8 @@ export function createClaimGuestPlantCaseRouteHandler(dependencies: ClaimGuestPl
         kind: 'execute',
         run: async result => {
           if (result.status !== 'completed') {
+            // guest-session-claim.md（2026-10-10 用户裁决）：新建目标因快照已过期而无法完成 → 409 CAPABILITY_SNAPSHOT_EXPIRED。
+            if (result.status === 'unavailable' && snapshotExpired) { throw rejection.capability_snapshot_expired!() }
             const mapped = rejection[result.status]
             if (!mapped) { throw new Error('认领用例返回未登记的结果') }
             throw mapped()

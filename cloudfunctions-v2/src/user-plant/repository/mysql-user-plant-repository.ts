@@ -218,6 +218,80 @@ function readSingleRow<TType extends UserPlantSqlRow['kind']>(
   return row as Extract<UserPlantSqlRow, { readonly kind: TType }>
 }
 
+/** 单株与列表共用的只读投影 SQL（SELECT 列 + JOIN）；调用方只追加归属与生命周期 WHERE。 */
+export const READ_PLANT_PROJECTION_SQL = `SELECT 'read-plant' AS \`kind\`, \`p\`.\`public_user_plant_id\`, \`p\`.\`lifecycle_status\`,
+              \`p\`.\`current_identity_status\`, CAST(\`p\`.\`version\` AS CHAR) AS \`version\`,
+              CAST(\`p\`.\`created_at_ms\` AS CHAR) AS \`created_at_ms\`,
+              CAST(\`p\`.\`updated_at_ms\` AS CHAR) AS \`updated_at_ms\`,
+              \`i\`.\`public_identity_ref\` AS \`confirmed_identity_ref\`,
+              CAST(\`f\`.\`id\` AS CHAR) AS \`profile_internal_id\`, \`f\`.\`nickname\` AS \`profile_nickname\`,
+              \`f\`.\`pot_profile_json\` AS \`profile_pot_json\`, \`f\`.\`_openid\` AS \`profile_openid\`
+       FROM \`user_plants\` AS \`p\`
+       JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
+       LEFT JOIN \`plant_identities\` AS \`i\` ON \`i\`.\`id\` = \`p\`.\`confirmed_identity_internal_id\`
+       LEFT JOIN \`user_plant_profiles\` AS \`f\` ON \`f\`.\`user_plant_internal_id\` = \`p\`.\`id\` AND \`f\`.\`user_internal_id\` = \`p\`.\`user_internal_id\``
+
+/**
+ * 把一行只读投影转换为公开 UserPlantDto；deleting/deleted 视为不可见，损坏数据失败关闭。
+ * 单株读取与列表共用，保证列表每一项与单株读取完全一致。
+ */
+export function projectReadPlantRow(row: UserPlantReadProjectionSqlRow, userPlantRef: UserPlantRef): UserPlantDto {
+  if (row.lifecycle_status === 'deleting' || row.lifecycle_status === 'deleted') {
+    throw new UserPlantPersistenceError('USER_PLANT_NOT_FOUND', '用户植物不可见')
+  }
+  if (row.lifecycle_status !== 'active' && row.lifecycle_status !== 'archived') {
+    throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物生命周期不合法')
+  }
+  const version = resolveSafePositiveInteger(row.version, '用户植物版本不合法')
+  const createdAtMs = resolveSafeNonNegativeInteger(row.created_at_ms, '用户植物创建时间不合法')
+  const updatedAtMs = resolveSafeNonNegativeInteger(row.updated_at_ms, '用户植物更新时间不合法')
+  if (updatedAtMs < createdAtMs) {
+    throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物更新时间早于创建时间')
+  }
+  const createdAt = resolveUtcTimestamp(row.created_at_ms, '用户植物创建时间不合法')
+  const updatedAt = resolveUtcTimestamp(row.updated_at_ms, '用户植物更新时间不合法')
+  let profile: ReturnType<typeof projectPublicProfile>
+  try { profile = projectPublicProfile(row) } catch {
+    throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物档案投影不合法')
+  }
+  const profileFields = profile === undefined ? {} : { profile }
+
+  if (row.current_identity_status === 'confirmed') {
+    if (
+      row.confirmed_identity_ref === null ||
+      !plantIdentityPublicRefFormat.test(row.confirmed_identity_ref)
+    ) {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '已确认植物身份引用不合法')
+    }
+    return {
+      user_plant_id: userPlantRef,
+      lifecycle: row.lifecycle_status,
+      identityStatus: 'confirmed',
+      confirmedIdentityRef: row.confirmed_identity_ref as PlantIdentityRef,
+      ...profileFields,
+      version,
+      createdAt,
+      updatedAt
+    }
+  }
+  if (
+    (row.current_identity_status !== 'unidentified' &&
+      row.current_identity_status !== 'candidate_pending') ||
+    row.confirmed_identity_ref !== null
+  ) {
+    throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物身份投影不合法')
+  }
+  return {
+    user_plant_id: userPlantRef,
+    lifecycle: row.lifecycle_status,
+    identityStatus: row.current_identity_status,
+    ...profileFields,
+    version,
+    createdAt,
+    updatedAt
+  }
+}
+
 /** 创建只访问 identity 用户表与 user-plant 聚合根的 MySQL Repository。 */
 export function createMysqlUserPlantRepository<TTransaction extends TransactionExecutionContext>(
   executor: UserPlantSqlExecutor<TTransaction>
@@ -344,17 +418,7 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
     }
     const rows = await executor.executeQuery(
       transaction,
-      `SELECT 'read-plant' AS \`kind\`, \`p\`.\`public_user_plant_id\`, \`p\`.\`lifecycle_status\`,
-              \`p\`.\`current_identity_status\`, CAST(\`p\`.\`version\` AS CHAR) AS \`version\`,
-              CAST(\`p\`.\`created_at_ms\` AS CHAR) AS \`created_at_ms\`,
-              CAST(\`p\`.\`updated_at_ms\` AS CHAR) AS \`updated_at_ms\`,
-              \`i\`.\`public_identity_ref\` AS \`confirmed_identity_ref\`,
-              CAST(\`f\`.\`id\` AS CHAR) AS \`profile_internal_id\`, \`f\`.\`nickname\` AS \`profile_nickname\`,
-              \`f\`.\`pot_profile_json\` AS \`profile_pot_json\`, \`f\`.\`_openid\` AS \`profile_openid\`
-       FROM \`user_plants\` AS \`p\`
-       JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
-       LEFT JOIN \`plant_identities\` AS \`i\` ON \`i\`.\`id\` = \`p\`.\`confirmed_identity_internal_id\`
-       LEFT JOIN \`user_plant_profiles\` AS \`f\` ON \`f\`.\`user_plant_internal_id\` = \`p\`.\`id\` AND \`f\`.\`user_internal_id\` = \`p\`.\`user_internal_id\`
+      `${READ_PLANT_PROJECTION_SQL}
        WHERE \`u\`.\`public_user_id\` = ?
          AND \`p\`.\`public_user_plant_id\` = ?
          AND \`u\`.\`status\` = 'active' AND \`u\`.\`_openid\` = '' AND \`p\`.\`_openid\` = ''
@@ -368,60 +432,7 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
     if (row.public_user_plant_id !== userPlantRef) {
       throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物公开引用读回不一致')
     }
-    if (row.lifecycle_status === 'deleting' || row.lifecycle_status === 'deleted') {
-      throw new UserPlantPersistenceError('USER_PLANT_NOT_FOUND', '用户植物不可见')
-    }
-    if (row.lifecycle_status !== 'active' && row.lifecycle_status !== 'archived') {
-      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物生命周期不合法')
-    }
-    const version = resolveSafePositiveInteger(row.version, '用户植物版本不合法')
-    const createdAtMs = resolveSafeNonNegativeInteger(row.created_at_ms, '用户植物创建时间不合法')
-    const updatedAtMs = resolveSafeNonNegativeInteger(row.updated_at_ms, '用户植物更新时间不合法')
-    if (updatedAtMs < createdAtMs) {
-      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物更新时间早于创建时间')
-    }
-    const createdAt = resolveUtcTimestamp(row.created_at_ms, '用户植物创建时间不合法')
-    const updatedAt = resolveUtcTimestamp(row.updated_at_ms, '用户植物更新时间不合法')
-    let profile: ReturnType<typeof projectPublicProfile>
-    try { profile = projectPublicProfile(row) } catch {
-      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物档案投影不合法')
-    }
-    const profileFields = profile === undefined ? {} : { profile }
-
-    if (row.current_identity_status === 'confirmed') {
-      if (
-        row.confirmed_identity_ref === null ||
-        !plantIdentityPublicRefFormat.test(row.confirmed_identity_ref)
-      ) {
-        throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '已确认植物身份引用不合法')
-      }
-      return {
-        user_plant_id: userPlantRef,
-        lifecycle: row.lifecycle_status,
-        identityStatus: 'confirmed',
-        confirmedIdentityRef: row.confirmed_identity_ref as PlantIdentityRef,
-        ...profileFields,
-        version,
-        createdAt,
-        updatedAt
-      }
-    }
-    if (
-      (row.current_identity_status !== 'unidentified' &&
-        row.current_identity_status !== 'candidate_pending') ||
-      row.confirmed_identity_ref !== null
-    ) {
-      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物身份投影不合法')
-    }
-    return {
-      user_plant_id: userPlantRef,
-      lifecycle: row.lifecycle_status,
-      identityStatus: row.current_identity_status,
-      ...profileFields,
-      version,
-      createdAt,
-      updatedAt
-    }
+    return projectReadPlantRow(row, userPlantRef)
   }
 
   return {

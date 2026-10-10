@@ -84,5 +84,88 @@
     "e2e_real_api：真实 CloudBase 网关、真实微信登录验真、云端 MySQL、P5 真实并发闭环",
     "资产/时间线/列表/删除/身份确认/内部上下文：合同未冻结，未实现",
     "首株完整档案奖励事件发出：依赖未冻结的环境档案合同"
-  ]
+  ],
+  "round2": {
+    "decision": "用户 2026-10-10 裁决 A（列表、删除、认领快照过期 409 冻结并实现）与 B（四份合同草案待审）；主代理裁定 user-plant.list.page_size 为 hard_rule {default:20,max:50}",
+    "contractChanges": [
+      "docs/backend-v2/contracts/user-plant.md：新增「列表公开接口」「删除公开接口」",
+      "docs/backend-v2/contracts/guest-session-claim.md：新建目标快照已失效且无可重放原成功 → 409 CAPABILITY_SNAPSHOT_EXPIRED",
+      "docs/backend-v2/contracts/contract-registry.json：两份合同 SHA-256 更新",
+      "docs/backend-v2/api/generate-openapi.mjs → openapi.p1.json / manifest.json：列表查询参数、UserPlant/UserPlantListSuccess/DeleteUserPlantRequest/UserPlantDeletionSuccess 组件（route-registry 未改，原登记已满足）",
+      "docs/backend-v2/architecture/configuration-variable-catalog.json/.md：新增 user-plant.list.page_size（hard_rule）与 [E03][P2] 票绑定；manifest.json 仅更新两项目录哈希"
+    ],
+    "productChanges": [
+      "src/contracts/user-plant-list-delete-contract.ts（新）+ index.ts 三个校验器 + types.ts 类型转出",
+      "src/user-plant/domain/user-plant-list-query.ts（新）：分页硬规则常量、lifecycle/limit 解析、游标编解码",
+      "src/user-plant/repository/mysql-user-plant-repository.ts：抽出 READ_PLANT_PROJECTION_SQL 与 projectReadPlantRow（单株与列表共用，行为不变）",
+      "src/user-plant/repository/mysql-user-plant-list-repository.ts（新）、mysql-user-plant-deletion-repository.ts（新）",
+      "src/user-plant/application/list-user-plants.ts（新）、delete-user-plant.ts（新）",
+      "src/user-plant/http/list-user-plants-route.ts（新）、delete-user-plant-route.ts（新）、server.ts 接线",
+      "src/user-plant/http/claim-guest-plant-case-route.ts：新建目标快照过期 → 409"
+    ],
+    "classicRed": [
+      {
+        "test": "test/contracts/user-plant-list-delete-contract.spec.ts（OpenAPI 列表/删除、配置目录 3 例）",
+        "layer": "unit_real_data",
+        "red": "制品缺失"
+      },
+      {
+        "test": "test/user-plant/list-user-plants-route.spec.ts（整文件）",
+        "layer": "unit_fake",
+        "red": "模块不存在"
+      },
+      {
+        "test": "test/user-plant/delete-user-plant-route.spec.ts（整文件）",
+        "layer": "unit_fake",
+        "red": "模块不存在"
+      },
+      {
+        "test": "test/user-plant/claim-guest-plant-case-route.spec.ts > 新建目标：能力快照已过期且事务因缺快照无法完成 → 409",
+        "layer": "unit_fake",
+        "red": "503 而非 409"
+      },
+      {
+        "test": "test/e2e/user-plant-list-delete.mysql.spec.ts（11 例：列表排序/筛选/分页/跨用户，删除/重放/冲突/版本/跨用户/归档可删/并发/上限释放）",
+        "layer": "unit_real_data",
+        "red": "路由未接入（405/空）"
+      },
+      {
+        "test": "test/e2e/guest-claim-http.mysql.spec.ts > 新建目标且能力快照已过期 → 409",
+        "layer": "unit_real_data",
+        "red": "503 而非 409"
+      }
+    ],
+    "fastPathCounterfactualRed": [
+      {
+        "tests": "test/user-plant/user-plant-list-query.spec.ts（常量与目录一致、limit 缺省、多读一行判下一页）+ 列表路由缺省 20",
+        "mutation": "默认页大小改 25；fetchLimit 去掉 +1",
+        "redObserved": "4 例失败",
+        "restored": true
+      }
+    ],
+    "testCorrectionsNotExpectedChanges": [
+      "合同测试集合比较的字面量排序写错（cursor/lifecycle/limit），语义不变",
+      "删除重放比较由逐字节改为 JSON 语义相等：共享幂等表以 MySQL JSON 列保存，键顺序会被规范化；合同要求的是同一公开结果"
+    ],
+    "green": {
+      "typecheck": "0 error",
+      "lint": "0 error（既有 warning）",
+      "vitest_default": "284 files / 3061 passed / 5 skipped / 0 failed",
+      "vitest_mysql_related": "18 files / 234 passed（user-plant*、get-user-plant-http、guest-claim*、measured-profile、long-term-care-http、authenticated-ephemeral*、temporary-case）",
+      "vitest_mysql_full": "61 files / 584 passed / 0 failed（本机 Docker MySQL 8.4 全量）"
+    },
+    "draftsForUserReview": [
+      "cloudfunctions-v2/models/user-plant/identity-confirmation-contract-draft.md",
+      "cloudfunctions-v2/models/user-plant/user-plant-asset-contract-draft.md",
+      "cloudfunctions-v2/models/user-plant/user-plant-timeline-contract-draft.md",
+      "cloudfunctions-v2/models/user-plant/environment-profile-contract-draft.md"
+    ],
+    "deferred": [
+      "内部上下文接口推迟到小青 Agent 阶段",
+      "deleting→deleted 跨域清理清单未冻结"
+    ],
+    "risks": [
+      "DELETE 带 JSON 正文：需在 P5 真实 CloudBase 网关验证正文不被丢弃；若被丢弃，备选为改用 If-Match 头携带版本（需改合同）"
+    ]
+  }
 }

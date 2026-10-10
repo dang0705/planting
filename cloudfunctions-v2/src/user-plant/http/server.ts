@@ -64,6 +64,12 @@ import { createAuthenticatedEphemeralBindingApplicationService } from '../applic
 import { createMysqlAuthenticatedEphemeralBindingRepository, createMysqlAuthenticatedEphemeralBindingCommitUnknownReader } from '../repository/mysql-authenticated-ephemeral-binding-repository.js'
 import { createMysqlAuthenticatedEphemeralCaseOwnershipReader } from '../repository/mysql-authenticated-ephemeral-case-ownership-reader.js'
 import { authenticatedEphemeralBindingRoute, createAuthenticatedEphemeralBindingRouteHandler } from './authenticated-ephemeral-binding-route.js'
+import { createListUserPlantsApplicationService } from '../application/list-user-plants.js'
+import { createDeleteUserPlantApplicationService } from '../application/delete-user-plant.js'
+import { createMysqlUserPlantListRepository } from '../repository/mysql-user-plant-list-repository.js'
+import type { UserPlantReadProjectionSqlRow } from '../repository/mysql-user-plant-repository.js'
+import { createListUserPlantsRouteHandler, listUserPlantsRoute } from './list-user-plants-route.js'
+import { createDeleteUserPlantRouteHandler, deleteUserPlantRoute } from './delete-user-plant-route.js'
 import {
   archiveUserPlantRoute,
   createArchiveUserPlantRouteHandler,
@@ -216,8 +222,26 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     query: (sql, parameters) => withReadConnection(dependencies.connectionSource, connection => connection.query(sql, toSqlParameters(parameters)))
   })
   const putCatalogBinding = createPutCatalogBindingApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository })
+  /** 列表（只读事务）与标记删除（幂等写事务）用例，user-plant.md 2026-10-10 冻结。 */
+  const listUserPlants = createListUserPlantsApplicationService({
+    driver,
+    repository: createMysqlUserPlantListRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
+      executeQuery: async (transaction, sql, parameters) =>
+        (await transaction.connection.query(sql, toSqlParameters(parameters))) as unknown as readonly UserPlantReadProjectionSqlRow[]
+    })
+  })
+  const deleteUserPlant = createDeleteUserPlantApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository })
+  const bearerAuthenticator = createUserBearerAuthenticator(resolvePrincipal)
 
   const dispatch = createRouteDispatcher([
+    {
+      route: listUserPlantsRoute,
+      handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, listUserPlants })
+    },
+    {
+      route: deleteUserPlantRoute,
+      handler: createDeleteUserPlantRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, deleteUserPlant })
+    },
     {
       route: putUserPlantCatalogBindingRoute,
       handler: createPutCatalogBindingRouteHandler({

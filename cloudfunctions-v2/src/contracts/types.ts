@@ -459,3 +459,4 @@ export type TemporaryCaseResponseDto = {
 export type * from "./care-capability-types.js";
 /** 长期养护 DTO 拆分至独立文件（types.ts 500 行上限）。 */
 export type * from "./long-term-care-types.js";
+export type { DeleteUserPlantRequestDto, UserPlantDeletionResponseDto, UserPlantListResponseDto } from "./user-plant-list-delete-contract.js";

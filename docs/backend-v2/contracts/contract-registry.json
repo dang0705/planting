@@ -28,14 +28,14 @@
       "version": "user-plant/v1",
       "file": "user-plant.md",
       "owner": "user-plant",
-      "sha256": "422ee5dd26cb639af285e72bb8ec70166c21bfb180b3a84bcc2df9bd3bd0c9db"
+      "sha256": "2175d4677e7f45555630739e71a97e1893e7a8e529f0ad296745ff43fafd8441"
     },
     {
       "id": "guest-session-claim",
       "version": "guest-session-claim/v1",
       "file": "guest-session-claim.md",
       "owner": "plant-knowledge + user-plant + care + diagnosis",
-      "sha256": "91731cc7c4a4a450afde9a1ee13cbd33057ec99fa0e9a42adb027896932497ec"
+      "sha256": "d77df55a8d685c14d062952f2d23d924b5b09dd2c212ea3422a96cdb7415de2a"
     },
     {
       "id": "authenticated-ephemeral-plant-case",

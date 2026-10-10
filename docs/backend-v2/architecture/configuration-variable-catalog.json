@@ -5242,6 +5242,33 @@
       "decisionNote": "用户 2026-10-09 授权主代理决定；主代理裁决 30 秒硬规则。"
     },
     {
+      "id": "user-plant.list.page_size",
+      "chineseName": "用户植物列表分页大小",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "default": 20,
+        "max": 50
+      },
+      "consumers": [
+        "GET /api/v2/user-plants（listUserPlants）"
+      ],
+      "changePolicy": "接口容量边界，不做运营配置；调整须同步 user-plant.md 列表合同、代码常量 USER_PLANT_LIST_PAGE_SIZE、OpenAPI 与锁定测试并经评审",
+      "fallback": "运行时不读取目录；limit 超出 1～50 返回 400 VALIDATION_FAILED；常量与目录不一致由一致性测试阻断",
+      "expected": "缺省 limit=20；limit 只接受 1～50 的十进制整数；51 及以上、0、负数、小数、前导零均为 400",
+      "decisionGroup": "hard_business_rule",
+      "owner": "user-plant",
+      "phase": "P2",
+      "ticketTitle": "[E03][P2] 用户植物核心实现",
+      "clickUpTicketId": "z8v0kmr9mj",
+      "decisionNote": "用户 2026-10-10 裁决列表采用游标分页、默认 20 条；主代理 2026-10-10 裁定为 hard_rule（默认 20、上限 50），与 care.plans.page_size、http.list.* 保持一致",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md#列表公开接口（2026-10-10 用户裁决冻结）"
+      ]
+    },
+    {
       "id": "care.facts.watering_backfill_max_days",
       "chineseName": "浇水事实最长补记天数",
       "domain": "care",
@@ -6479,6 +6506,14 @@
       "agents": [
         "root",
         "care_terra"
+      ]
+    },
+    "[E03][P2] 用户植物核心实现": {
+      "id": "z8v0kmr9mj",
+      "url": "https://app.clickup.com/t/z8v0kmr9mj",
+      "agents": [
+        "user_plant_terra",
+        "root"
       ]
     }
   },

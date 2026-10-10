@@ -524,14 +524,50 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "lifecycle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "archived"
+              ]
+            },
+            "description": "省略表示 active 与 archived 都返回；deleting/deleted 永不可见。"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "description": "每页条数，十进制整数文本。"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "只能原样回传上一页的 nextCursor。"
+          }
+        ],
         "responses": {
           "200": {
             "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/UserPlantListSuccess"
                 }
               }
             }
@@ -787,7 +823,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/UserPlantDeletionSuccess"
                 }
               }
             }
@@ -808,8 +844,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/DeleteUserPlantRequest"
               }
             }
           }
@@ -5165,6 +5200,141 @@
             "minimum": 1,
             "maximum": 9007199254740991,
             "description": "调用方最后读到的用户植物版本，必须是正安全整数。"
+          }
+        }
+      },
+      "DeleteUserPlantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "调用方最后读到的用户植物版本，必须是正安全整数。"
+          }
+        }
+      },
+      "UserPlant": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user_plant_id",
+          "lifecycle",
+          "identityStatus",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "user_plant_id": {
+            "type": "string",
+            "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+          },
+          "lifecycle": {
+            "enum": [
+              "active",
+              "archived"
+            ]
+          },
+          "identityStatus": {
+            "enum": [
+              "unidentified",
+              "candidate_pending",
+              "confirmed"
+            ]
+          },
+          "confirmedIdentityRef": {
+            "type": "string",
+            "pattern": "^pid_[A-Za-z0-9_-]{8,}$",
+            "description": "仅 confirmed 时存在。"
+          },
+          "profile": {
+            "type": "object",
+            "description": "公开档案投影，见 cloudfunctions-v2/models/user-plant/public-profile-contract.md。"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserPlantListSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "$ref": "#/components/schemas/UserPlant"
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "UserPlantDeletionSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "user_plant_id",
+              "lifecycle",
+              "version",
+              "updatedAt"
+            ],
+            "properties": {
+              "user_plant_id": {
+                "type": "string",
+                "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+              },
+              "lifecycle": {
+                "const": "deleting"
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         }
       },

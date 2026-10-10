@@ -130,6 +130,69 @@ active 植物数量上限。跨用户或不存在的植物统一返回 `404 USER
 恢复额外允许 `403 CAPABILITY_DENIED` 和 `409 CAPABILITY_SNAPSHOT_EXPIRED`；归档路由不声明
 这两项能力错误。上述状态码以 `contracts/http-api.md` 错误目录为准。
 
+## 列表公开接口（2026-10-10 用户裁决冻结）
+
+`GET /api/v2/user-plants` 只列出当前登录用户自己的用户植物，不接受请求体。查询参数只允许以下三项，各最多出现一次；
+未知参数、重复参数或非法取值返回 `400 VALIDATION_FAILED`：
+
+```ts
+/** 列表查询参数；全部来自 URL 查询串。 */
+export type UserPlantListQuery = {
+  /** 可选生命周期筛选：active 或 archived；省略表示两者都返回。deleting/deleted 永远不可见，不能筛选。 */
+  lifecycle?: 'active' | 'archived'
+  /** 可选每页条数：1～50 的十进制整数文本；省略为 20（硬规则 user-plant.list.page_size）。 */
+  limit?: string
+  /** 可选不透明游标：只能原样回传上一页的 nextCursor；被篡改或格式不对返回 400。 */
+  cursor?: string
+}
+
+/** 列表响应：items 内每项与单株读取的公开投影 UserPlantDto 完全一致。 */
+export type UserPlantListResponse = {
+  /** 按创建时间从新到旧、同一毫秒按公开引用二进制倒序排列；最多 limit 项。 */
+  items: UserPlantDto[]
+  /** 还有下一页时为不透明游标；最后一页为 null。 */
+  nextCursor: string | null
+}
+```
+
+- 成功固定 `200 { "data": UserPlantListResponse }`；没有植物时返回空 `items` 与 `nextCursor: null`，不是 404。
+- 主体只来自 Bearer 会话；不得通过查询参数指定 `user_id`。他人的植物、`deleting`、`deleted` 不出现在任何一页中。
+- 游标只编码“上一页最后一项的创建时间 + 公开引用”，不含内部主键、`user_id` 或筛选条件；客户端改变筛选条件时应丢弃旧游标。
+- 只读接口，不需要 `Idempotency-Key`。
+
+## 删除公开接口（2026-10-10 用户裁决冻结）
+
+`DELETE /api/v2/user-plants/{userPlantRef}` 表达用户明确“删除这株植物”。本期只做**标记删除**：
+把 `active` 或 `archived` 的植物按 `expectedVersion` 转为 `deleting`，此后对外视为不存在；跨域数据清理清单与补偿另行冻结，
+本接口不删除档案、资产、养护、诊断或认领记录，也不推进到 `deleted`。
+
+```ts
+/** 删除请求体只允许调用方最后读到的版本。 */
+export type DeleteUserPlantRequest = {
+  /** 正安全整数；不匹配时返回 409 USER_PLANT_VERSION_CONFLICT。 */
+  expectedVersion: number
+}
+
+/** 删除受理结果；只说明已进入删除中，不返回档案或其他内部字段。 */
+export type UserPlantDeletionResponse = {
+  /** 被删除植物的公开引用。 */
+  user_plant_id: string
+  /** 固定为 deleting。 */
+  lifecycle: 'deleting'
+  /** 标记删除后的新版本（原版本 + 1）。 */
+  version: number
+  /** 标记删除时间（服务端 UTC）。 */
+  updatedAt: string
+}
+```
+
+- 媒体类型必须是 `application/json`；`Idempotency-Key` 只从必填请求头读取；请求体不得携带其他字段。
+- 成功固定 `200 { "data": UserPlantDeletionResponse }`。同键同参重放返回首次结果（即使植物已对外不可见）；同键异参返回
+  `409 IDEMPOTENCY_CONFLICT`；版本过期返回 `409 USER_PLANT_VERSION_CONFLICT`；跨用户、不存在、已在删除中或已删除统一
+  `404 USER_PLANT_NOT_FOUND`。
+- 进入 `deleting` 后：单株读取、列表、档案修改、归档/恢复、品种绑定、养护写入与认领目标均按“不存在”处理；
+  `deleting` 不计入 active 数量上限。
+
 ## 事实边界
 
 - 档案和环境变化是用户植物配置，不等于养护事实。

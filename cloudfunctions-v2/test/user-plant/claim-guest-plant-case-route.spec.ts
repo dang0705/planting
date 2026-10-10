@@ -7,6 +7,7 @@ import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import type { ClaimGuestPlantCaseApplicationInput } from '../../src/user-plant/application/claim-guest-plant-case.js'
 import { claimGuestPlantCaseRoute, createClaimGuestPlantCaseRouteHandler, type ClaimGuestPlantCaseRouteDependencies } from '../../src/user-plant/http/claim-guest-plant-case-route.js'
+import { CapabilitySnapshotExpiredError, CapabilitySnapshotUnavailableError } from '../../src/subscription/repository/mysql-capability-snapshot-reader.js'
 
 /**
  * unit_fake（L3）。Expected：guest-session-claim.md（2026-10-09 修订：请求体 guestToken、幂等键只走请求头、公开结果白名单、
@@ -84,6 +85,24 @@ describe('POST /api/v2/user-plants/claims 路由', () => {
     expect(response.body.data).toMatchObject({ userPlantId: 'upl_claimroute_newplant' })
     expect(f.calls[0]).toMatchObject({ target: { type: 'new_user_plant' }, newUserPlantRef: 'upl_claimroute_newplant', capabilitySnapshot: null })
     expect(f.stages).toContain('capability')
+  })
+
+  // 合同（guest-session-claim.md，2026-10-10 用户裁决）：新建目标且快照已失效、无可重放原成功 → 409 CAPABILITY_SNAPSHOT_EXPIRED；
+  // 已成功的同键重放不依赖当前快照；快照只是暂时读不到（非过期）仍为 503。
+  const newTarget = { ...body, target: { type: 'new_user_plant' } }
+  test('新建目标：能力快照已过期且事务因缺快照无法完成 → 409 CAPABILITY_SNAPSHOT_EXPIRED', async () => {
+    const f = await start({ resolveCapabilitySnapshot: async () => { throw new CapabilitySnapshotExpiredError() }, claimGuestPlantCase: async () => ({ status: 'unavailable' }) as never })
+    expect(await f.post(newTarget)).toMatchObject({ status: 409, body: { error: { type: 'CAPABILITY_SNAPSHOT_EXPIRED' } } })
+  })
+
+  test('新建目标：快照已过期但原成功可重放 → 200 replayed=true，不受快照影响', async () => {
+    const f = await start({ resolveCapabilitySnapshot: async () => { throw new CapabilitySnapshotExpiredError() }, claimGuestPlantCase: async () => ({ ...completed, claimRef: 'gcl_claimroute_original1' }) })
+    expect(await f.post(newTarget)).toMatchObject({ status: 200, body: { data: { replayed: true } } })
+  })
+
+  test('新建目标：快照暂时不可用（非过期）→ 仍为 503 SERVICE_UNAVAILABLE', async () => {
+    const f = await start({ resolveCapabilitySnapshot: async () => { throw new CapabilitySnapshotUnavailableError() }, claimGuestPlantCase: async () => ({ status: 'unavailable' }) as never })
+    expect(await f.post(newTarget)).toMatchObject({ status: 503, body: { error: { type: 'SERVICE_UNAVAILABLE' } } })
   })
 
   test.each([

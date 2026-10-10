@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 215 项业务/治理变量、16 个 Provider 配置档案：已冻结 87 项、待冻结 58 项、不可配置硬规则 70 项。
+- 当前共 216 项业务/治理变量、16 个 Provider 配置档案：已冻结 87 项、待冻结 58 项、不可配置硬规则 71 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -121,6 +121,7 @@
 | `user-plant.guest_claim.direct_fact_or_plan_write` | 游客认领是否自动写事实或计划 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | user-plant | user-plant、care、diagnosis | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `user-plant.guest.max_cases_per_session` | 单个游客会话最多临时植物案例数 | `userplant_limits` | 领域策略 / 已冻结 | `5` 个 | user-plant | user-plant、care、diagnosis | 发布新用户植物策略，只影响之后新建的临时案例；失败：策略不可用时拒绝新建游客临时案例 | P2 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.guest_claim.processing_lease_seconds` | 游客认领命令处理租约时长 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `30` 秒 | user-plant | user-plant 游客认领 | 认领在单个 MySQL 事务内完成，提交时以“租约未过期且持有者匹配”为写入条件，正确性不依赖时长；时长只决定崩溃后的接管等待，不做运营配置，调整须改代码与测试；失败：租约过期后由新请求原子接管并递增 attempt_count；过期持有者的完成写入被条件拒绝 | P2 / [P2] 统一身份 Principal |
+| `user-plant.list.page_size` | 用户植物列表分页大小 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"default":20,"max":50}` | user-plant | GET /api/v2/user-plants（listUserPlants） | 接口容量边界，不做运营配置；调整须同步 user-plant.md 列表合同、代码常量 USER_PLANT_LIST_PAGE_SIZE、OpenAPI 与锁定测试并经评审；失败：运行时不读取目录；limit 超出 1～50 返回 400 VALIDATION_FAILED；常量与目录不一致由一致性测试阻断 | P2 / [E03][P2] 用户植物核心实现 |
 
 ## 植物知识、分类与 CMS
 

@@ -215,4 +215,17 @@ describe('POST /api/v2/user-plants/claims（真实 MySQL）', () => {
     expect(scalar('SELECT COUNT(*) FROM guest_case_claims;')).toBe('1')
     expect(scalar('SELECT COUNT(*) FROM guest_case_claims WHERE user_internal_id=2;')).toBe('0')
   })
+
+  /**
+   * Expected 来源：guest-session-claim.md（2026-10-10 用户裁决）：新建目标时服务端能力快照已失效且无可重放原成功 →
+   * 409 CAPABILITY_SNAPSHOT_EXPIRED，不新建植物、不改变案例。层次：L3 / unit_real_data（真实快照读取器读到过期快照）。
+   */
+  test('新建目标且能力快照已过期 → 409 CAPABILITY_SNAPSHOT_EXPIRED，不建植物、案例仍 active、无成功事实', async () => {
+    sql(`UPDATE capability_snapshots SET valid_until_ms=${now - 1} WHERE snapshot_ref='cps_test_claim_000001';`)
+    const response = await post(claimBody('gpc_claimhttp_case0002', { type: 'new_user_plant' }), 'claim-http-key-0021')
+    expect(response).toMatchObject({ status: 409, body: { error: { type: 'CAPABILITY_SNAPSHOT_EXPIRED' } } })
+    expect(scalar('SELECT COUNT(*) FROM user_plants;')).toBe('1')
+    expect(scalar('SELECT status FROM guest_plant_cases WHERE id=2;')).toBe('active')
+    expect(scalar('SELECT COUNT(*) FROM guest_case_claims;')).toBe('0')
+  })
 })
