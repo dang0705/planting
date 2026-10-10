@@ -1,0 +1,23 @@
+{
+  "snapshotId": "qwen3.6-plus-cn-beijing-2026-10-10",
+  "model": "qwen3.6-plus（别名，能力等同 qwen3.6-plus-2026-04-02）及快照 qwen3.6-plus-2026-04-02",
+  "region": "华北2（北京）",
+  "tier": "单次请求输入 ≤256K tokens",
+  "inputCnyPerMillion": 2,
+  "outputCnyPerMillion": 12,
+  "cacheCreateMultiplier": 1.25,
+  "cacheHitMultiplier": 0.1,
+  "capturedAt": "2026-10-10",
+  "sources": [
+    "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "https://help.aliyun.com/zh/model-studio/context-cache",
+    "https://help.aliyun.com/zh/model-studio/vision"
+  ],
+  "notesZh": [
+    "思考与非思考同价；价格页未标注上下文缓存折扣",
+    "上下文缓存文档：显式缓存支持别名 qwen3.6-plus，不含快照 qwen3.6-plus-2026-04-02；隐式缓存两者都不含",
+    "图像理解文档：Qwen3.6-Plus 在「URL 单次最多 256 张图」列表中；Qwen3.6 系列按 32×32 像素/token 计",
+    "JSON Object 模式文档：Qwen3.6-Plus 系列（非思考模式）支持 response_format=json_object；不支持 JSON Schema 严格模式",
+    "页面为原价，实际以百炼控制台为准；仅用于离线评测费用换算"
+  ]
+}

@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 242 项业务/治理变量、16 个 Provider 配置档案：已冻结 111 项、待冻结 61 项、不可配置硬规则 70 项。
+- 当前共 243 项业务/治理变量、16 个 Provider 配置档案：已冻结 111 项、待冻结 62 项、不可配置硬规则 70 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -253,6 +253,7 @@
 | `diagnosis.visual_gen.prompt_release_sha256` | 视觉诊断生成式提示词发布哈希 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING SHA-256 | diagnosis | diagnosis、Bailian Adapter | 不可变 Prompt release；与模型快照、输出 Schema、请求参数组成 diagnosis-visual-gen 版本组；不覆盖现行 diagnosis-visual/v1；失败：哈希缺失或不匹配时阻断视觉生成式诊断，不静默回退到其他提示词；待冻结原因：提示词 v1 草案未经评测与园艺审核（用户 2026-10-10 裁决新增，修订 C12）；阻断：视觉诊断生成式版本组 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.visual_gen.output_schema_version` | 视觉诊断生成式模型输出 Schema 版本 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis、Bailian Adapter | 不可变 JSON Schema release（拟 diagnosis-visual-gen-output/v1）；失败：校验失败整份拒绝；待冻结原因：输出 Schema 仅在提示词草案中，未落盘冻结（修订 C12）；阻断：视觉诊断生成式版本组 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.visual_gen.request_params` | 视觉诊断生成式请求参数组 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis、Bailian Adapter | enable_thinking、max_tokens、max_pixels、temperature 作为版本组一部分发布，改动即新版本组；失败：未冻结前不得发起线上生成式调用；待冻结原因：思考模式与像素上限待离线评测 A/B（修订 C12）；阻断：视觉诊断生成式版本组 | P4 / [P4] 固定/动态问诊与小青工具 |
+| `diagnosis.visual_gen.model_code` | 视觉诊断生成式模型代码（含兜底候选顺序） | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis、Bailian Adapter | 模型代码属于 diagnosis-visual-gen 版本组；换模型即新版本组，同一请求锁定一个模型，不静默切换；失败：未冻结前不开放线上生成式调用；评测时按候选顺序在免费额度内依次尝试；待冻结原因：候选模型尚在探针与开发集评测中；免费额度受限；阻断：视觉诊断生成式版本组 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.visual_gen.agent_allowlist_ref` | 视觉诊断生成式药剂允许名单引用 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis、diagnosis-result/v2 Schema、服务端安全门 | 名单与 diagnosis-result/v2 Schema 的 agentName 枚举同版本发布；增删药剂即新名单版本；失败：名单未通过园艺来源审核前，生成式版本组不得上线（离线评测可用草拟版）；待冻结原因：草拟名单 20 项已按用户 2026-10-10 裁定登记，待园艺来源审核；阻断：视觉诊断生成式版本组线上发布 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.fixed_packages.release_refs` | 黄叶与萎蔫固定题包发布引用 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis | 题包不可变 release + active 指针；失败：无已发布题包则该症状入口不可用；待冻结原因：V1复用内容与发布数据库保护已验证；正式发布审核、激活及创建运行入口尚未验收；阻断：固定问诊正式运行入口 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.knowledge.bundle_release_ref` | 诊断原因、结论、行动和映射的兼容知识发布包 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis、CloudBase CMS 发布校验 | 原因目录、Outcome、Action 和映射作为兼容不可变 release 发布，请求锁定单一快照及 SHA-256；失败：题包路径：无已审核的兼容发布包时不开放相应诊断结果。视觉诊断生成式版本组不依赖该发布包开放，但须走 diagnosis.visual_gen.* 版本组发布门（用户 2026-10-10 裁决，修订 C11）；待冻结原因：P1 诊断知识来源增量合同、旧资产审计与首版内容审核尚未冻结；阻断：黄叶、萎蔫和虫害诊断知识发布与结果验收 | P4 / [P4] 固定/动态问诊与小青工具 |

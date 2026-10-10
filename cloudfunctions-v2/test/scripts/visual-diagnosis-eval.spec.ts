@@ -4,6 +4,7 @@ import {
   BudgetExceededError,
   estimateCaseCostCny,
   extractPrefixFromDraft,
+  extractCauseCodesFromPrefix,
   resolveLocalImageRef,
   runEvaluation,
   scoreModelText,
@@ -749,5 +750,109 @@ describe('视觉诊断评测脚本：追问质量与分组口径', () => {
       reasonableRate: 1
     })
     expect(report.summary.groups.with_context).toMatchObject({ cases: 0 })
+  })
+})
+
+/**
+ * 2026-10-10 第六轮 Expected（协调方转达用户要求：复核「病因编号为空」是否可重复）：
+ * 只额外保存结构诊断字段，不存原文——每个候选的 causeCode 是否为空/是否在清单内、候选数量、
+ * status 值、候选对象实际使用的键名、药剂名是否在名单内（精确与规范化）。测试层次：unit_fake。
+ */
+describe('视觉诊断评测脚本：结构诊断', () => {
+  const catalog = ['pest_aphid', 'fungal_rust', 'root_rot']
+
+  test('从固定前缀【4】提取病因编号闭集', () => {
+    const prefix =
+      '【4 病因分类体系】\npest_aphid｜蚜虫｜x｜y｜z\nfungal_rust｜锈病｜x｜y｜z\n【5 行动库】'
+    expect(extractCauseCodesFromPrefix(prefix)).toEqual(['pest_aphid', 'fungal_rust'])
+  })
+
+  test('记录候选编号为空、不在清单内以及候选实际使用的键名', () => {
+    const text = JSON.stringify({
+      contractVersion: 'diagnosis-visual-gen-output/v1',
+      classification: {
+        overallStatus: 'problem_found',
+        candidates: [
+          { rank: 1, causeCode: '', certaintyBand: 'likely' },
+          { rank: 2, cause_code: 'fungal_rust', certaintyBand: 'possible' },
+          { rank: 3, causeCode: 'unknown_thing', certaintyBand: 'possible' }
+        ]
+      }
+    })
+    const score = scoreModelText(text, makeCase('a', ['fungal_rust']), catalog)
+    expect(score.structure).toMatchObject({
+      status: 'problem_found',
+      candidateCount: 3,
+      emptyCauseCodeCount: 2,
+      outOfCatalogCauseCodeCount: 1,
+      candidateKeyNames: ['causeCode', 'cause_code', 'certaintyBand', 'rank']
+    })
+  })
+
+  test('记录药剂名的精确与规范化命中情况（不存药剂原文以外的内容）', () => {
+    const text = modelText(['pest_aphid'], {
+      immediateActions: [
+        {
+          detailZh: '按产品标签使用',
+          agentNames: ['矿物油', '苦参碱', ': '],
+          labelDosageNotice: true
+        }
+      ]
+    })
+    const score = scoreModelText(text, makeCase('a', ['pest_aphid']), catalog)
+    expect(score.structure.agentChecks).toEqual([
+      { exactInAllowlist: false, normalizedInAllowlist: true, empty: false },
+      { exactInAllowlist: true, normalizedInAllowlist: true, empty: false },
+      { exactInAllowlist: false, normalizedInAllowlist: false, empty: true }
+    ])
+  })
+})
+
+/**
+ * 2026-10-10 Expected（协调方转达用户要求：qwen3.7-flash 的价格优势在单次输入 ≤32K tokens 档）：
+ * 评测脚本记录每次调用是否在输入档内（按回包 promptTokens），汇总报告越档次数；
+ * 估算会越档的案例拒绝发起调用。测试层次：unit_fake。
+ */
+describe('视觉诊断评测脚本：输入 tokens 档位', () => {
+  test('估算会越档的案例不发起调用并记录原因', async () => {
+    const provider = fakeProvider([modelText(['pest_aphid'])])
+    const manyImages = makeCase('big', ['pest_aphid'], {
+      imageUrls: Array.from({ length: 30 }, (_, index) => `https://example.invalid/${index}.jpg`)
+    })
+    const report = await runEvaluation(
+      [manyImages, makeCase('small', ['pest_aphid'])],
+      provider,
+      baseOptions({ apply: true, maxInputTokensPerCall: 32000 })
+    )
+    expect(provider.calls).toBe(1)
+    expect(report.results[0]?.errorCode).toBe('input_tier_exceeded_estimate')
+    expect(report.results[1]?.withinInputTier).toBe(true)
+  })
+
+  test('按回包 promptTokens 判断是否越档，并在汇总中计数', async () => {
+    const provider = fakeProvider([modelText(['pest_aphid'])], {
+      promptTokens: 33000,
+      completionTokens: 100,
+      cachedTokens: 0,
+      cacheCreationTokens: 0
+    })
+    const report = await runEvaluation(
+      [makeCase('a', ['pest_aphid'])],
+      provider,
+      baseOptions({ apply: true, maxInputTokensPerCall: 32000 })
+    )
+    expect(report.results[0]?.withinInputTier).toBe(false)
+    expect(report.summary.inputTierExceededCount).toBe(1)
+    expect(report.summary.maxInputTokensPerCall).toBe(32000)
+  })
+
+  test('未设置档位上限时不检查', async () => {
+    const report = await runEvaluation(
+      [makeCase('a', ['pest_aphid'])],
+      fakeProvider([modelText(['pest_aphid'])]),
+      baseOptions({ apply: true })
+    )
+    expect(report.results[0]?.withinInputTier).toBeUndefined()
+    expect(report.summary.inputTierExceededCount).toBe(0)
   })
 })

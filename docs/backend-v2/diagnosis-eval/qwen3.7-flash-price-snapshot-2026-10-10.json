@@ -1,0 +1,25 @@
+{
+  "snapshotId": "qwen3.7-flash-cn-beijing-2026-10-10",
+  "model": "qwen3.7-flash（别名，能力等同 qwen3.7-flash-2026-07-15）及快照 qwen3.7-flash-2026-07-15",
+  "region": "华北2（北京）",
+  "tier": "单次请求输入 ≤32K tokens（32K～256K 为 0.6/2.4，256K～1M 为 1.2/4.8）",
+  "inputCnyPerMillion": 0.2,
+  "outputCnyPerMillion": 0.8,
+  "cacheCreateMultiplier": 1.25,
+  "cacheHitMultiplier": 0.1,
+  "capturedAt": "2026-10-10",
+  "sources": [
+    "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "https://help.aliyun.com/zh/model-studio/context-cache",
+    "https://help.aliyun.com/zh/model-studio/vision",
+    "https://help.aliyun.com/zh/model-studio/json-mode"
+  ],
+  "notesZh": [
+    "思考与非思考同价；别名标注「上下文缓存享有折扣」「Batch 半价」，快照未标注",
+    "上下文缓存文档：别名与快照均支持显式缓存（命中通常 10%）和隐式缓存（命中 20%）",
+    "图像理解文档：Qwen3.7-Flash 在「URL 单次最多 256 张图」列表中；32×32 像素/token",
+    "JSON 模式文档：Qwen3.7-Flash 系列支持 json_object 与 JSON Schema 严格模式（json_schema + strict）；开启结构化输出时文档建议不设 max_tokens",
+    "单次输入 ≤32K 档：本评测单案约 9～10K tokens，落在该档",
+    "页面为原价，实际以百炼控制台为准；仅用于离线评测费用换算"
+  ]
+}

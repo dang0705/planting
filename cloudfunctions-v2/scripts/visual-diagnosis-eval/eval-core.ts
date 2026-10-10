@@ -109,6 +109,43 @@ export interface SafetyFinding {
   readonly category?: 'dilution_or_concentration' | 'amount' | 'frequency_or_interval'
 }
 
+/** 输出结构诊断：候选编号与药剂名的结构事实。 */
+export interface OutputStructure {
+  /** 总体状态的取值（截断至 30 字符）。 */
+  readonly status: string
+  /** 候选数量。 */
+  readonly candidateCount: number
+  /** causeCode 缺失或为空的候选数。 */
+  readonly emptyCauseCodeCount: number
+  /** causeCode 非空但不在病因闭集内的候选数（未提供闭集时为 0）。 */
+  readonly outOfCatalogCauseCodeCount: number
+  /** 候选对象中实际出现的键名（排序去重），用于发现字段名写错。 */
+  readonly candidateKeyNames: readonly string[]
+  /** 每个药剂名的检查结果（按出现顺序）。 */
+  readonly agentChecks: readonly AgentCheck[]
+}
+
+/** 单个药剂名的检查结果；不保存药剂名本身。 */
+export interface AgentCheck {
+  /** 与名单规范名逐字一致。 */
+  readonly exactInAllowlist: boolean
+  /** 规范化（去括号、空白、别名）后在名单内。 */
+  readonly normalizedInAllowlist: boolean
+  /** 不含任何字母或汉字（例如只有标点）。 */
+  readonly empty: boolean
+}
+
+/** 从固定前缀【4】段提取病因编号闭集。 */
+export function extractCauseCodesFromPrefix(prefix: string): string[] {
+  const start = prefix.indexOf('【4')
+  const end = prefix.indexOf('【5', start + 1)
+  const section = start < 0 ? '' : prefix.slice(start, end < 0 ? undefined : end)
+  return [...section.matchAll(/^([a-z]+_[a-z_]+)｜/gmu)].map(match => match[1] ?? '')
+}
+
+/** 名单规范名（逐字）。 */
+const exactAgentNames = new Set(agentAllowlist.agents.map(agent => agent.nameZh))
+
 /** 评测分组。 */
 export type EvaluationGroup = 'image_determinable' | 'context_dependent_no_context' | 'with_context'
 
@@ -196,6 +233,8 @@ export interface CaseScore {
   readonly askedFollowUpTopics: readonly string[]
   /** 追问质量合格：病史依赖类、未硬判、且命中至少 1 个标注的关键追问项。 */
   readonly followUpReasonable: boolean
+  /** 结构诊断（只记录结构事实，不存原文），用于判断输出格式是否漂移。 */
+  readonly structure: OutputStructure
   /** 解析失败类型（不保存原文，只记类型）；合法时为 none。 */
   readonly parseFailureKind: 'none' | 'empty' | 'markdown_fenced' | 'not_json' | 'contract_mismatch'
 }
@@ -216,6 +255,8 @@ export interface CaseResult {
   readonly rawTextSha256: string
   /** Provider 调用失败时的错误码（不含凭证或回包正文）。 */
   readonly errorCode?: string
+  /** 回包 promptTokens 是否不超过输入档位上限（未设置上限时省略）。 */
+  readonly withinInputTier?: boolean
 }
 
 /** 运行参数；预算相关字段没有默认值。 */
@@ -238,6 +279,8 @@ export interface RunOptions {
   readonly log: (line: string) => void
   /** 是否把追问质量计入验收汇总；默认否（后期迭代 z8v0kmvh4x）。 */
   readonly countFollowUpQualityInAcceptance?: boolean
+  /** 单次调用输入 tokens 上限（价格档位，如 32,000）；估算越档的案例不发起调用。 */
+  readonly maxInputTokensPerCall?: number
 }
 
 /** 评测报告。 */
@@ -274,6 +317,10 @@ export interface EvalSummary {
   readonly cachedTokenShare: number
   /** 分组汇总；病史依赖类无上下文的 reasonableRate 只在开关打开时计入追问质量。 */
   readonly groups: Readonly<Record<EvaluationGroup, GroupSummary>>
+  /** 输入档位上限（未设置时为 null）。 */
+  readonly maxInputTokensPerCall: number | null
+  /** 回包 promptTokens 超过档位上限的调用次数（应为 0）。 */
+  readonly inputTierExceededCount: number
   /** 追问质量是否计入验收汇总（用户 2026-10-10 裁定：后期迭代 z8v0kmvh4x，默认否）。 */
   readonly followUpQualityCountedInAcceptance: boolean
   /** 本次验收口径：只看图像可判定类与带上下文案例的首选/前三命中；病史依赖类无上下文只记录不设门槛。 */
@@ -463,7 +510,11 @@ function collectActionFindings(steps: readonly unknown[], edibleContext: string)
 const pendingFindingCodes = new Set<string>()
 
 /** 对模型原文评分；原文不进入返回值。 */
-export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
+export function scoreModelText(
+  text: string,
+  evalCase: EvalCase,
+  causeCatalog: readonly string[] = []
+): CaseScore {
   let parsed: unknown
   try {
     parsed = JSON.parse(text)
@@ -536,6 +587,42 @@ export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
     topCertaintyBand: String(field(candidates[0], 'certaintyBand') ?? ''),
     safetyViolations: [...violations],
     safetyFindings: findings,
+    structure: {
+      status: status.slice(0, 30),
+      candidateCount: candidates.length,
+      emptyCauseCodeCount: candidates.filter(
+        candidate => String(field(candidate, 'causeCode') ?? '').trim() === ''
+      ).length,
+      outOfCatalogCauseCodeCount:
+        causeCatalog.length === 0
+          ? 0
+          : candidates.filter(candidate => {
+              const code = String(field(candidate, 'causeCode') ?? '').trim()
+              return code !== '' && !causeCatalog.includes(code)
+            }).length,
+      candidateKeyNames: [
+        ...new Set(
+          candidates.flatMap(candidate =>
+            candidate !== null && typeof candidate === 'object' && !Array.isArray(candidate)
+              ? Object.keys(candidate as Record<string, unknown>)
+              : []
+          )
+        )
+      ].sort(),
+      agentChecks: [
+        ...list(field(parsed, 'immediateActions')),
+        ...list(field(parsed, 'ongoingCare'))
+      ].flatMap(step =>
+        list(field(step, 'agentNames')).map(value => {
+          const name = String(value)
+          return {
+            exactInAllowlist: exactAgentNames.has(name),
+            normalizedInAllowlist: isAllowedAgent(name),
+            empty: !/[\p{L}]/u.test(name)
+          }
+        })
+      )
+    },
     evaluationGroup: group,
     notHardJudged,
     askedFollowUpTopics: askedTopics,
@@ -561,7 +648,11 @@ function roundCny(value: number): number {
 }
 
 /** 汇总指标。 */
-function summarize(results: readonly CaseResult[], countFollowUp = false): EvalSummary {
+function summarize(
+  results: readonly CaseResult[],
+  countFollowUp = false,
+  maxInputTokens: number | null = null
+): EvalSummary {
   const count = results.length
   const rate = (predicate: (result: CaseResult) => boolean): number =>
     count === 0 ? 0 : results.filter(predicate).length / count
@@ -605,6 +696,8 @@ function summarize(results: readonly CaseResult[], countFollowUp = false): EvalS
   })
   return {
     ...base,
+    maxInputTokensPerCall: maxInputTokens,
+    inputTierExceededCount: results.filter(result => result.withinInputTier === false).length,
     followUpQualityCountedInAcceptance: countFollowUp,
     acceptance: {
       imageDeterminable: pick(base.groups.image_determinable),
@@ -645,7 +738,11 @@ export async function runEvaluation(
       cumulativeCostCny: 0,
       stoppedReason: 'dry_run',
       results: [],
-      summary: summarize([], options.countFollowUpQualityInAcceptance === true)
+      summary: summarize(
+        [],
+        options.countFollowUpQualityInAcceptance === true,
+        options.maxInputTokensPerCall ?? null
+      )
     }
   }
   if (estimatedTotal > options.budgetCapCny) {
@@ -655,6 +752,7 @@ export async function runEvaluation(
   const results: CaseResult[] = []
   let cumulative = 0
   let consecutiveErrors = 0
+  const causeCatalog = extractCauseCodesFromPrefix(options.prefixText)
   let stoppedReason: EvalReport['stoppedReason'] = 'completed'
   outer: for (let start = 0; start < cases.length; start += options.batchSize) {
     const batch = cases.slice(start, start + options.batchSize)
@@ -671,6 +769,27 @@ export async function runEvaluation(
         options.log(`已达强制停止线：累计 ${roundCny(cumulative)} 元，停止发起新调用`)
         break outer
       }
+      const tierLimit = options.maxInputTokensPerCall
+      const estimatedInput =
+        options.estimate.prefixTokens +
+        options.estimate.dynamicTextTokens +
+        options.estimate.tokensPerImage * evalCase.imageUrls.length
+      if (tierLimit !== undefined && estimatedInput > tierLimit) {
+        // 估算会越过价格档位：不发起调用，只记录原因（不计入 Provider 连续失败）。
+        results.push({
+          caseId: evalCase.caseId,
+          score: scoreModelText('', evalCase, causeCatalog),
+          usage: { promptTokens: 0, completionTokens: 0, cachedTokens: 0, cacheCreationTokens: 0 },
+          actualCostCny: 0,
+          latencyMs: 0,
+          rawTextSha256: '',
+          errorCode: 'input_tier_exceeded_estimate'
+        })
+        options.log(
+          `案例 ${evalCase.caseId} 估算输入 ${estimatedInput} tokens 超过档位上限 ${tierLimit}，未发起调用`
+        )
+        continue
+      }
       let response: ProviderResponse
       try {
         response = await provider.complete({
@@ -683,7 +802,7 @@ export async function runEvaluation(
         consecutiveErrors += 1
         results.push({
           caseId: evalCase.caseId,
-          score: scoreModelText('', evalCase),
+          score: scoreModelText('', evalCase, causeCatalog),
           usage: { promptTokens: 0, completionTokens: 0, cachedTokens: 0, cacheCreationTokens: 0 },
           actualCostCny: 0,
           latencyMs: 0,
@@ -702,11 +821,14 @@ export async function runEvaluation(
       cumulative += cost
       results.push({
         caseId: evalCase.caseId,
-        score: scoreModelText(response.text, evalCase),
+        score: scoreModelText(response.text, evalCase, causeCatalog),
         usage: response.usage,
         actualCostCny: roundCny(cost),
         latencyMs: response.latencyMs,
-        rawTextSha256: createHash('sha256').update(response.text, 'utf8').digest('hex')
+        rawTextSha256: createHash('sha256').update(response.text, 'utf8').digest('hex'),
+        ...(tierLimit !== undefined
+          ? { withinInputTier: response.usage.promptTokens <= tierLimit }
+          : {})
       })
     }
   }
@@ -720,6 +842,10 @@ export async function runEvaluation(
     cumulativeCostCny: roundCny(cumulative),
     stoppedReason,
     results,
-    summary: summarize(results, options.countFollowUpQualityInAcceptance === true)
+    summary: summarize(
+      results,
+      options.countFollowUpQualityInAcceptance === true,
+      options.maxInputTokensPerCall ?? null
+    )
   }
 }
