@@ -44,12 +44,12 @@
 | U1 空缺 | 未选材料 → `substrate_materials` 缺证据 | Edge | 合同第4节 | 已写 |
 | U1 空缺 | 尺寸缺失／内盆未确认 → `inner_pot_geometry` | Edge | 合同第4节 | 已写 |
 | U1 元素洞 | 材料数组 `[null, 'peat']` 跳过洞、按 peat 计算；全为洞 → `substrate_materials` | Edge | skill U1 元素洞外延＋合同第4节（本轮补入合同） | 待写 |
-| U2 边界 | 16/12/14cm、留空 1～2cm、泥炭＋珍珠岩 → 90～490mL | Happy | 手算（截锥＋易利用水×消耗÷(1−排出)） | 已写 |
+| U2 边界 | 16/12/14cm、留空 1～2cm、泥炭＋珍珠岩 → 90～490mL | Happy | 手算（截锥＋可用水（AW，Bilderback 2005 口径）×消耗÷(1−排出)） | 已写 |
 | U2 边界 | 只选泥炭 → 180～490mL；干透型 → 210～890mL | Happy | 手算 | 已写 |
 | U2 边界 | 直筒盆（上下同径 10cm、高 10cm、留空 1cm）退化为圆柱：706.86mL，浇入 70～180mL | Edge | 手算（π·5²·9） | 待写 |
 | U3 非法 | 未知材料、策略缺该材料 → TypeError | Edge | 合同 | 已写 |
 | U3 非法 | 留空 ≥ 盆高 → RangeError | Edge | 合同 | 已写 |
-| U3 非法 | 易利用水上限 > 容器持水量下限的物性自相矛盾 → RangeError | Edge | 物理约束：易利用水是持水量的一部分（本轮补入合同） | 待写 |
+| U3 非法 | 可用水（AW，Bilderback 2005 口径）上限 > 容器持水量下限的物性自相矛盾 → RangeError | Edge | 物理约束：可用水（AW，Bilderback 2005 口径）是持水量的一部分（本轮补入合同） | 待写 |
 | U4 幂等 | `['peat','peat']` 与 `['peat']` 结果相同 | Edge | 合同“所选材料集合”的集合语义（本轮补入合同） | 待写 |
 | Reverse | 无排水孔不给水量；排水未知为缺证据 | Reverse | 合同第4节 | 已写 |
 | U5/U6/U7 | — | — | — | N/A：无写入、无共享状态、无本地态 |
@@ -72,7 +72,7 @@ Expected 来源：`mvp-watering-policy-contract.md` 第1～4节字段＋第6节�
 | U1 空缺 | 发布为 null/undefined → unavailable；缺任一必填字段 → invalid | Edge | 配置治理“无发布不可用、不补默认” | 待写 |
 | U2 边界 | 捕获时刻 = 生效时刻 → available；= 失效时刻 → unavailable；早于生效 → not_effective | Edge | 玻璃策略先例的半开区间 | 待写 |
 | U3 非法 | 摘要不符、多余字段、捕获时刻非 UTC → invalid | Edge | 配置治理“正文不可原地修改、严格 Schema” | 待写 |
-| U3 非法 | 区间反序、比例越界、排出比例 ≥ 1、某材料易利用水上限 > 持水量下限、参考点超出有效域、缺任一材料 → invalid | Edge | 合同第2、4节物理约束 | 待写 |
+| U3 非法 | 区间反序、比例越界、排出比例 ≥ 1、某材料可用水（AW，Bilderback 2005 口径）上限 > 持水量下限、参考点超出有效域、缺任一材料 → invalid | Edge | 合同第2、4节物理约束 | 待写 |
 | Reverse | 非 active 状态（draft/verified/retired）→ unavailable，不返回参数 | Reverse | 合同第6节 | 待写 |
 | U4 幂等 | 返回快照冻结，修改原发布对象不影响已返回快照 | Edge | 配置治理“同一请求锁定只读快照” | 待写 |
 | U5/U6/U7 | — | — | — | N/A：纯解析，无写入、无共享状态、无本地态 |
@@ -152,3 +152,18 @@ Break：坐标未四舍五入即进入存储。Mutation：去掉两位小数取�
 | U4–U7 | — | — | — | N/A：纯函数，无写入、无共享状态、无本地态 |
 
 Break：比例用错分母（用当前时段而非测量时段 GHI）。Mutation：把 `ghi / anchorGhi` 改成 `anchorGhi / ghi` → Happy 用例应红。
+
+## J. v3 盆型与基质参与干湿循环（用户 2026-10-10 审定；合同第 8 节）
+
+| 用例 | 层次 | Expected 来源 | 文件 |
+|---|---|---|---|
+| P1/P2/P3/P5 参考盆恒等与 12/16/20cm、泥炭/颗粒土窗口；D1/D2 方向 | L3 unit_fake | 合同 8.4～8.5 公式＋独立 Python 手算；文献 §11 方向 | `test/care/watering/pot-substrate-drying.spec.ts` |
+| M1/M2/S1 缺几何、缺基质兜底、无孔盆 | L3 unit_fake | 合同 8.6 | 同上 |
+| PM1～PM6 主要材料（窗口、拒绝、浇水量） | L3 unit_fake | 合同 8.10＋手算 | 同上 |
+| MX1～MX3 主要材料（水量分支） | L1 unit_fake | 合同 8.10＋手算 | `test/care/watering/mvp-water-amount.spec.ts` |
+| G1～G5 缺段 ≤6h 补齐、>6h 无结论、覆盖终点不补、v2 不变 | L3 unit_fake | 合同 8.11＋手算 | `test/care/watering/drying-gap-fill.spec.ts` |
+| PS1～PS3 `primarySubstrateMaterial` DTO | L1 unit_fake | `watering-advice-http-contract.md` | `test/care/watering-advice-request.spec.ts` |
+| V3-1～V3-4 v3 正文解析与物理约束；读取器 v3 准入 | L1 unit_fake | 合同 8.7＋审定值 | `test/care/mvp-watering-policy.spec.ts`、`mysql-mvp-watering-policy-reader.spec.ts` |
+| P4/P6/D3/D4/R1 盆壁材质 | — | skip：待盆材质验证票 ClickUp `z8v0kmvewm` | `pot-substrate-drying.spec.ts` 末尾 |
+
+Mutation：缺段阈值 6→7 使 G3 变红；主要材料最小占比 0.5→0.6 使 PM1/PM3/PM6/MX1 变红（2026-10-10 已执行并恢复）。未覆盖：真实 MySQL 读回与发布、HTTP 端到端、真实盆栽精度。

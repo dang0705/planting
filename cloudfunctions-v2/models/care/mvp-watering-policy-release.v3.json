@@ -1,0 +1,181 @@
+{
+  "contractVersion": "care-watering-mvp/v3",
+  "scopeCode": "care_mvp_watering",
+  "confidence": "low",
+  "sourceRef": "cloudfunctions-v2/models/care/mvp-literature-parameters.md",
+  "referencePpfd": 50,
+  "referenceVpdKpa": 1.4,
+  "lightHalfSaturationPpfd": 75,
+  "vpdSensitivity": 0.6,
+  "transpirationShare": 0.8,
+  "validPpfd": {
+    "min": 0,
+    "max": 1500
+  },
+  "validVpdKpa": {
+    "min": 0.1,
+    "max": 4
+  },
+  "indoorVpdFallbackKpa": {
+    "min": 0.7,
+    "max": 2.2
+  },
+  "cultivationRetention": {
+    "min": 0.8,
+    "max": 1.25
+  },
+  "soilEvidenceFallbackHours": 24,
+  "soilEvidenceMaxHours": 72,
+  "referencePot": {
+    "topDiameterCm": 15,
+    "bottomDiameterCm": 11,
+    "heightCm": 13
+  },
+  "referenceAvailableWater": 0.3,
+  "plantDemandVolumeExponent": {
+    "min": 0,
+    "max": 0.52
+  },
+  "remainingFraction": {
+    "wet": {
+      "min": 0.6,
+      "max": 1
+    },
+    "moist": {
+      "min": 0.25,
+      "max": 0.6
+    },
+    "surfaceDryOnly": {
+      "min": 0,
+      "max": 0.5
+    }
+  },
+  "depletion": {
+    "keep_moist": {
+      "min": 0.15,
+      "max": 0.25
+    },
+    "surface_dry": {
+      "min": 0.25,
+      "max": 0.35
+    },
+    "dry_wet": {
+      "min": 0.45,
+      "max": 0.55
+    },
+    "full_dry": {
+      "min": 0.7,
+      "max": 0.85
+    }
+  },
+  "substrates": {
+    "general": {
+      "containerCapacity": {
+        "min": 0.25,
+        "max": 0.4
+      },
+      "availableWater": {
+        "min": 0.1,
+        "max": 0.17
+      }
+    },
+    "coco": {
+      "containerCapacity": {
+        "min": 0.5,
+        "max": 0.8
+      },
+      "availableWater": {
+        "min": 0.18,
+        "max": 0.35
+      }
+    },
+    "ceramsite": {
+      "containerCapacity": {
+        "min": 0.08,
+        "max": 0.15
+      },
+      "availableWater": {
+        "min": 0.02,
+        "max": 0.05
+      }
+    },
+    "peat": {
+      "containerCapacity": {
+        "min": 0.52,
+        "max": 0.65
+      },
+      "availableWater": {
+        "min": 0.25,
+        "max": 0.35
+      }
+    },
+    "perlite": {
+      "containerCapacity": {
+        "min": 0.2,
+        "max": 0.3
+      },
+      "availableWater": {
+        "min": 0.08,
+        "max": 0.15
+      }
+    },
+    "bark": {
+      "containerCapacity": {
+        "min": 0.49,
+        "max": 0.7
+      },
+      "availableWater": {
+        "min": 0.1,
+        "max": 0.37
+      }
+    },
+    "sphagnum": {
+      "containerCapacity": {
+        "min": 0.55,
+        "max": 0.85
+      },
+      "availableWater": {
+        "min": 0.25,
+        "max": 0.4
+      }
+    },
+    "gritty": {
+      "containerCapacity": {
+        "min": 0.32,
+        "max": 0.45
+      },
+      "availableWater": {
+        "min": 0.09,
+        "max": 0.31
+      }
+    },
+    "coarse_sand": {
+      "containerCapacity": {
+        "min": 0.2,
+        "max": 0.3
+      },
+      "availableWater": {
+        "min": 0.05,
+        "max": 0.12
+      }
+    }
+  },
+  "headspaceCm": {
+    "min": 1,
+    "max": 3
+  },
+  "leachingFraction": {
+    "min": 0.1,
+    "max": 0.2
+  },
+  "luxPerPpfd": {
+    "min": 50,
+    "max": 58
+  },
+  "luxAnchorMinGhiWm2": 50,
+  "luxUncertainty": {
+    "meter": 0.1,
+    "camera_estimate": 0.3
+  },
+  "luxAnchorMaxAgeDays": 30
+}

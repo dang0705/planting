@@ -5396,6 +5396,357 @@
         "cloudfunctions-v2/models/care/long-term-care-contract.md",
         "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
       ]
+    },
+    {
+      "id": "care.plans.expiry_grace_hours",
+      "chineseName": "检查计划过期宽限小时数（超过计划时刻多久仍未完成即过期）",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "hard_rule",
+      "currentValue": 72,
+      "consumers": [
+        "care-plan-expiry 事件函数（计划过期扫描）"
+      ],
+      "changePolicy": "不可运营配置；调整须同时评审盆土证据有效期（soilEvidenceMaxHours），同步合同 §12、本目录、care 代码常量与锁定测试并经评审；只影响之后的扫描，不回滚已过期计划",
+      "fallback": "运行时不读取目录；常量与目录不一致由 CI 一致性测试阻断发布；扫描未运行时计划保持 planned，不提前过期",
+      "expected": "status=planned 且 当前时刻 > scheduledAt + 72 小时 → expired；恰好 72 小时不过期；completed/cancelled/expired 不被改写",
+      "decisionGroup": "care_algorithms",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-09 裁决（定时任务写入过期）；主代理 2026-10-09 配置裁决：72 小时与 soilEvidenceMaxHours=72 对齐，owner=care。主代理 2026-10-09 裁定改为 hard_rule：MVP 阶段极少变更，引入类型化策略 release 的复杂度大于收益，由代码常量 + 目录一致性测试 + 合同 §12 共同保证；将来需要调整时再升级为 domain_policy。",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md#12. 计划过期",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
+      ]
+    },
+    {
+      "id": "care.plans.expiry_scan",
+      "chineseName": "检查计划过期扫描频率、批量与单次时长上限",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "cron": "0 0 * * * * *",
+        "intervalHours": 1,
+        "batchSize": 500,
+        "runBudgetFractionOfFunctionTimeout": 0.5
+      },
+      "consumers": [
+        "care-plan-expiry 事件函数",
+        "CloudBase 定时触发器配置"
+      ],
+      "changePolicy": "不可运营配置；调整须同步合同 §12、本目录、care 代码常量、定时触发器 cron 与锁定测试并经评审；更改批量需重新评估单批事务锁时长",
+      "fallback": "取不到函数超时则本次不执行（not_started）；批次失败则本次停止、已提交批次保留，下一周期自动补上",
+      "expected": "每小时一次；每批最多 500 行，影响行数 < 500 即结束；到达 开始时刻 + 函数超时/2 后不再开新批次",
+      "decisionGroup": "reliability_ops",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "主代理 2026-10-09 配置裁决：每小时一次；单次批量 500，分批直到清空或达到单次运行时长上限（函数超时的一半）。主代理 2026-10-09 裁定改为 hard_rule：MVP 阶段极少变更，引入类型化策略 release 的复杂度大于收益，由代码常量 + 目录一致性测试 + 合同 §12 共同保证；将来需要调整时再升级为 domain_policy。",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md#12. 计划过期"
+      ]
+    },
+    {
+      "id": "care.watering.cultivation_reference_pot",
+      "chineseName": "干燥基线的参考盆几何",
+      "valueType": "object",
+      "unit": "厘米（盆口内径/盆底内径/内深）",
+      "fallback": "无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable",
+      "expected": "参考盆配泥炭、塑料盆壁时 v=P=Ae=1，存量比只剩参考泥炭物性区间 [0.833,1.167]；参考环境下根区微湿检查窗口 +1.041667～+5.6 天",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.3 参考盆（基线的量纲锚点，已审定）",
+        "cloudfunctions-v2/models/care/mvp-literature-parameters.md#8. 室内观叶植物的日耗水量",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "confirmed",
+      "currentValue": {
+        "topDiameterCm": 15,
+        "bottomDiameterCm": 11,
+        "heightCm": 13,
+        "wall": "non_porous",
+        "drainage": true
+      },
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 不可变发布正文；新版本只影响新计算，可回退到 v2",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+    },
+    {
+      "id": "care.watering.cultivation_reference_available_water",
+      "chineseName": "参考基质可用水（AW，Bilderback 2005 口径）比例（定义锚点）",
+      "valueType": "number",
+      "unit": "体积比 0～1",
+      "fallback": "无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable",
+      "expected": "存量比 S = 体积比 × 所选材料 AW 区间 ÷ 0.30；参考泥炭得 [0.833,1.167]",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.3 参考盆（基线的量纲锚点，已审定）",
+        "cloudfunctions-v2/models/care/mvp-literature-parameters.md#(4) 泥炭基混合基质",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "confirmed",
+      "currentValue": 0.3,
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 不可变发布正文；新版本只影响新计算，可回退到 v2",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+    },
+    {
+      "id": "care.watering.plant_demand_volume_exponent",
+      "chineseName": "植物蒸腾随盆容积的伸缩指数",
+      "valueType": "range",
+      "unit": "无量纲指数",
+      "fallback": "无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable",
+      "expected": "植物比 P = 体积比^b 在 b∈[0,0.52] 的包络；20/15/18 盆 P=[1,1.703]，12/9/11 盆 P=[0.710,1]",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.4 逐项推导（全部区间算术，不取中值）",
+        "cloudfunctions-v2/models/care/mvp-literature-parameters.md#11. 盆型、盆材与干燥速度",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "confirmed",
+      "currentValue": {
+        "min": 0,
+        "max": 0.52
+      },
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 不可变发布正文；新版本只影响新计算，可回退到 v2",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+    },
+    {
+      "id": "care.watering.porous_wall_evaporation_ratio",
+      "chineseName": "透气盆壁单位面积蒸发 ÷ 土表单位面积蒸发（κ）",
+      "valueType": "range",
+      "unit": "无量纲",
+      "proposedValue": {
+        "min": 0.4,
+        "max": 0.8
+      },
+      "fallback": "未审定时不发布 v3",
+      "expected": "素烧陶盆蒸发面比 Ae = (土表面积 + κ×湿润盆壁面积) ÷ 参考土表面积；20/15/18 素烧陶 Ae=[3.94,6.22]，参考环境根区微湿窗口 +1.033387～+9.815403 天",
+      "pendingReason": "待验证票 z8v0kmvewm：室内观叶植物塑料/釉面/素烧陶盆整盆失水称重对比；验证通过前不得进入源码、DTO 或发布正文。Suh 1977：塑料/瓷盆蒸发约为陶盆 43%、陶盆约 2/3 蒸发经盆壁；按常见陶盆壁/口面积比 2.5～5 推导 κ≈0.4～0.8（低置信），需用户审定",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.4 逐项推导（全部区间算术，不取中值）",
+        "cloudfunctions-v2/models/care/mvp-literature-parameters.md#11. 盆型、盆材与干燥速度"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering 干燥积分）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 不可变发布正文；审定前不得进入源码、环境变量或数据库；新版本只影响新计算，可回退到 v2",
+      "phase": "P4",
+      "ticketTitle": "[E06][验证] 盆壁材质对盆土干燥速度的影响（κ、wallMaterial）",
+      "clickUpTicketId": "z8v0kmvewm",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 审定：盆壁材质须经严格验证、开票并实现后才能进入模型；验证票 z8v0kmvewm",
+      "blockingScope": "盆壁材质参与干燥窗口（κ、wallMaterial 字段、织物盆）；不阻断已审定的 v3 盆体积/基质模型"
+    },
+    {
+      "id": "care.watering.pot_wall_material_classes",
+      "chineseName": "盆壁材质枚举与透气类别映射",
+      "valueType": "enum_map",
+      "unit": "plastic / glazed_ceramic / unglazed_terracotta / null",
+      "proposedValue": {
+        "plastic": "non_porous(κ=0)",
+        "glazed_ceramic": "non_porous(κ=0)",
+        "unglazed_terracotta": "porous(κ 区间)",
+        "null": "unknown(κ∈[0,κmax])",
+        "fabric": "第一版不单列，按未知"
+      },
+      "fallback": "未审定时 DTO 不新增 wallMaterial，v3 不发布",
+      "expected": "釉面陶瓷与塑料窗口完全相同；非法字符串拒绝；未知取 κ 并集，不默认塑料或陶盆",
+      "pendingReason": "待验证票 z8v0kmvewm：室内观叶植物塑料/釉面/素烧陶盆整盆失水称重对比；验证通过前不得进入源码、DTO 或发布正文。需新增 MeasuredPotInput.wallMaterial 与档案/watering-advice 请求 DTO 字段（属合同修订）；织物盆是否单列待定",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.4 逐项推导（全部区间算术，不取中值）",
+        "cloudfunctions-v2/models/care/mvp-literature-parameters.md#11. 盆型、盆材与干燥速度"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering 干燥积分）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 不可变发布正文；审定前不得进入源码、环境变量或数据库；新版本只影响新计算，可回退到 v2",
+      "phase": "P4",
+      "ticketTitle": "[E06][验证] 盆壁材质对盆土干燥速度的影响（κ、wallMaterial）",
+      "clickUpTicketId": "z8v0kmvewm",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 审定：盆壁材质须经严格验证、开票并实现后才能进入模型；验证票 z8v0kmvewm",
+      "blockingScope": "盆壁材质参与干燥窗口（κ、wallMaterial 字段、织物盆）；不阻断已审定的 v3 盆体积/基质模型"
+    },
+    {
+      "id": "care.watering.cultivation_retention_fallback",
+      "chineseName": "缺基质证据时的兜底存量比",
+      "valueType": "range",
+      "unit": "无量纲",
+      "fallback": "无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable",
+      "expected": "几何齐备但未选基质：S 取 0.8～1.25、P=Ae=1，参考环境根区微湿窗口 +1～+6 天；几何不全时仍按既有安全顺序不公开窗口",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.6 缺证据时的行为",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "confirmed",
+      "currentValue": {
+        "min": 0.8,
+        "max": 1.25
+      },
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 发布正文 cultivationRetention（v3 语义：缺基质兜底存量比）；新版本只影响新计算",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+    },
+    {
+      "id": "care.watering.substrate_mix_drying_rule",
+      "chineseName": "混合基质（配比未知）主要材料规则",
+      "valueType": "rule",
+      "unit": "主要材料＝体积占一半及以上",
+      "fallback": "主要材料不属于所选材料 → VALIDATION_FAILED；v1/v2 策略忽略主要材料",
+      "expected": "16/12/14 泥炭＋珍珠岩、主要材料泥炭：AW [0.165,0.35]，根区微湿窗口 +0.756895～+7.010979 天、根区干浇水 70～300 mL；未标为 +0.366979～+7.010979 天、40～300 mL",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.10 混合基质「主要材料」规则",
+        "cloudfunctions-v2/models/care/watering-advice-http-contract.md"
+      ],
+      "domain": "care",
+      "layer": "hard_rule",
+      "status": "hard_rule",
+      "currentValue": "未标主要材料：各组分并集；标了主要材料 p：[min(p.min, ½p.min+½其余.min), max(p.max, ½p.max+½其余.max)]；可用水（AW，Bilderback 2005 口径）与持水量上限同一规则",
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（干燥存量与浇水量）",
+        "watering-advice 请求 DTO primarySubstrateMaterial"
+      ],
+      "changePolicy": "硬规则不可被配置覆盖；变更须同步合同 §8.10、combine-mvp-substrate-mix.ts 常量与锁定测试",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）"
+    },
+    {
+      "id": "care.watering.no_drainage_drying_upper_bound",
+      "chineseName": "无孔/排水未知盆的存量上端规则",
+      "valueType": "rule",
+      "unit": "—",
+      "proposedValue": "存量下端照常、上端无界（内部最晚交点不求解）；公开结果维持既有安全顺序 review_drainage / insufficient_evidence",
+      "fallback": "公开行为与 v2 相同（不公开窗口、不给水量）",
+      "expected": "排水明确无 → review_drainage、checkWindow=null、amountMl=null；不得用大数冒充无穷",
+      "pendingReason": "无孔盆浇入水量未知、可超过容器持水量；是否需要对外给“排水风险下的检查提示”待产品裁决",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.6 缺证据时的行为",
+        "cloudfunctions-v2/models/care/pot-safety-contract.md"
+      ],
+      "domain": "care",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "consumers": [
+        "care watering-advice（临时与长期，assessMvpWatering 干燥积分）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v3 不可变发布正文；审定前不得进入源码、环境变量或数据库；新版本只影响新计算，可回退到 v2",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "用户 2026-10-10 裁决盆型与基质须参与干湿循环；本项为草案参数，待用户审定",
+      "blockingScope": "无孔/排水未知盆的内部窗口上端（公开结果不受影响，已按既有安全顺序处理）"
+    },
+    {
+      "id": "care.watering.drying_gap_fill_max_hours",
+      "chineseName": "环境数据缺段可保守补齐的最长小时数",
+      "valueType": "integer",
+      "unit": "小时",
+      "currentValue": 6,
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.11 环境数据缺段补齐"
+      ],
+      "consumers": [
+        "care watering-advice（assessMvpWatering → fillMvpDryingGaps，v3 起）"
+      ],
+      "changePolicy": "硬规则：证据连续性准入边界，与 Open-Meteo 逐小时粒度绑定，不随策略发布调参；变更须同步合同 §8.11、MVP_DRYING_GAP_FILL_MAX_HOURS 与锁定测试",
+      "fallback": "缺段 >6 小时保持空洞，按既有规则无结论；v1/v2 不补",
+      "expected": "参考盆泥炭、第 6～12 小时缺 PPFD（6h）→ 窗口 +0.592314～+5.846429 天；缺 7h → 不公开窗口",
+      "domain": "care",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "layer": "hard_rule",
+      "status": "hard_rule",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.watering.cultivation_geometry_relation",
+      "chineseName": "盆体积与土表面积的圆台几何关系",
+      "valueType": "rule",
+      "unit": "cm、mL、cm²",
+      "currentValue": "V=πf(R_f²+R_f r+r²)/3，A_top=πR_f²，R_f=r+(R−r)f/H；实际盆与参考盆按同一留空端点取比值后包络",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md#8.4 逐项推导（全部区间算术，不取中值）",
+        "cloudfunctions-v2/models/care/measured-pot-contract.md"
+      ],
+      "consumers": [
+        "care deriveCultivationDrying",
+        "care estimateMvpWaterAmount（装土体积）"
+      ],
+      "changePolicy": "固定数学规则，不可配置；变更须同步合同与锁定测试",
+      "fallback": "几何不全或装不了土 → 兜底存量比，公开结果按既有安全顺序",
+      "expected": "参考盆恒等：v=P=Ae=1；12/9/11 盆体积比 0.52～0.54、土表面积比 0.63～0.64",
+      "domain": "care",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-10 审定（主代理转达）",
+      "layer": "hard_rule",
+      "status": "hard_rule",
+      "decisionGroup": "hard_business_rule"
     }
   ],
   "providerProfiles": [
@@ -6120,6 +6471,14 @@
       "url": "https://app.clickup.com/t/z8v0kmr974",
       "agents": [
         "diagnosis_terra"
+      ]
+    },
+    "[E06][验证] 盆壁材质对盆土干燥速度的影响（κ、wallMaterial）": {
+      "id": "z8v0kmvewm",
+      "url": "https://app.clickup.com/t/z8v0kmvewm",
+      "agents": [
+        "root",
+        "care_terra"
       ]
     }
   },

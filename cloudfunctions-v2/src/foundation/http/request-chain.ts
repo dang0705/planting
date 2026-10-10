@@ -32,6 +32,8 @@ export type PublicErrorType =
   | 'CARE_PROPOSAL_NOT_CONFIRMABLE'
   /** 养护计划版本冲突（long-term-care/v1）。 */
   | 'CARE_PLAN_VERSION_CONFLICT'
+  /** 养护计划已过期（long-term-care/v1 §12）。 */
+  | 'CARE_PLAN_EXPIRED'
   | 'INTERNAL_ERROR'
   | 'SERVICE_UNAVAILABLE'
   /** 游客令牌签发超过来源限流（guest-token/v1）。 */

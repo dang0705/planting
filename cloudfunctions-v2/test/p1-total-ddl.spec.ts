@@ -44,6 +44,12 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     // Expected 来源：guest-token/v1（用户 2026-10-08 冻结）——游客改为服务端自发令牌，
     // 023 只允许扩展 guest_sessions：新增来源与防刷列、把 CloudBase 匿名摘要改为可空。
     const isGuestTokenExtension = entry.file === '023_guest_token_sessions.sql'
+    // Expected 来源：long-term-care/v1 §12.7（用户 2026-10-09 裁决计划过期定时扫描）——028 只允许为 care_plans 新增一个扫描二级索引。
+    const isCarePlanExpiryIndex = entry.file === '028_care_plan_expiry_scan_index.sql'
+    if (isCarePlanExpiryIndex) {
+      assert.deepEqual([...content.matchAll(/^CREATE INDEX `([^`]+)` ON `([^`]+)`/gmu)].map(match => [match[1], match[2]]), [['idx_care_plan_expiry_scan', 'care_plans']])
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|MODIFY|ALTER|CREATE TABLE|CREATE TRIGGER)\b/iu)
+    }
     if (isGuestTokenExtension) {
       assert.deepEqual([...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]), ['guest_sessions'])
       assert.deepEqual([...content.matchAll(/ADD COLUMN `([^`]+)`/gu)].map(match => match[1]), ['identity_source', 'issuance_source_hash'])
@@ -154,6 +160,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 建表必须固定 utf8mb4`)
     } else if (isGuestTokenExtension) {
       assert.match(content, /^ALTER TABLE `guest_sessions`\s/mu, '游客令牌迁移只扩展既有游客会话表')
+    } else if (isCarePlanExpiryIndex) {
+      assert.match(content, /^CREATE INDEX `idx_care_plan_expiry_scan` ON `care_plans` \(`status`, `scheduled_at_ms`, `id`\);$/mu, '过期扫描迁移只新增既定二级索引')
     } else if (isSessionPolicyExtension) {
       assert.match(content, /^ALTER TABLE `user_sessions`\s/mu, '会话策略迁移只扩展既有会话表')
       assert.match(content, /\bADD COLUMN\b/u, '会话策略迁移必须显式新增字段')

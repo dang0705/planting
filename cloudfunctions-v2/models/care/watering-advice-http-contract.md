@@ -15,6 +15,7 @@
 | `lastWatering` | `{ wateredAt }` 或 null | 否 | 可选“不知道”；不补今天 |
 | `pot` | `{ isInnerPot, innerTopDiameterCm, innerBottomDiameterCm, innerHeightCm, hasDrainageHole: true\|false\|null }` 或 null | 否 | 水量估算所需；缺失时水量为缺证据 |
 | `substrateMaterials` | V1 九类代码数组（`general`、`coco`、`ceramsite`、`peat`、`perlite`、`bark`、`sphagnum`、`gritty`、`coarse_sand`） | 否 | 配比未知；空数组表示未选 |
+| `primarySubstrateMaterial` | 九类代码之一或 `null`（2026-10-10 增补） | 否 | 主要材料＝体积占一半及以上；必须属于 `substrateMaterials`，否则 400 `VALIDATION_FAILED`；缺省/`null` 按各组分并集。规则见 `mvp-watering-policy-contract.md` §8.10 |
 | `indoorClimate` | `{ temperatureC, relativeHumidityPercent, measuredAt }` 或 null | 否 | 室内实测；缺失时用策略兜底区间并标为估算 |
 
 时间均为带 `Z` 的 UTC ISO 字符串，且不得晚于服务器当前时刻。未知字段拒绝（`VALIDATION_FAILED`）。
@@ -26,6 +27,18 @@
 ```
 
 `result` 即 `assessMvpWatering` 的公开结果：`status`（ready / insufficient_evidence / temporarily_unavailable）、`confidence: low`、`recommendedActions`、`details.action`、`details.checkWindow`（检查盆土窗口与当地日期）、`details.amountMl`（建议浇入区间）、`details.missingEvidence`。不返回输入快照、策略版本、摘要或内部引用。
+
+### 光照与室外辐射缺失码（2026-10-10 增补，用户经主代理确认）
+
+结果为 `insufficient_evidence` 且植物位置光照不可用时，`details.missingEvidence` 在原有类别之后**追加**一个明确缺失码，让前端知道该补什么；原有类别不删除。两个码可同时出现（例如 Provider 不可用且未测 Lux）。
+
+| 缺失码 | 何时出现 | 内部原因 | 前端建议 |
+|---|---|---|---|
+| `outdoor_radiation` | 室外辐射取不到：Provider 不可用（网络、超时、HTTP 错误、响应非法），或返回的序列里没有覆盖 Lux 测量时刻的时段 | 辐射为空；光照原因 `anchor_radiation` | 提示“暂时取不到天气数据，请稍后再试”；不要求用户重新测光 |
+| `plant_light` | 植物位置 Lux 锚点不可用：未测 Lux（不论室外辐射是否可得），或有室外辐射时读数超过 30 天、测量时段太暗（GHI < 50 W/m²）、读数与室外不一致 | `light_reading`、`light_reading_stale`、`anchor_too_dark`、`anchor_inconsistent` | 提示“请在白天明亮时段、于植物位置重新测一次光照” |
+
+- 只在 `status = insufficient_evidence` 时追加；`ready`（例如根区干可以浇水、湿土暂停）、`temporarily_unavailable` 与缺植物基线时不追加。
+- 缺失码是稳定枚举，不含坐标、读数、时间或 Provider 错误原文。
 
 ## 写入与幂等
 

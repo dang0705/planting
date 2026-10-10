@@ -1,0 +1,315 @@
+{
+  "capturedAt": "2026-10-10",
+  "ticket": "E06 / [P4] 盆土视觉和四类养护能力（z8v0kmr973）",
+  "status": "implemented_green_v3_core_wall_material_pending_validation",
+  "decisions": {
+    "user": "用户 2026-10-10 裁决：盆型（大小/形状/材质/排水孔）与基质必须真正参与干湿循环；本阶段只做设计+合同+参数调研+RED，参数定稿须用户审，不实现产品代码",
+    "userReview": {
+      "at": "2026-10-10",
+      "via": "主代理转达",
+      "items": [
+        "盆壁材质（κ、wallMaterial、织物盆）须严格验证、开票并实现后才能进入模型 → 本次不实现；验证票 ClickUp z8v0kmvewm（列表 Phase-P4）",
+        "参考盆 15/11/13 塑料有孔、参考泥炭 AW 0.30、b=0–0.52、盆体积与土表面积几何关系 → confirmed",
+        "混合基质：用户标主要材料；合同 §8.10 规则（主材料≥½，区间=主材料 ∪ 与最极端其余组分对半混合）；未标退回并集；DTO 增 primarySubstrateMaterial",
+        "环境缺段 ≤6h 用有效域保守需求全区间补齐，>6h 无结论；阈值 hard_rule",
+        "缺基质兜底 0.8–1.25 保留 confirmed"
+      ]
+    }
+  },
+  "goalCard": {
+    "goal": "把栽培保水倍率从固定区间 0.8～1.25 改为由实测盆与基质推导的「可用水量 ÷ 需水」结构，形成草案合同、pending 参数与 RED",
+    "assumptions": [
+      "Tropicals 基线对应常见 15cm 塑料盆＋泥炭类基质（待审）",
+      "无本地标定，按用户 2026-10-08 裁决用文献值"
+    ],
+    "minimalVerification": "新增 Expected 用例在当前产品上 RED；回到 skip 后全量 vitest 0 失败",
+    "stopConditions": "参数未审定前不得实现或发布 v3",
+    "rollback": "删除合同第 8 节、文献 §11、目录 8 项与新 spec；v1/v2 无变化"
+  },
+  "contract": {
+    "file": "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md",
+    "sections": [
+      "§8 草案：盆型与基质参与干湿循环（8.1～8.9）"
+    ],
+    "sha256": "1531f1d585565861a1b91c0007052a0ff24a9c39435d87342a1a340d6e5aae69"
+  },
+  "research": {
+    "file": "cloudfunctions-v2/models/care/mvp-literature-parameters.md",
+    "sections": [
+      "§11 盆型、盆材与干燥速度"
+    ],
+    "sha256": "75c144ea358e4fc3e5989f36602c32d992971a6ff092180a2cdde40f59d2eb6b",
+    "sources": [
+      {
+        "factor": "盆容积→植物蒸腾",
+        "ref": "Poorter et al. 2012, Functional Plant Biology 39(11):839–850",
+        "url": "https://www.publish.csiro.au/FP/fp12049",
+        "finding": "盆容积翻倍生物量平均 +43%",
+        "confidence": "中"
+      },
+      {
+        "factor": "盆壁材质",
+        "ref": "Suh 1977, Korean J. Agricultural Science 4(2):317–343",
+        "url": "https://koreascience.kr/article/JAKO197719959263263.pub?lang=en",
+        "finding": "塑料/瓷盆蒸发约为素烧陶盆 43%；陶盆约 2/3 蒸发经盆壁",
+        "confidence": "中（摘要级）"
+      },
+      {
+        "factor": "盆壁材质（推广）",
+        "ref": "NC State 园艺推广扫描件",
+        "url": "https://hortscans.ces.ncsu.edu/uploads/c/l/clay_pla_543418275d72f.pdf",
+        "finding": "陶盆浇水人工多 50%～100%（检索摘要，未 OCR 核对）",
+        "confidence": "低"
+      },
+      {
+        "factor": "织物盆侧壁蒸发",
+        "ref": "Million & Yeager 2022 HortScience",
+        "url": "https://doaj.org/article/5522358392154d259ca8e12a45afc099",
+        "finding": "灌溉需水 +66%（检索摘要，原页 403）",
+        "confidence": "低"
+      },
+      {
+        "factor": "侧壁隔离",
+        "ref": "O'Connor, Koski, Klett, ASHS 2013",
+        "url": "https://ashs.confex.com/ashs/2013/webprogram/Paper14164.html",
+        "finding": "侧壁包塑后失水与塑料盆相同（定性）",
+        "confidence": "中"
+      },
+      {
+        "factor": "盆高→容器持水量",
+        "ref": "Owen & Altland 2008, HortScience 43(2):505",
+        "url": "https://journals.ashs.org/view/journals/hortsci/43/2/article-p505.xml",
+        "finding": "盆高 3.8→15.2cm，CC 降 20%～42%（未建模，记为局限）",
+        "confidence": "中"
+      },
+      {
+        "factor": "基质可用水（AW，Bilderback 2005 口径）",
+        "ref": "已发布 v2 物性表（Bilderback 2005、Schabauer 2026 等，见文献 §1）",
+        "url": "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json",
+        "finding": "复用水量分支同一物性",
+        "confidence": "中-低"
+      }
+    ]
+  },
+  "configurationCatalog": {
+    "added_all_pending": [
+      "care.watering.cultivation_reference_pot",
+      "care.watering.cultivation_reference_available_water",
+      "care.watering.plant_demand_volume_exponent",
+      "care.watering.porous_wall_evaporation_ratio",
+      "care.watering.pot_wall_material_classes",
+      "care.watering.cultivation_retention_fallback",
+      "care.watering.substrate_mix_drying_rule",
+      "care.watering.no_drainage_drying_upper_bound"
+    ],
+    "currentValue": "P1_PENDING（草案值只放 proposedValue，不作默认）",
+    "regenerated": [
+      "docs/backend-v2/architecture/configuration-variable-catalog.md（同时带出 JSON 中已存在但未生成的 care.plans.expiry_grace_hours / expiry_scan 两行）",
+      "docs/backend-v2/architecture/manifest.json（仅更新 catalog json/md 两个 SHA-256；生成脚本会丢弃 generatedAt/syncNote 等元数据并改动他人文件哈希，故未整体采用其输出）"
+    ],
+    "sha256": {
+      "configuration-variable-catalog.json": "dd0eb757d47ba2b9521cc8c8ecc191b6019fc854421709ff03e0c99a68fe771a",
+      "configuration-variable-catalog.md": "23d02c26abb03e44beae6e8d5b2951138445ce109f6c086186897c8695acba40"
+    },
+    "round2": {
+      "confirmed": [
+        "care.watering.cultivation_reference_pot",
+        "care.watering.cultivation_reference_available_water",
+        "care.watering.plant_demand_volume_exponent",
+        "care.watering.cultivation_retention_fallback"
+      ],
+      "hard_rule": [
+        "care.watering.substrate_mix_drying_rule",
+        "care.watering.drying_gap_fill_max_hours（新，6h）",
+        "care.watering.cultivation_geometry_relation（新）"
+      ],
+      "pending": [
+        "care.watering.porous_wall_evaporation_ratio（票 z8v0kmvewm）",
+        "care.watering.pot_wall_material_classes（票 z8v0kmvewm）",
+        "care.watering.no_drainage_drying_upper_bound"
+      ],
+      "ticketBindingAdded": "[E06][验证] 盆壁材质对盆土干燥速度的影响（κ、wallMaterial） → z8v0kmvewm",
+      "sha256": {
+        "configuration-variable-catalog.json": "10d9a01c1042580a2708c2437d805ae67a59c8a69c208340fc5b4f24380f6cec",
+        "configuration-variable-catalog.md": "93811d83b8f3865688d1a49d0bbcd8562ddc891d9dcd561d76bda04648be8f79"
+      }
+    }
+  },
+  "expectedTests": {
+    "file": "cloudfunctions-v2/test/care/watering/pot-substrate-drying.spec.ts",
+    "layer": "unit_fake（L3）",
+    "state": "describe.skip（文件头注明待参数审定后启用）",
+    "expectedSource": "合同 §8.4～8.6 草案公式＋独立 Python 手算（不调用 SUT）；方向性用例来自文献 §11",
+    "realPath": "assessMvpWatering → mapMvpSoilObservation → integrateDryingFromAnchor → projectWateringReplayResult",
+    "replacedBoundary": "环境时段显式输入（参考环境），无 Provider/DB/HTTP",
+    "notCovered": [
+      "v3 正文 Schema 与读取器",
+      "MySQL 读回",
+      "watering-advice DTO 新字段 wallMaterial",
+      "真实盆栽精度"
+    ],
+    "redRun": {
+      "command": "npx vitest run --config vitest.config.mjs test/care/watering/pot-substrate-drying.spec.ts（临时去掉 skip）",
+      "result": "10 failed | 4 passed (14)",
+      "red": [
+        "P1 参考盆 15/11/13 塑料＋泥炭 → 检查窗口 +1.041667～+5.6 天（不再叠加 0.8～1.25）",
+        "P2 12/9/11 塑料＋泥炭（小盆存量少）→ +0.581337～+4.370344 天",
+        "P3 20/15/18 塑料＋泥炭（大盆存量多）→ +1.553893～+13.437210 天",
+        "P4 20/15/18 素烧陶＋泥炭（盆壁蒸发 κ∈[0.4,0.8]）→ +1.033387～+9.815403 天",
+        "P5 12/9/11 塑料＋颗粒土（AW 0.09～0.31）→ +0.209281～+3.870876 天",
+        "P6 20/15/18 盆壁材质未知＋泥炭 → κ 取 [0, 0.8] 并集：+1.033387～+13.437210 天",
+        "D1 方向：同植物同环境，20cm 塑料盆的最晚检查晚于 12cm 塑料盆（存量随体积增加）",
+        "D2 方向：同一 16/12/14 塑料盆，颗粒土的最早检查早于泥炭（可用水（AW，Bilderback 2005 口径）更少）",
+        "D3 方向：同一 20/15/18 盆配泥炭，素烧陶盆的最早检查早于塑料盆（盆壁蒸发）",
+        "R1 盆壁材质非法字符串 → 拒绝，不做字符串猜测"
+      ],
+      "redCause": "当前产品对任何盆与基质均返回 +1～+6 天（固定 0.8～1.25），且忽略 wallMaterial",
+      "greenGuardsNotRed": [
+        "D4 釉面陶瓷与塑料同属不透气盆壁 → 窗口完全相同",
+        "M1 缺盆高（几何不全）→ 维持既有安全顺序：缺证据，不公开窗口",
+        "M2 未选基质 → 兜底存量比 0.8～1.25、P=Ae=1：+1～+6 天",
+        "S1 排水孔明确没有 → 维持既有安全顺序：review_drainage，不公开窗口、不给水量"
+      ],
+      "contractCorrectionFromRed": "首轮 RED 发现几何不全时既有安全顺序已不公开窗口，草案 §8.6 改为维持该顺序（兜底存量比只用于几何齐备但缺基质）"
+    },
+    "fullSuiteAfterSkip": "Test Files 274 passed | 1 skipped (275)；Tests 2881 passed | 14 skipped (2895)；0 失败",
+    "round2": {
+      "redRun": {
+        "log": "scratchpad red-round2.log（会话临时）",
+        "result": "Test Files 6 failed；Tests 7 failed | 49 passed（另 3 个文件在收集阶段失败：v3 正文被现解析器判 invalid / v3 发布文件不存在）",
+        "redAssertion": [
+          "MX1 主材料泥炭 → 净补水 120.276～394.460 mL，建议浇入 130～490 mL（实际 80.18）",
+          "MX3 主材料不在所选材料中、或为未知代码 → 拒绝（未抛出）",
+          "Happy：完整请求映射为命令…（缺 primaryMaterial）",
+          "PS1 主要材料在所选材料中 → 映射为 primaryMaterial",
+          "PS2 显式 null 或缺省 → primaryMaterial 为 null",
+          "V3-1 审定正文可解析…（invalid）",
+          "V3-4 仓库内 v3 发布正文与审定值一致（ENOENT）"
+        ],
+        "redSuiteLevel": [
+          "pot-substrate-drying.spec.ts（夹具策略必须可解析：invalid）",
+          "drying-gap-fill.spec.ts（同上）",
+          "mysql-mvp-watering-policy-reader.spec.ts（v3 发布文件 ENOENT）"
+        ],
+        "roundOneAssertionRed": "P1/P2/P3/P5/D1/D2 已在第一轮对当前产品逐条断言 RED（实际均为 +1～+6 天）"
+      },
+      "expectedChangedDueToContractRevision": [
+        "watering-advice-request.spec.ts Happy 与 U1：命令新增 primaryMaterial: null（DTO 合同 2026-10-10 修订，非吞失败）"
+      ],
+      "mutation": [
+        "MVP_DRYING_GAP_FILL_MAX_HOURS 6→7：G3 RED",
+        "primaryMinimumShare 0.5→0.6：PM1/PM3/PM6/MX1 RED；均已恢复"
+      ],
+      "skippedPendingWallTicket": [
+        "P4",
+        "P6",
+        "D3",
+        "D4",
+        "R1"
+      ],
+      "green": {
+        "vitest": "Test Files 276 passed；Tests 2913 passed | 5 skipped (2918)",
+        "typecheck": "tsc tsconfig.json + tsconfig.test.json 通过",
+        "oxlint": "0 errors（5642 warnings，与仓库既有 no-magic-numbers 等同类）",
+        "oxfmt": "未作为门禁；仓库现有 366 个文件未按 oxfmt 格式，新文件沿用相邻文件紧凑风格"
+      }
+    }
+  },
+  "productCodeChanged": true,
+  "deployed": false,
+  "databaseWritten": false,
+  "gitCommitted": false,
+  "tdd": "经典路径：Expected 测试先落盘并在未实现产品上 RED（断言级 + 收集级），再实现至 GREEN；另做两处反事实突变 RED 并恢复。",
+  "clickUp": {
+    "created": {
+      "id": "z8v0kmvewm",
+      "url": "https://app.clickup.com/t/z8v0kmvewm",
+      "list": "Phase-P4 (1100440000000766)",
+      "title": "[E06][验证] 盆壁材质对盆土干燥速度的影响（κ、wallMaterial）"
+    }
+  },
+  "implementation": {
+    "productFilesChanged": [
+      "cloudfunctions-v2/src/configuration/mvp-watering-policy.ts（v3 Schema 与物理约束）",
+      "cloudfunctions-v2/src/care/repository/mysql-mvp-watering-policy-reader.ts（接受 v3）",
+      "cloudfunctions-v2/src/care/watering/resolve-mvp-soil-evidence-validity.ts（v3 沿用 v2 有效期）",
+      "cloudfunctions-v2/src/care/cultivation/frustum-fill-geometry.ts（新）",
+      "cloudfunctions-v2/src/care/cultivation/derive-cultivation-drying.ts（新：S、P、Ae）",
+      "cloudfunctions-v2/src/care/watering/combine-mvp-substrate-mix.ts（新：主要材料规则）",
+      "cloudfunctions-v2/src/care/watering/fill-mvp-drying-gaps.ts（新：MVP_DRYING_GAP_FILL_MAX_HOURS=6）",
+      "cloudfunctions-v2/src/care/watering/estimate-mvp-water-amount.ts（主要材料、共用几何）",
+      "cloudfunctions-v2/src/care/application/assess-mvp-watering.ts（v3 分量倍率、缺段补齐；v1/v2 不变）",
+      "cloudfunctions-v2/src/care/http/watering-advice-request.ts（primarySubstrateMaterial）",
+      "cloudfunctions-v2/src/care/application/build-watering-advice.ts（透传；清单仅在已标时写入）"
+    ],
+    "release": {
+      "file": "cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json",
+      "sha256File": "1e0f9cc0cd1f4b858014491cdd5dbfc4a74a8be494684482e2106362e38d528b",
+      "published": false,
+      "note": "未写库、未部署；发布由主代理执行"
+    },
+    "apiContract": {
+      "openapi": "docs/backend-v2/api/generate-openapi.mjs → openapi.p1.json + manifest.json 重新生成（生成前确认无改动时输出与工作区一致）",
+      "routeRegistry": "route-registry.json 无字段级 Schema、路由与错误码不变，无需修改",
+      "httpContract": "cloudfunctions-v2/models/care/watering-advice-http-contract.md、long-term-care-contract.md"
+    }
+  },
+  "terminologyCorrection": {
+    "at": "2026-10-10",
+    "by": "主代理",
+    "change": "「易利用水」→「可用水（AW，Bilderback 2005 口径）」；合同 §8.2 增口径说明及与 De Boodt EAW 的区别；只改文字，不改数值与标识符"
+  },
+  "onlineRecheckInvestigation": {
+    "at": "2026-10-10",
+    "report": "线上 HTTP：lightReading=null 时 moist 全部 insufficient_evidence、wet 全部 pause_watering 无窗口",
+    "verdict": "合同规定行为，非映射缺陷；未改产品代码",
+    "causes": [
+      "无 Lux → deriveMvpPlantLightIntervals 返回 insufficient_evidence(light_reading) → 环境时段为空 → 无检查窗口（合同 §2a、测试矩阵 H.U1、wiring-plan「无环境时段→窗口开放」）",
+      "moist → 安全门 unknown 是 §3 映射表规定（map-mvp-soil-observation 正确）",
+      "wet → pause_watering 且不公开窗口是 watering-result-projection-contract 第 3 条"
+    ],
+    "test": {
+      "file": "cloudfunctions-v2/test/care/watering-advice-route-window.spec.ts",
+      "layer": "unit_fake L3 HTTP 路由",
+      "cases": [
+        "W1 无 Lux＋根区微湿 → insufficient_evidence 无窗口",
+        "W2 只补一次 Lux → ready check_later 有窗口",
+        "W3 补 Lux 后 12cm 颗粒土早于 20cm 泥炭",
+        "W4 根区湿 → pause_watering 无窗口",
+        "W5 不观察盆土、只给上次浇水＋Lux → 有窗口"
+      ],
+      "result": "5 passed（合同行为验证，非 RED→GREEN）"
+    },
+    "followUpSuggestion": "无 Lux 时 missingEvidence 为泛化的 current_soil_or_pot_evidence，前端无法提示“去测光”；建议新增明确缺失码（如 plant_light），属公开合同变更，待用户裁决",
+    "fullSuite": "Test Files 277 passed；Tests 2918 passed | 5 skipped"
+  },
+  "onlineRecheck2": {
+    "at": "2026-10-10",
+    "report": "带 Lux（5 分钟前、meter 2000）＋根区微湿，四种盆仍 insufficient_evidence",
+    "logging": "已存在：src/entries/care.ts 在 Open-Meteo 不可用时 warn {event:provider_unavailable, provider:open_meteo, reason: timeout|http_error|network|invalid_body|normalize_failed}，不含用户数据；未新增日志",
+    "localDiagnosis": {
+      "script": "scratchpad/diag/open-meteo-anchor-diagnose.mjs（只读，不入库）",
+      "result": "同 URL 本地请求 HTTP 200、772ms；时区 Asia/Shanghai；覆盖 2026-10-08T15:00Z～2026-10-25T15:00Z 共 408 小时；测量时段 00:00～01:00Z GHI=455 W/m² ≥ 50",
+      "verdict": "排除②（太暗）与③（对齐/覆盖）；最可能是①：VPC 内函数无公网出口，Open-Meteo 请求失败被按缺段处理"
+    },
+    "missingCodes": {
+      "contract": "cloudfunctions-v2/models/care/watering-advice-http-contract.md「光照与室外辐射缺失码」",
+      "openapi": "generate-openapi.mjs CareCapabilitySuccess.details.missingEvidence 描述；openapi.p1.json/manifest 重新生成",
+      "impl": "cloudfunctions-v2/src/care/application/build-watering-advice.ts lightMissingCodes/withLightMissing",
+      "red": "M1～M5 在实现前 RED（5 failed | 7 passed），M6/M7 为不追加的守护用例",
+      "green": "全量 Test Files 277 passed；Tests 2925 passed | 5 skipped"
+    }
+  },
+  "onlineRecheck3": {
+    "at": "2026-10-10",
+    "cls": "v2-care 每次请求 provider_unavailable / open_meteo / normalize_failed；假设①（无公网）不成立",
+    "rootCause": "真实响应 diffuse_radiation 在 2026-10-18T23:00Z、10-19T00:00Z 两个预报时段为 -3.0 W/m²；normalizeOpenMeteoRadiation 的 AJV Schema minimum:0 拒绝整份 408 小时响应 → 辐射为空 → 光照缺证据 → 无窗口",
+    "artifact": "cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation-negative-dhi.json（+ .metadata.json，函数同参数抓取，去掉 generationtime_ms/timezone_abbreviation/elevation）",
+    "contract": "cloudfunctions-v2/models/care/radiation-interval-contract.md 修订 2026-10-10：单个负值按该分量缺值 null，不拒绝整份、不钳制；null 照常；单位/时间格式/非有限数/数组不等长仍拒绝",
+    "refactor": "src/care/provider/open-meteo-radiation-fetcher.ts 自 entries/care.ts 抽出（行为不变，日志字段不变），供路由层用真实适配器测试",
+    "fix": "src/care/light/normalize-open-meteo-radiation.ts：Schema 放开负数，逐值 nonNegativeOrMissing",
+    "expectedRevised": "normalize spec「非法辐射 -1 拒绝」按合同修订改为「单个负值 → null」；NaN/Infinity/字符串仍拒绝",
+    "red": "7 failed（2 个 L1 + 5 个 L3 路由：四种盆与盆型差异），错误为「辐射响应结构、时间格式或单位非法」与 normalize_failed 告警，复现线上",
+    "green": "全量 Test Files 278 passed；Tests 2932 passed | 5 skipped；typecheck 通过；oxlint 0 errors"
+  }
+}

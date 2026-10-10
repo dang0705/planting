@@ -30,7 +30,7 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 ## 2. 长期浇水建议 `POST /api/v2/care/watering-advice`（`target.kind='user_plant'`）
 
 - 仅登录用户；游客传 user_plant → 400；用例内强制登录主体（T8）。
-- 请求：沿用 `WateringAdviceRequest`；对长期植物 `catalogTaxonRef`、`pot`、`lastWatering` **不得提交**（提交 → 400）。`location`、`window`、`lightReading`、`substrateMaterials`、`indoorClimate`、`soil` 仍由请求提供（U2；前端可记住上次输入）。
+- 请求：沿用 `WateringAdviceRequest`；对长期植物 `catalogTaxonRef`、`pot`、`lastWatering` **不得提交**（提交 → 400）。`location`、`window`、`lightReading`、`substrateMaterials`、`primarySubstrateMaterial`（2026-10-10 增补）、`indoorClimate`、`soil` 仍由请求提供（U2；前端可记住上次输入）。
 - 服务端取：品种 = 最新绑定（无绑定 → 结果 `insufficient_evidence`，缺 `plant_baseline`）；盆器 = 档案 `measuredPot`（无 → 缺证据）；上次浇水 = 最近一条 `watering` 事实。
 - 盆土证据有效期（U6，`care-watering-mvp/v2`，临时案例同规则）见 §8。
 - 响应：`{ data: { resultRef: 'cres_…', proposalRef: 'cpr_…' | null, result } }`；`proposalRef` 仅在 `result.status='ready'` 且行动可确认（`water_allowed`、`check_later`、`check_now`、`priority_check`）时出现。
@@ -80,7 +80,7 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 - 响应：`{ data: { planRef, status: 'completed' | 'cancelled', version, factRef | null, calendar } }`。
 - 写入（同一事务、按 `version` 条件写）：`care_plans` 状态 + `version+1`；`watering` → `care_facts`；`soil` → `care_environment_observations`（`soil_surface`、`user_context`）。
 - 盆土观察固定字段（主代理 2026-10-09 裁决 Q2）：`factor_type='soil_surface'`、`source_scope='pot'`、`source_kind='user_context'`、`source_ref`=计划引用、`unit_code='category'`、`confidence_band='low'`、`contract_version='long-term-care/v1'`、`normalized_value_json={state,scope}`、观察时刻 = 服务端当前时刻。用户手动观察，MVP 统一低置信。
-- 错误：通用 + `CARE_PLAN_VERSION_CONFLICT`（409：版本不符或计划非 planned）、`USER_PLANT_ARCHIVED`。
+- 错误：通用 + `CARE_PLAN_VERSION_CONFLICT`（409：版本不符，或计划为 completed/cancelled）、`CARE_PLAN_EXPIRED`（409：计划已过期，见 §12）、`USER_PLANT_ARCHIVED`。
 
 ## 8. 盆土证据有效期（U6，`care-watering-mvp/v2`；长期与临时案例同规则）
 
@@ -110,8 +110,61 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 
 ## 11. 配置
 
+计划过期（§12，主代理 2026-10-09 配置裁决）：`care.plans.expiry_grace_hours`=72、`care.plans.expiry_scan`={每小时、每批 500、时长上限=函数超时的一半}；同日裁定两项均为 hard_rule（代码常量 + 目录一致性测试 + 本合同共同保证，不走策略 release；MVP 极少变更，将来需调整再升级为策略）。
+
 新增（用户 2026-10-09 裁决）：`care.facts.watering_backfill_max_days`=7、`care.plans.check_max_postpone_days`=7、`care.watering.open_window_proposal_valid_hours`=24、`care.plans.page_size`={default:20,max:50}（hard_rule）；`care-watering-mvp/v2` 正文字段 `soilEvidenceFallbackHours`=24、`soilEvidenceMaxHours`=72。`care.watering.recheck_window_hours` 维持 pending、不阻断（MVP 模型自算窗口）。
 
 ## 附：U6 湿/微湿有效期公式裁决（主代理 2026-10-09）
 
 「最早可能进入下一状态」按字面会退化为 0（读数可能正好在状态下界）。裁决采用：有效期 =（该状态 remainingFraction 上界 − 下界）× 植物基线最短干燥天数，即按最快干燥速度走完整个状态区间的时长；再受 `care.watering.soil_evidence_max_hours`=72 封顶，推算不出时用 `care.watering.soil_evidence_fallback_hours`=24。理由：室内盆栽主要风险是浇水过多导致烂根，「湿」判断偏长更保守；检查窗口仍由干燥回放独立给出。
+
+## 12. 计划过期（用户 2026-10-09 裁决：定时任务写入过期；主代理 2026-10-09 配置裁决）
+
+一句话：用户确认的「检查盆土」计划如果到点后 72 小时还没完成/跳过，就由每小时一次的定时任务把它标成 `expired`（已过期）；过期计划只读，不能再完成。打个前端比方：像购物车里的限时优惠券，过了有效期由后台批量置灰，前端再点「使用」会收到明确的「已过期」错误，而不是笼统的「数据冲突」。
+
+### 12.1 判定规则
+
+- 可过期状态：只有 `planned`（待完成）。`completed`、`cancelled`、`expired` 永不被扫描改写。
+- 判定：`当前时刻 > scheduledAt + 72 小时` 严格大于；恰好等于 72 小时不过期。72 小时 = `care.plans.expiry_grace_hours`（与 `care-watering-mvp/v2` 的 `soilEvidenceMaxHours`=72 对齐：盆土证据最长有效期，过了这个时长「检查一次盆土」已失去意义，应重新获取建议）。
+- 等价 SQL 条件：`status = 'planned' AND scheduled_at_ms < 当前时刻 − 72h`（以本次运行开始时刻为准，单次运行内所有批次使用同一截止时刻）。
+- 标记内容：`status='expired'`、`version = version + 1`、`updated_at_ms = 写入时刻`；`plan_payload_json`（日历、`completedFactRef`=null）不变。不写事实、观察、提醒，不改来源建议状态。
+
+### 12.2 并发安全（与用户「完成/跳过」竞争）
+
+- 扫描写入是一条带条件的单表更新：`UPDATE care_plans SET status='expired', version=version+1, updated_at_ms=? WHERE status='planned' AND scheduled_at_ms < ? ORDER BY scheduled_at_ms, id LIMIT ?`。条件里的 `status='planned'` 就是并发闸门：InnoDB 对每一行先加行锁再按**最新已提交**值复核条件。
+- 用户先完成：§7 用例已对计划行 `FOR UPDATE` 并写成 `completed/cancelled`；扫描语句等锁后复核条件不再满足 → 跳过该行，**不得**覆盖为过期。
+- 扫描先过期：用户的 §7 事务对计划行加锁后读到 `expired` → 返回 409 `CARE_PLAN_EXPIRED`，不写事实、观察，不改计划。
+- 扫描不读后写、不在应用内持有行快照，因此不需要比对版本号；版本号 +1 让持有旧 `version` 的客户端在后续写入时也会失败。
+
+### 12.3 过期后再完成：409 `CARE_PLAN_EXPIRED`
+
+- `POST …/plans/{planRef}/completions`：计划状态为 `expired` → 409 `CARE_PLAN_EXPIRED`（中文消息：「计划已过期，请重新获取浇水建议」），无论 `version` 是否匹配、`outcome` 是 `done` 还是 `skipped`。判定先于版本比对。
+- 计划仍为 `planned` 但已超过 72 小时、扫描尚未运行（最长滞后约 1 个扫描周期）：以存储状态为唯一事实，仍可完成。不在请求路径上做「读时过期」，避免同一规则两处实现。
+- 同一 `Idempotency-Key` 的首次结果重放优先（共享幂等表，T2）：过期前已成功的完成请求重放仍返回首次 200。
+- `CARE_PLAN_VERSION_CONFLICT` 语义收窄为：版本不符，或计划为 `completed/cancelled`。
+- `completeCarePlan` 错误集合 = 通用 + `CARE_PLAN_VERSION_CONFLICT` + `CARE_PLAN_EXPIRED`。
+
+### 12.4 可见行为
+
+- 计划列表（§5）：`status=expired` 返回已过期计划，`status` 字段为 `expired`、`completedFactRef` 为 null、`calendar` 原样保留（前端可提示「已过期，可从日历删除」）；默认 `status=planned` 不再包含已过期计划。
+- 养护摘要（§4）`nextPlan` 只取 `planned`，已过期计划不出现。
+- 无单计划详情接口；本节不新增接口。
+
+### 12.5 扫描运行（`care.plans.expiry_scan`）
+
+- 频率：每小时一次（CloudBase 7 段 cron `0 0 * * * * *`）。
+- 分批：每批最多 500 行，每批一个独立短事务；某批影响行数 < 500 视为已清空，结束本次运行。
+- 时长上限：本次运行开始时刻 + 函数超时的一半；到达上限不再开启新批次（已开启的批次跑完），剩余留给下一次运行。函数超时取运行时上下文提供的值；取不到 → 本次不执行（`not_started`），不猜默认值。
+- 重复运行幂等：已过期行不再满足条件，重复运行只会处理新到期的计划。
+- 失败恢复：某批数据库失败 → 该批整体回滚，已提交的批次保留，本次运行停止并记为 `failed`；下一次运行自动补上（条件写天然可重放）。提交结果未知同样停止，由下一次运行收敛。
+
+### 12.6 审计与日志
+
+- 每次运行写一条结构化日志 `care_plan_expiry_run`：`outcome`（`drained` | `deadline_reached` | `failed` | `not_started`）、`expiredCount`、`batchCount`、`cutoffAt`、`durationMs`。批次失败另写 `care_plan_expiry_batch_failed`，只含错误类名。
+- 日志与返回值**不得**包含任何用户/植物/计划的内部主键、公开引用、平台主体标识（OpenID 等）、SQL 文本、连接配置或数据库错误原文。
+- 单行审计以计划行自身 `status`、`version`、`updated_at_ms` 为准，不另建审计表（本阶段）。
+
+### 12.7 部署形态
+
+- CloudBase 定时触发器只能挂在**普通（事件型）云函数**上，HTTP 云函数仅由 HTTP 请求触发（CloudBase 文档《函数类型》对比表；cloudbase skill `cloud-functions`「Triggered by SDK calls or timers? → Event Function」）。因此新增 care 域事件函数入口 `care-plan-expiry`（`exports.main(event, context)`），复用 care Repository 与共享数据库连接，不暴露 HTTP 网关、不新建万能函数。
+- 索引：`028_care_plan_expiry_scan_index.sql` 为 `care_plans(status, scheduled_at_ms, id)` 建扫描索引（既有 `idx_care_plan_due` 以用户列开头，不能支撑全局扫描）。

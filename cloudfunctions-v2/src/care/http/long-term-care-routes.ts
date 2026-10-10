@@ -132,7 +132,7 @@ export function createLongTermCareRouteBindings(dependencies: LongTermCareRouteD
       validateData: data => validators.careConfirmationResponse(data)
     }) },
     { route: completeCarePlanRoute, handler: createAuthenticatedJsonRouteHandler(dependencies, {
-      ...common, route: completeCarePlanRoute, kind: 'write', passThroughErrors: new Set([...writeErrors, 'CARE_PLAN_VERSION_CONFLICT']),
+      ...common, route: completeCarePlanRoute, kind: 'write', passThroughErrors: new Set([...writeErrors, 'CARE_PLAN_VERSION_CONFLICT', 'CARE_PLAN_EXPIRED']),
       parse: request => ({ userPlantRef: pathRef(request, 'userPlantRef', userPlantRefPattern), planRef: pathRef(request, 'planRef', planRefPattern),
         body: body<CompleteCarePlanRequestDto>(request, validators.completeCarePlanRequest) }),
       execute: ({ principal, dto, nowMs, idempotency }) => dependencies.commands.completePlan({

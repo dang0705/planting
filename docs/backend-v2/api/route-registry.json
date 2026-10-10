@@ -543,7 +543,8 @@
         "PAYLOAD_TOO_LARGE",
         "UNSUPPORTED_MEDIA_TYPE",
         "SERVICE_UNAVAILABLE",
-        "CARE_PLAN_VERSION_CONFLICT"
+        "CARE_PLAN_VERSION_CONFLICT",
+        "CARE_PLAN_EXPIRED"
       ]
     },
     {
@@ -983,6 +984,68 @@
       "security": "public",
       "requestContract": "PlantEncyclopediaQuery",
       "responseContract": "PlantEncyclopediaResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "NOT_FOUND",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/weather/city-climate/profiles",
+      "operationId": "listCityClimateProfiles",
+      "owner": "weather",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "Empty",
+      "responseContract": "CityClimateProfileListResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/weather/city-climate/profiles/{cityCode}",
+      "operationId": "getCityClimateProfile",
+      "owner": "weather",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "CityClimateCityPath",
+      "responseContract": "CityClimateProfile",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "NOT_FOUND",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/weather/city-climate/fit",
+      "operationId": "getCityClimateFit",
+      "owner": "weather",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "CityClimateFitQuery",
+      "responseContract": "CityClimateFitResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "NOT_FOUND",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/weather/city-climate/recommendations",
+      "operationId": "listCityClimateRecommendations",
+      "owner": "weather",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "CityClimateRecommendQuery",
+      "responseContract": "CityClimateRecommendResponse",
       "idempotency": "not_applicable",
       "errors": [
         "VALIDATION_FAILED",

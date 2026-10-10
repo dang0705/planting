@@ -60,6 +60,8 @@ export interface WateringAdviceCommand {
   readonly pot: MeasuredPotInput
   /** 用户勾选的材料代码集合。 */
   readonly materials: readonly string[]
+  /** 用户标注的主要材料（占一半及以上，合同 mvp-watering-policy §8.10）；未标为 null，按各组分并集。 */
+  readonly primaryMaterial: string | null
   /** 室内实测温湿度；未测为 null。 */
   readonly indoorClimate: {
     /** 室内温度（°C）。 */
@@ -88,7 +90,7 @@ export type WateringAdviceParseResult =
 const utc = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$' } as const
 /** 引用字符串：非空、无空白、长度受限。 */
 const reference = { type: 'string', pattern: '^\\S{1,512}$' } as const
-/** 严格请求 Schema（watering-advice/v1）。 */
+/** 严格请求 Schema（watering-advice/v1；2026-10-10 增加可选 primarySubstrateMaterial）。 */
 const schema = {
   type: 'object', additionalProperties: false, required: ['target', 'location', 'window'],
   properties: {
@@ -119,6 +121,7 @@ const schema = {
         hasDrainageHole: { type: ['boolean', 'null'] },
       } },
     substrateMaterials: { type: 'array', maxItems: mvpSubstrateMaterials.length, items: { enum: [...mvpSubstrateMaterials] } },
+    primarySubstrateMaterial: { enum: [...mvpSubstrateMaterials, null] },
     indoorClimate: { type: ['object', 'null'], additionalProperties: false, required: ['temperatureC', 'relativeHumidityPercent', 'measuredAt'],
       properties: { temperatureC: { type: 'number', minimum: -20, maximum: 60 }, relativeHumidityPercent: { type: 'number', minimum: 0, maximum: 100 }, measuredAt: utc } },
   },
@@ -160,6 +163,10 @@ export function parseWateringAdviceRequest(body: unknown, now: number): Watering
     if (parsed === null || parsed > now) { return invalid }
     times[key] = parsed
   }
+  const materials = [...new Set<string>(request.substrateMaterials ?? [])]
+  // 主要材料必须属于所选材料（2026-10-10 合同修订）；不从其他字段猜测。
+  const primaryMaterial: string | null = request.primarySubstrateMaterial ?? null
+  if (primaryMaterial !== null && !materials.includes(primaryMaterial)) { return invalid }
   const pot = request.pot ?? null
   return { status: 'ok', command: {
     target: request.target.kind === 'temporary_case'
@@ -175,7 +182,7 @@ export function parseWateringAdviceRequest(body: unknown, now: number): Watering
       actualInnerPotConfirmed: pot?.isInnerPot ?? null, drainageAvailable: pot?.hasDrainageHole ?? null,
       potTopDiameterCm: pot?.innerTopDiameterCm ?? null, potBottomDiameterCm: pot?.innerBottomDiameterCm ?? null, potHeightCm: pot?.innerHeightCm ?? null,
     },
-    materials: [...new Set<string>(request.substrateMaterials ?? [])],
+    materials, primaryMaterial,
     indoorClimate: request.indoorClimate ? { temperatureC: request.indoorClimate.temperatureC,
       relativeHumidityPercent: request.indoorClimate.relativeHumidityPercent, measuredAtMs: times.climate! } : null,
   } }

@@ -183,6 +183,7 @@ const errorTypes = [
   'GUEST_SESSION_NOT_CLAIMABLE', 'AI_QUOTA_INSUFFICIENT', 'INTERNAL_ERROR',
   'SERVICE_UNAVAILABLE', 'RATE_LIMITED', 'TEMPORARY_CASE_LIMIT_REACHED',
   'USER_PLANT_ARCHIVED', 'CARE_PROPOSAL_NOT_CONFIRMABLE', 'CARE_PLAN_VERSION_CONFLICT',
+  'CARE_PLAN_EXPIRED',
 ]
 
 const openapi = {
@@ -644,6 +645,7 @@ const openapi = {
           pot: { type: ['object', 'null'], additionalProperties: false, required: ['isInnerPot', 'innerTopDiameterCm', 'innerBottomDiameterCm', 'innerHeightCm', 'hasDrainageHole'],
             properties: { isInnerPot: { type: ['boolean', 'null'] }, innerTopDiameterCm: { type: ['number', 'null'] }, innerBottomDiameterCm: { type: ['number', 'null'] }, innerHeightCm: { type: ['number', 'null'] }, hasDrainageHole: { type: ['boolean', 'null'] } } },
           substrateMaterials: { type: 'array', items: { enum: ['general', 'coco', 'ceramsite', 'peat', 'perlite', 'bark', 'sphagnum', 'gritty', 'coarse_sand'] } },
+          primarySubstrateMaterial: { enum: ['general', 'coco', 'ceramsite', 'peat', 'perlite', 'bark', 'sphagnum', 'gritty', 'coarse_sand', null], description: '主要材料（体积占一半及以上），必须属于 substrateMaterials；缺省或 null 按各组分并集（mvp-watering-policy-contract.md §8.10）。' },
           indoorClimate: { type: ['object', 'null'], additionalProperties: false, required: ['temperatureC', 'relativeHumidityPercent', 'measuredAt'],
             properties: { temperatureC: { type: 'number' }, relativeHumidityPercent: { type: 'number', minimum: 0, maximum: 100 }, measuredAt: { type: 'string', format: 'date-time' } } },
         },
@@ -685,6 +687,10 @@ const openapi = {
               capabilityType: { const: 'watering' }, contractVersion: { const: 'care-capability-result/v1' },
               status: { enum: ['ready', 'insufficient_evidence', 'temporarily_unavailable'] }, confidence: { enum: ['low', 'medium', 'high'] },
               detailsSchemaVersion: { const: 'watering-assessment/v1' },
+              details: { type: 'object', description: 'watering-assessment/v1 详情。', properties: {
+                missingEvidence: { type: 'array', items: { type: 'string' },
+                  description: '缺失证据类别。光照不可用且结果为 insufficient_evidence 时追加 outdoor_radiation（室外辐射取不到）或 plant_light（植物位置 Lux 锚点不可用），见 watering-advice-http-contract.md。' },
+              } },
             } },
         } } },
       },

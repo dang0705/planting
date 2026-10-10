@@ -327,3 +327,22 @@ MVP 参考值可取窗边中高光约 2–5 mol m⁻² d⁻¹，远离窗户约 
 4. 按盆容归一化的室内观叶耗水率（mL L⁻¹ d⁻¹）。
 5. 家庭手浇的施水效率或分布均匀度。
 6. 二手引用、未核对原文的：De Boodt & Verdonck 1972 原文、FAO-56 Table 19、UC ANR 图、PT Horticulture 的泥炭 / 砂值、ISHS 644_39 原文。
+
+---
+
+## 11. 盆型、盆材与干燥速度（2026-10-10 增补，服务 `mvp-watering-policy-contract.md` 第 8 节草案）
+
+| 因素 | 影响方向 | 文献数字 | 出处 / 条件 | 置信度 |
+|---|---|---|---|---|
+| 盆容积 → 植物大小 | 盆越大植物越大、蒸腾越多 | 65 项研究荟萃：盆容积翻倍，生物量平均 +43%（推导指数 log₂1.43≈0.52） | Poorter et al. 2012, *Functional Plant Biology* 39(11):839–850，https://www.publish.csiro.au/FP/fp12049 （摘要） | 中（多为作物/实验盆，非室内观叶） |
+| 盆壁材质（素烧陶 vs 塑料/瓷） | 透气陶盆失水更快、土更干、更凉 | 塑料与瓷盆白天平均蒸发约为素烧陶盆的 43%；陶盆约 2/3 的蒸发经盆壁；涂漆、上清漆、内衬塑料膜的陶盆蒸发介于二者之间；非透气盆浇水 1 天后土壤含水即高于陶盆 | Suh 1977, *Korean J. Agricultural Science* 4(2):317–343，https://koreascience.kr/article/JAKO197719959263263.pub?lang=en （摘要；盆尺寸未见） | 中（摘要级，九种观赏植物） |
+| 盆壁材质（推广资料） | 同上 | 透气陶盆浇水人工比不透气盆多 50%～100% | NC State 园艺推广扫描件 https://hortscans.ces.ncsu.edu/uploads/c/l/clay_pla_543418275d72f.pdf （扫描 PDF 未能 OCR，数字来自检索摘要，未核对原页） | 低 |
+| 织物盆 | 侧壁蒸发使需水更多 | 织物盆灌溉需水比塑料盆多 66%、渗漏多 31% | Million & Yeager 2022, *HortScience*（DOAJ https://doaj.org/article/5522358392154d259ca8e12a45afc099 ，原页 403，数字来自检索摘要） | 低 |
+| 织物盆侧壁隔离实验 | 侧壁包塑后失水与黑塑料盆相同 | 定性 | O'Connor, Koski, Klett（ASHS 2013 摘要）https://ashs.confex.com/ashs/2013/webprogram/Paper14164.html | 中（定性） |
+| 盆高 → 容器持水量 | 盆越高 CC 越低、通气越多 | 树皮基质盆高 3.8→15.2cm，CC 下降 20%（中粒）～42%（细粒） | Owen & Altland 2008, *HortScience* 43(2):505，https://journals.ashs.org/view/journals/hortsci/43/2/article-p505.xml （检索摘要）；原理见 Purdue HO-287-W | 中 |
+| 盆口面积 → 土表蒸发 | 面积越大蒸发越多（道尔顿关系：蒸发 ∝ 面积 × 水汽压差） | 裸基质 15cm 口径饱和起点 1.9～5.6 g/h，48h 内衰减 37%～66% | Schabauer 2026 Table A1（见 §6） | 高（裸基质，偏上限） |
+| 排水孔 | 无孔时多浇的水积在盆底、根区长期过湿 | 定性；托盘积水不能回渗 | FCHP Manual p.479（见 §3）；Purdue HO-287-W 盆底滞水层 | 中（定性） |
+
+**推导（低）：** κ（单位面积湿润盆壁蒸发 ÷ 单位面积土表蒸发）= Suh 的“盆壁≈土表 2 倍” ÷ 常见陶盆壁/口面积比 2.5～5 ≈ 0.4～0.8。b（植物蒸腾随盆容积的指数）取 [0, 0.52]：0 为刚换盆植物未长，0.52 为 Poorter 平均关系。
+
+**未找到：** 室内观叶植物在陶盆 vs 塑料盆中的直接全盆失水率（g/d）对比；家用常见盆型的湿润盆壁面积实测；赤玉土等颗粒土在不同盆高下的 CC。

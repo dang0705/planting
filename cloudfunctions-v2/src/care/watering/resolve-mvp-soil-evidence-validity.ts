@@ -5,7 +5,7 @@ import type { MvpMoistureProfile } from './resolve-mvp-moisture-group.js'
 /** 每小时毫秒数，仅用于把策略小时换算成 UTC 毫秒。 */
 const millisecondsPerHour = 3_600_000
 
-/** 有效期规则所需的策略字段：v1 固定 TTL；v2 回退与封顶（用户 2026-10-09 裁决 U6）。 */
+/** 有效期规则所需的策略字段：v1 固定 TTL；v2/v3 回退与封顶（用户 2026-10-09 裁决 U6）。 */
 export type MvpSoilValidityPolicy = {
   /** v1 合同版本。 */
   readonly contractVersion: 'care-watering-mvp/v1'
@@ -14,8 +14,8 @@ export type MvpSoilValidityPolicy = {
   /** 各状态在观察时刻剩余基线比例（v1 不使用）。 */
   readonly remainingFraction: MvpSoilRemainingFractions
 } | {
-  /** v2 合同版本。 */
-  readonly contractVersion: 'care-watering-mvp/v2'
+  /** v2 合同版本；v3（用户 2026-10-10 审定）沿用同一有效期规则。 */
+  readonly contractVersion: 'care-watering-mvp/v2' | 'care-watering-mvp/v3'
   /** 湿/微湿推不出离开时刻时的回退有效小时数。 */
   readonly soilEvidenceFallbackHours: number
   /** 统一封顶有效小时数。 */

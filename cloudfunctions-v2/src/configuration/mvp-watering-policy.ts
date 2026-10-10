@@ -15,7 +15,7 @@ export interface MvpPolicyRange {
 export interface MvpPolicySubstrate {
   /** 浇透并自由排水后的容器持水量。 */
   readonly containerCapacity: MvpPolicyRange
-  /** 植物易利用水；上限不得超过持水量下限。 */
+  /** 植物可用水（AW，Bilderback 2005 口径）；上限不得超过持水量下限。 */
   readonly availableWater: MvpPolicyRange
 }
 
@@ -32,6 +32,8 @@ const sharedPayloadKeys = ['contractVersion', 'scopeCode', 'confidence', 'source
 const payloadKeysByVersion = {
   'care-watering-mvp/v1': [...sharedPayloadKeys, 'soilEvidenceTtlHours'],
   'care-watering-mvp/v2': [...sharedPayloadKeys, 'soilEvidenceFallbackHours', 'soilEvidenceMaxHours'],
+  'care-watering-mvp/v3': [...sharedPayloadKeys, 'soilEvidenceFallbackHours', 'soilEvidenceMaxHours',
+    'referencePot', 'referenceAvailableWater', 'plantDemandVolumeExponent'],
 } as const
 
 /**
@@ -72,7 +74,7 @@ export interface MvpWateringPolicyBase {
     /** 只确认表土干时的剩余基线比例。 */
     readonly surfaceDryOnly: MvpPolicyRange
   }
-  /** 各浇水分组浇水前已消耗易利用水比例。 */
+  /** 各浇水分组浇水前已消耗可用水（AW，Bilderback 2005 口径）比例。 */
   readonly depletion: Readonly<Record<typeof depletionGroups[number], MvpPolicyRange>>
   /** 九类基质材料的体积含水物性。 */
   readonly substrates: Readonly<Record<typeof substrateCodes[number], MvpPolicySubstrate>>
@@ -123,8 +125,38 @@ export interface MvpWateringPolicyV2Fields {
   readonly soilEvidenceMaxHours: number
 }
 
+/** 干燥基线所指的参考内盆几何（cm）；参考盆不透气、有排水孔（合同 8.3）。 */
+export interface MvpReferencePot {
+  /** 参考盆盆口内直径（cm）。 */
+  readonly topDiameterCm: number
+  /** 参考盆盆底内直径（cm）。 */
+  readonly bottomDiameterCm: number
+  /** 参考盆内深（cm），必须大于留空高度上限。 */
+  readonly heightCm: number
+}
+
+/**
+ * v3 专有字段（用户 2026-10-10 审定）：盆型与基质参与干湿循环（合同第 8 节）。
+ * 盆土证据有效期沿用 v2；cultivationRetention 语义收窄为“几何齐备但缺基质时的兜底存量比”。
+ * 盆壁材质蒸发系数未经验证，不属于本版本（待验证票 z8v0kmvewm）。
+ */
+export interface MvpWateringPolicyV3Fields {
+  /** 合同版本号，固定为 care-watering-mvp/v3。 */
+  readonly contractVersion: 'care-watering-mvp/v3'
+  /** 湿/微湿观察推算不出离开时刻时的回退有效小时数（同 v2）。 */
+  readonly soilEvidenceFallbackHours: number
+  /** 任何盆土观察的统一封顶有效小时数（同 v2）。 */
+  readonly soilEvidenceMaxHours: number
+  /** 植物基线对应的参考盆。 */
+  readonly referencePot: MvpReferencePot
+  /** 参考基质的可用水（AW，Bilderback 2005 口径）比例（定义锚点，点值，0～1）。 */
+  readonly referenceAvailableWater: number
+  /** 植物蒸腾随盆容积伸缩的指数区间 b（需求比 P = 体积比^b）。 */
+  readonly plantDemandVolumeExponent: MvpPolicyRange
+}
+
 /** 某一版本的完整发布（共有字段 + 版本专有字段）。 */
-export type MvpWateringPolicyRelease = MvpWateringPolicyBase & (MvpWateringPolicyV1Fields | MvpWateringPolicyV2Fields)
+export type MvpWateringPolicyRelease = MvpWateringPolicyBase & (MvpWateringPolicyV1Fields | MvpWateringPolicyV2Fields | MvpWateringPolicyV3Fields)
 
 /** 请求级只读快照附加字段。 */
 export interface MvpWateringPolicySnapshotMetadata {
@@ -197,10 +229,22 @@ const schemaV2 = {
   properties: { ...sharedProperties, contractVersion: { const: 'care-watering-mvp/v2' },
     soilEvidenceFallbackHours: { type: 'number', exclusiveMinimum: 0 }, soilEvidenceMaxHours: { type: 'number', exclusiveMinimum: 0 } },
 }
+/** v3 严格发布 Schema（用户 2026-10-10 审定）；混入未验证的盆壁系数或 v1 固定 TTL 一律拒绝。 */
+const schemaV3 = {
+  type: 'object', additionalProperties: false,
+  required: [...payloadKeysByVersion['care-watering-mvp/v3'], ...metadataRequired],
+  properties: { ...sharedProperties, contractVersion: { const: 'care-watering-mvp/v3' },
+    soilEvidenceFallbackHours: { type: 'number', exclusiveMinimum: 0 }, soilEvidenceMaxHours: { type: 'number', exclusiveMinimum: 0 },
+    referencePot: { type: 'object', additionalProperties: false, required: ['topDiameterCm', 'bottomDiameterCm', 'heightCm'],
+      properties: { topDiameterCm: { type: 'number', exclusiveMinimum: 0 }, bottomDiameterCm: { type: 'number', exclusiveMinimum: 0 }, heightCm: { type: 'number', exclusiveMinimum: 0 } } },
+    referenceAvailableWater: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
+    plantDemandVolumeExponent: range },
+}
 /** 编译一次的校验器。 */
 const ajv = new Ajv({ strict: true, allErrors: true, strictNumbers: true })
 const validateV1 = ajv.compile<MvpWateringPolicyRelease>(schemaV1)
 const validateV2 = ajv.compile<MvpWateringPolicyRelease>(schemaV2)
+const validateV3 = ajv.compile<MvpWateringPolicyRelease>(schemaV3)
 
 /** UTC 往返校验；拒绝被自动修正的非法日期。 */
 function parseUtc(value: unknown): number | null {
@@ -223,7 +267,10 @@ function semanticallyValid(release: MvpWateringPolicyRelease): boolean {
   if (!ranges.every(ordered) || release.cultivationRetention.min <= 0 || release.leachingFraction.max >= 1) { return false }
   if (!contains(release.validPpfd, release.referencePpfd) || !contains(release.validVpdKpa, release.referenceVpdKpa)) { return false }
   if (release.indoorVpdFallbackKpa.min < release.validVpdKpa.min || release.indoorVpdFallbackKpa.max > release.validVpdKpa.max) { return false }
-  if (release.contractVersion === 'care-watering-mvp/v2' && release.soilEvidenceMaxHours < release.soilEvidenceFallbackHours) { return false }
+  if (release.contractVersion !== 'care-watering-mvp/v1' && release.soilEvidenceMaxHours < release.soilEvidenceFallbackHours) { return false }
+  // v3：参考盆装土高度必须为正（留空上限小于盆高），指数区间有序。
+  if (release.contractVersion === 'care-watering-mvp/v3'
+    && (release.referencePot.heightCm <= release.headspaceCm.max || !ordered(release.plantDemandVolumeExponent))) { return false }
   return Object.values(release.substrates).every(item => ordered(item.containerCapacity) && ordered(item.availableWater)
     && item.availableWater.max <= item.containerCapacity.min)
 }
@@ -242,7 +289,7 @@ export function resolveMvpWateringPolicy(release: unknown, capturedAt: string): 
   const now = parseUtc(capturedAt)
   if (now === null) { return { status: 'invalid' } }
   if (release === null || release === undefined) { return { status: 'unavailable' } }
-  if (!validateV1(release) && !validateV2(release)) { return { status: 'invalid' } }
+  if (!validateV1(release) && !validateV2(release) && !validateV3(release)) { return { status: 'invalid' } }
   const effective = parseUtc(release.effectiveAt)
   const expires = release.expiresAt === undefined ? undefined : parseUtc(release.expiresAt)
   const keys: readonly string[] = payloadKeysByVersion[release.contractVersion]

@@ -81,3 +81,17 @@ describe('MySQL MVP 浇水策略读取 v2｜unit_fake', () => {
     expect(await fixture([{ ...row, schema_version: 'care-watering-mvp/v2' }]).reader.read(capturedAt)).toEqual({ status: 'invalid' })
   })
 })
+
+describe('MySQL MVP 浇水策略读取 v3｜unit_fake', () => {
+  // Expected：用户 2026-10-10 审定 v3（盆型与基质参与干燥）；读取器接受 v1/v2/v3，Schema 版本须与正文一致。
+  const v3Body = JSON.parse(readFileSync(join(findProjectRoot(), 'cloudfunctions-v2/models/care/mvp-watering-policy-release.v3.json'), 'utf8')) as CanonicalJsonObject
+  const v3Sha = calculateCanonicalJsonSha256(v3Body)
+  const v3Row = { ...row, schema_version: 'care-watering-mvp/v3', release_version: 'care-watering-mvp/v3.0.0', active_release_version: 'care-watering-mvp/v3.0.0', content_sha256: v3Sha, active_content_sha256: v3Sha, policy_json: v3Body }
+  it('v3 行 → available，快照带参考盆', async () => {
+    const result = await fixture([v3Row]).reader.read(capturedAt)
+    expect(result).toMatchObject({ status: 'available', snapshot: { contractVersion: 'care-watering-mvp/v3', referenceAvailableWater: 0.3 } })
+  })
+  it('v3 正文配 v2 Schema 版本 → invalid', async () => {
+    expect(await fixture([{ ...v3Row, schema_version: 'care-watering-mvp/v2' }]).reader.read(capturedAt)).toEqual({ status: 'invalid' })
+  })
+})

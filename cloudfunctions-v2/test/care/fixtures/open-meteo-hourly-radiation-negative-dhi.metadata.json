@@ -1,0 +1,20 @@
+{
+  "source": "https://api.open-meteo.com/v1/forecast",
+  "documentation": "https://open-meteo.com/en/docs",
+  "request": "latitude=31.23&longitude=121.47&hourly=shortwave_radiation,direct_normal_irradiance,diffuse_radiation&timeformat=unixtime&timezone=auto&past_days=1&forecast_days=16（与 care 函数 fetchOpenMeteoRadiation 相同）",
+  "fetchedAt": "2026-10-10T00:11:41.486511+00:00",
+  "sha256": "eb5b1e5414ad0b114d8261d9671226a35daf7fd293b38ddd1700acfdc29b8fb4",
+  "removedFields": [
+    "generationtime_ms",
+    "timezone_abbreviation",
+    "elevation"
+  ],
+  "coverage": {
+    "firstIntervalEnd": "2026-10-08T16:00:00+00:00",
+    "lastIntervalEnd": "2026-10-25T15:00:00+00:00",
+    "hours": 408
+  },
+  "failureTrigger": "diffuse_radiation 在 2026-10-18T23:00Z 与 2026-10-19T00:00Z 两个预报时段为 -3.0 W/m²（GHI 10、50），旧 Schema minimum:0 使整份响应 normalize_failed",
+  "scope": "unit_real_data 的真实公开 Provider 制品；非线上 Care 验收",
+  "attribution": "Weather data by Open-Meteo (CC BY 4.0)"
+}

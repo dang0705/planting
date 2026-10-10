@@ -123,7 +123,14 @@ describe('unit_fake 辐射归一化；Expected：Open-Meteo 已核验外部合�
       expect(() => normalizeOpenMeteoRadiation(invalid, context)).toThrow('辐射')
     }
   })
-  it.each([-1, NaN, Infinity, '100'])('非法辐射%s拒绝', value => {
+  // 修订 2026-10-10（radiation-interval-contract.md）：单个负值按该分量缺值处理，不再拒绝整份响应；非数值与非有限数仍拒绝。
+  it('单个负辐射值 → 该分量该时段为 null，其余保留', () => {
+    const input = raw()
+    const result = normalizeOpenMeteoRadiation({ ...input, hourly: { ...input.hourly, diffuse_radiation: [-3, 0] } }, context)
+    expect(result.intervals[0]).toMatchObject({ ghiWattsPerM2: 100, dniWattsPerM2: 80, dhiWattsPerM2: null })
+    expect(result.intervals[1]).toMatchObject({ dhiWattsPerM2: 0 })
+  })
+  it.each([NaN, Infinity, '100'])('非法辐射%s拒绝', value => {
     const input = raw()
     expect(() =>
       normalizeOpenMeteoRadiation(
@@ -208,3 +215,22 @@ describe('unit_real_data 公开Open-Meteo响应制品；未覆盖在线Provider�
     expect(result.intervals.at(-1)?.intervalEndMs).toBe(localDayStartMs + 23 * 3600000)
   })
 })
+
+describe('真实 Open-Meteo 响应含负散射值（线上 normalize_failed 根因，2026-10-10）｜unit_real_data', () => {
+  // Expected：radiation-interval-contract.md 修订 2026-10-10；制品 open-meteo-hourly-radiation-negative-dhi.json（函数同参数抓取）。
+  const fixtureDirectory = path.join(findProjectRoot(), 'cloudfunctions-v2/test/care/fixtures')
+  const text = fs.readFileSync(path.join(fixtureDirectory, 'open-meteo-hourly-radiation-negative-dhi.json'), 'utf8')
+  const metadata = JSON.parse(fs.readFileSync(path.join(fixtureDirectory, 'open-meteo-hourly-radiation-negative-dhi.metadata.json'), 'utf8')) as { sha256: string }
+  it('制品摘要与元数据一致', () => {
+    expect(createHash('sha256').update(text).digest('hex')).toBe(metadata.sha256)
+  })
+  it('整份 408 小时响应可标准化；两个负散射时段 DHI 为 null、GHI 保留', () => {
+    const result = normalizeOpenMeteoRadiation(JSON.parse(text), { series: 'hourly', sourceRef: 'open_meteo_forecast_v1', fetchedAtMs: 1_000 })
+    expect(result.intervals).toHaveLength(408)
+    const at = (iso: string) => result.intervals.find(item => item.intervalEndMs === Date.parse(iso))
+    expect(at('2026-10-18T23:00:00Z')).toMatchObject({ ghiWattsPerM2: 10, dhiWattsPerM2: null })
+    expect(at('2026-10-19T00:00:00Z')).toMatchObject({ ghiWattsPerM2: 50, dhiWattsPerM2: null })
+    expect(at('2026-10-10T01:00:00Z')?.ghiWattsPerM2).toBe(455)
+  })
+})
+

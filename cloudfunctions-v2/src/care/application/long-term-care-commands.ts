@@ -73,6 +73,8 @@ const archived = () => publicErrorSnapshot(409, 'USER_PLANT_ARCHIVED', '植物�
 const invalid = (message: string) => publicErrorSnapshot(400, 'VALIDATION_FAILED', message)
 const notConfirmable = () => publicErrorSnapshot(409, 'CARE_PROPOSAL_NOT_CONFIRMABLE', '该建议已处理或已过期')
 const versionConflict = () => publicErrorSnapshot(409, 'CARE_PLAN_VERSION_CONFLICT', '计划已被更新，请刷新后重试')
+/** §12.3：计划已被定时扫描标为过期，只读。 */
+const planExpired = () => publicErrorSnapshot(409, 'CARE_PLAN_EXPIRED', '计划已过期，请重新获取浇水建议')
 const ok = (data: unknown): HttpIdempotencyPublicResponseSnapshot => ({ status: 200, body: { data: data as Record<string, unknown> } })
 
 /** 锁本人可写植物：不存在 404、归档 409。 */
@@ -156,12 +158,14 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
         plan: { planRef, planType: 'check_soil', scheduledAt: new Date(scheduledAtMs).toISOString(), status: 'planned', calendar } })
     }),
 
-    /** §7 完成计划：按版本条件写终态；done 可附盆土观察与浇水事实。 */
+    /** §7 完成计划：按版本条件写终态；done 可附盆土观察与浇水事实；已过期计划 409（§12.3）。 */
     completePlan: (command: CompletePlanCommand) => runIdempotentWrite(dependencies, command.idempotency, command.nowMs, async transaction => {
       const plant = await lockWritablePlant(transaction, command)
       if (isSnapshot(plant)) { return plant }
       const plan = await lockCarePlan(transaction, plant, command.planRef)
       if (plan === null) { return notFound() }
+      // §12.3：过期判定先于版本比对；扫描已提交的过期不可被用户完成覆盖。
+      if (plan.status === 'expired') { return planExpired() }
       if (plan.status !== 'planned' || plan.version !== command.request.version) { return versionConflict() }
       const request = command.request
       let factRef: string | null = null

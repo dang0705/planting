@@ -66,6 +66,58 @@
       "function": "v2-plant-knowledge",
       "source": "本地 c362a731 + origin/refactor（含 PR #15 2c6e3403、PR #16 5ae4859e）的临时合并树，npm test 2755/2755",
       "check": "catalog/search 绿萝 0.84s、龟背竹 1.04s、monstera 0.24s，均 200 且 10 条；此前 10s 超时"
+    },
+    {
+      "function": "weather",
+      "source": "本地工作区未提交 weather 改动（weather-city-climate-fit/v2：plantId=taxon_id、剖面按 v0-city-outdoor 过滤、坏 JSON 脱敏 500、coverImage{url,source}）；部署前 typecheck/oxlint 0 错误，密钥扫描无命中；同时刻全量 vitest 有 5 个文件失败，均为另一代理进行中的 care 计划过期 RED，与本函数无关",
+      "check": "profiles 200；recommendations 重庆 top3 返回 taxon_id、CDN 封面与来源，52.1 同分按 taxon_id 升序；fit 按 taxon_id 200；旧数字 id 3755 → 404；缺 plantId → 400"
+    },
+    {
+      "function": "v2-plant-knowledge",
+      "source": "同上工作区（plant-encyclopedia-read/v2 封面公开带来源）",
+      "check": "encyclopedia/monstera-deliciosa 200（0.40s），coverImage.url=cdn.tropicals.cn，source.provider=Tropicals.cn"
+    },
+    {
+      "function": "v2-care",
+      "source": "本地工作区（新增 409 CARE_PLAN_EXPIRED，long-term-care 合同 §12）；全量 vitest 2881/2881；密钥扫描无命中",
+      "check": "部署成功，VPC 保留"
+    },
+    {
+      "function": "care-plan-expiry（新建事件函数）",
+      "source": "同上；Nodejs20.19、index.main、超时 60s、VPC vpc-oq2xmdvo/subnet-9hg8hmpn、数据库环境变量 5 项",
+      "trigger": "timer care-plan-expiry-hourly cron 0 0 * * * * *（与配置目录 hard_rule 一致）",
+      "check": "手动调用 outcome=drained（非 not_started，证明运行时提供 time_limit_in_ms），expiredCount=0，batchCount=1，45ms；日志只含计数字段",
+      "notCovered": "测试库当前没有超过 72 小时的 planned 计划，真实「标记为过期」与真实并发竞争尚未在 MySQL 上读回"
+    },
+    {
+      "function": "v2-care, v2-user-plant",
+      "source": "工作区（策略 v3：盆体积/基质驱动干燥、主要材料、缺段≤6h 补齐）；全量 vitest 2913 通过/5 跳过；密钥扫描无命中",
+      "check": "部署成功；真实请求复验：moist/root_zone → insufficient_evidence（soilState=unknown），wet → pause_watering 且 checkWindow=null，线上尚看不到检查窗口，排查中"
+    },
+    {
+      "function": "v2-care, v2-user-plant",
+      "source": "工作区（Open-Meteo 负散射值→null 修复、missingEvidence 新增 plant_light/outdoor_radiation）；全量 vitest 2932 通过/5 跳过；密钥扫描无命中",
+      "check": "真实请求（绿萝，上海南窗单层，Lux 2000，根区微湿）：四种盆均 ready/check_later 有 checkWindow；最早检查 12cm颗粒土 10-10 12:37、16cm泥炭+珍珠岩(主料泥炭) 10-11 10:36、15cm泥炭 10-11 16:41、20cm泥炭 10-12 12:19（上海时间）；泥炭类最晚检查超出 16 天预报覆盖→latestAt=null"
+    }
+  ],
+  "migrationsLater": [
+    {
+      "file": "028_care_plan_expiry_scan_index.sql",
+      "target": "qinghuazhi_v2_test.care_plans",
+      "result": "CREATE INDEX 成功；EXPLAIN 扫描语句 key=idx_care_plan_expiry_scan",
+      "authorizedBy": "用户 2026-10-09「全部部署到测试环境」"
+    }
+  ],
+  "policyPublishes": [
+    {
+      "at": "2026-10-10",
+      "policy": "care/mvp_watering",
+      "release": "care-mvp-watering/v3 (schema care-watering-mvp/v3)",
+      "releaseRef": "bpr_care_9f533de5cb1b",
+      "sha256": "072e440d079b6773931ad463537ffd4ac4c2da823eccbf6bd3925aae42511130",
+      "pointer": "v2 → v3（条件更新 WHERE active=v2，rowsAffected=1；读回 sha 一致）",
+      "rollback": "把 active 指针改回 bpr_care_887517f7453f / v2 sha 7bad0074…",
+      "authorizedBy": "用户 2026-10-10「发布并部署到测试环境」"
     }
   ]
 }

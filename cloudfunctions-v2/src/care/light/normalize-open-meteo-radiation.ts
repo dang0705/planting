@@ -89,7 +89,8 @@ function responseSchema(series: RadiationNormalizationContext['series']): object
       field,
       {
         type: 'array',
-        items: { anyOf: [{ type: 'number', minimum: 0 }, { type: 'null' }] }
+        // 负值不在 Schema 层拒绝：按单值缺值处理（radiation-interval-contract.md 修订 2026-10-10）。
+        items: { anyOf: [{ type: 'number' }, { type: 'null' }] }
       }
     ])
   )
@@ -115,6 +116,12 @@ function responseSchema(series: RadiationNormalizationContext['series']): object
     }
   }
 }
+
+/**
+ * 单个辐射值：负数是 Provider 分量拆分的数值伪差，物理上不可用，记为缺值 null；不钳制为 0，以免冒充有效零。
+ * 明确 null 保持缺值；非负有限数原样保留。
+ */
+const nonNegativeOrMissing = (value: number | null): number | null => (value === null || value < 0 ? null : value)
 
 /** 两类固定外部响应校验器，不进行类型强制转换或填默认值。 */
 const ajv = new Ajv({ allErrors: true, strict: true, strictNumbers: true })
@@ -170,9 +177,9 @@ export function normalizeOpenMeteoRadiation(
       intervalStartMs,
       intervalEndMs,
       semantics: 'interval_mean',
-      ghiWattsPerM2: data.shortwave_radiation[index]!,
-      dniWattsPerM2: data.direct_normal_irradiance[index]!,
-      dhiWattsPerM2: data.diffuse_radiation[index]!
+      ghiWattsPerM2: nonNegativeOrMissing(data.shortwave_radiation[index]!),
+      dniWattsPerM2: nonNegativeOrMissing(data.direct_normal_irradiance[index]!),
+      dhiWattsPerM2: nonNegativeOrMissing(data.diffuse_radiation[index]!)
     }
     const existing = unique.get(intervalEndMs)
     if (existing && JSON.stringify(existing) !== JSON.stringify(interval)) {

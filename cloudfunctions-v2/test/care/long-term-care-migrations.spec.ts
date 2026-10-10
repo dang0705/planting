@@ -8,17 +8,27 @@ import { findProjectRoot } from '../support/project-root.js'
  * unit_real_data（L1，只读真实迁移文件）。Expected：models/care/long-term-care-contract.md §10（主代理 2026-10-09 裁决 T1/T4，
  * 用户 2026-10-09 裁决 U1）：025 长期计算结果只追加、与临时结果同形、可空唯一 proposal 链接；026 品种绑定只追加；
  * 027 care_facts 拒绝 UPDATE；均按 v2 惯例（_openid、*_ms、COMMENT 以「青花植 v2」开头）。
+ * 028：§12.7（用户 2026-10-09 裁决计划过期扫描）——只为 care_plans 新增 (status, scheduled_at_ms, id) 扫描索引。
  */
 const schemaDirectory = path.join(findProjectRoot(), 'docs/backend-v2/schema')
 const read = (file: string) => fs.readFileSync(path.join(schemaDirectory, file), 'utf8')
 const strip = (text: string) => text.split('\n').filter(line => !line.trimStart().startsWith('--')).join('\n')
 
-describe('长期养护迁移 025–027', () => {
-  it('manifest 依次登记 025/026/027', () => {
+describe('长期养护迁移 025–028', () => {
+  it('manifest 依次登记 025/026/027/028（顺序连续）', () => {
     const manifest = JSON.parse(read('manifest.json')) as { files: Array<{ order: number; owner: string; file: string }> }
-    const tail = manifest.files.slice(-3)
-    expect(tail.map(entry => entry.file)).toEqual(['025_care_capability_results.sql', '026_user_plant_catalog_bindings.sql', '027_care_fact_immutability.sql'])
-    expect(tail.map(entry => entry.owner)).toEqual(['care', 'user-plant', 'care'])
+    const files = ['025_care_capability_results.sql', '026_user_plant_catalog_bindings.sql', '027_care_fact_immutability.sql', '028_care_plan_expiry_scan_index.sql']
+    const entries = files.map(file => manifest.files.find(entry => entry.file === file))
+    expect(entries.map(entry => entry?.owner)).toEqual(['care', 'user-plant', 'care', 'care'])
+    const orders = entries.map(entry => entry!.order)
+    expect(orders).toEqual([orders[0], orders[0]! + 1, orders[0]! + 2, orders[0]! + 3])
+  })
+
+  it('028 只为 care_plans 新增过期扫描索引，不建表、不改列、不写数据', () => {
+    const content = strip(read('028_care_plan_expiry_scan_index.sql'))
+    expect([...content.matchAll(/CREATE INDEX `([a-z_]+)` ON `([a-z_]+)` \(([^)]*)\)/gu)].map(match => [match[1], match[2], match[3]]))
+      .toEqual([['idx_care_plan_expiry_scan', 'care_plans', '`status`, `scheduled_at_ms`, `id`']])
+    expect(content).not.toMatch(/\bCREATE TABLE\b|\bALTER\b|\bDROP\b|\bTRIGGER\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bTIMESTAMP\b/u)
   })
 
   it('025 care_capability_results：归属、只追加、同形清单与摘要、可空唯一建议链接', () => {

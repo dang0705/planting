@@ -1,8 +1,7 @@
 import pino from 'pino'
 
 import { createCareServer } from '../care/http/server.js'
-import { normalizeOpenMeteoRadiation } from '../care/light/normalize-open-meteo-radiation.js'
-import { fetchOpenMeteoRadiation } from '../care/provider/open-meteo-radiation-client.js'
+import { createOpenMeteoRadiationFetcher } from '../care/provider/open-meteo-radiation-fetcher.js'
 import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
 import { createMysql2ConnectionSource, toSqlParameters, withReadConnection } from '../foundation/database/mysql2-connection-source.js'
 import { createResolveGuestOrUserPrincipal } from '../identity/application/resolve-guest-principal.js'
@@ -39,19 +38,7 @@ const server = createCareServer({
   connectionSource: source,
   now,
   resolvePrincipal,
-  fetchRadiation: async query => {
-    const fetched = await fetchOpenMeteoRadiation({ fetch: globalThis.fetch, now, totalDeadlineMs: openMeteoTotalDeadlineMs }, query)
-    if (fetched.status !== 'ok') {
-      logger.warn({ event: 'provider_unavailable', provider: 'open_meteo', reason: fetched.reason }, 'Open-Meteo 不可用')
-      return null
-    }
-    try {
-      return normalizeOpenMeteoRadiation(fetched.raw, { series: 'hourly', sourceRef: 'open_meteo_forecast_v1', fetchedAtMs: fetched.fetchedAtMs })
-    } catch {
-      logger.warn({ event: 'provider_unavailable', provider: 'open_meteo', reason: 'normalize_failed' }, 'Open-Meteo 响应不可用')
-      return null
-    }
-  },
+  fetchRadiation: createOpenMeteoRadiationFetcher({ fetch: globalThis.fetch, now, totalDeadlineMs: openMeteoTotalDeadlineMs, logger }),
   writeAudit: event => { logger.info({ event: 'request_outcome', function: 'care', ...event }, '请求结果') },
   recordRollbackFailure: () => { logger.error({ event: 'transaction_rollback_failed', function: 'care' }, '事务回滚失败') }
 })

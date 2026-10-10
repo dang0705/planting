@@ -75,6 +75,7 @@ export const errorResponseSchema: JSONSchemaType<ErrorResponseDto> = {
             "USER_PLANT_ARCHIVED",
             "CARE_PROPOSAL_NOT_CONFIRMABLE",
             "CARE_PLAN_VERSION_CONFLICT",
+            "CARE_PLAN_EXPIRED",
             "INTERNAL_ERROR",
             "SERVICE_UNAVAILABLE",
             "EPHEMERAL_CASE_NOT_BINDABLE",

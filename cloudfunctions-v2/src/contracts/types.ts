@@ -49,6 +49,8 @@ export type PublicErrorType =
   | "CARE_PROPOSAL_NOT_CONFIRMABLE"
   /** 养护计划版本不符或已不是待办（long-term-care/v1）。 */
   | "CARE_PLAN_VERSION_CONFLICT"
+  /** 养护计划已被定时扫描标为过期，不能再完成（long-term-care/v1 §12）。 */
+  | "CARE_PLAN_EXPIRED"
   | "INTERNAL_ERROR"
   | "SERVICE_UNAVAILABLE";
 

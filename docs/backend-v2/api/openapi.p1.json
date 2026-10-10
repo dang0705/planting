@@ -1916,7 +1916,8 @@
           "PAYLOAD_TOO_LARGE",
           "UNSUPPORTED_MEDIA_TYPE",
           "SERVICE_UNAVAILABLE",
-          "CARE_PLAN_VERSION_CONFLICT"
+          "CARE_PLAN_VERSION_CONFLICT",
+          "CARE_PLAN_EXPIRED"
         ],
         "parameters": [
           {
@@ -3814,6 +3815,187 @@
           }
         }
       }
+    },
+    "/api/v2/weather/city-climate/profiles": {
+      "get": {
+        "operationId": "listCityClimateProfiles",
+        "summary": "weather 域：listCityClimateProfiles",
+        "tags": [
+          "weather"
+        ],
+        "x-owner": "weather",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "Empty",
+        "x-response-contract": "CityClimateProfileListResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/weather/city-climate/profiles/{cityCode}": {
+      "get": {
+        "operationId": "getCityClimateProfile",
+        "summary": "weather 域：getCityClimateProfile",
+        "tags": [
+          "weather"
+        ],
+        "x-owner": "weather",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "CityClimateCityPath",
+        "x-response-contract": "CityClimateProfile",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "NOT_FOUND",
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [
+          {
+            "name": "cityCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/weather/city-climate/fit": {
+      "get": {
+        "operationId": "getCityClimateFit",
+        "summary": "weather 域：getCityClimateFit",
+        "tags": [
+          "weather"
+        ],
+        "x-owner": "weather",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "CityClimateFitQuery",
+        "x-response-contract": "CityClimateFitResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "NOT_FOUND",
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/weather/city-climate/recommendations": {
+      "get": {
+        "operationId": "listCityClimateRecommendations",
+        "summary": "weather 域：listCityClimateRecommendations",
+        "tags": [
+          "weather"
+        ],
+        "x-owner": "weather",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "CityClimateRecommendQuery",
+        "x-response-contract": "CityClimateRecommendResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "NOT_FOUND",
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5331,6 +5513,21 @@
               ]
             }
           },
+          "primarySubstrateMaterial": {
+            "enum": [
+              "general",
+              "coco",
+              "ceramsite",
+              "peat",
+              "perlite",
+              "bark",
+              "sphagnum",
+              "gritty",
+              "coarse_sand",
+              null
+            ],
+            "description": "主要材料（体积占一半及以上），必须属于 substrateMaterials；缺省或 null 按各组分并集（mvp-watering-policy-contract.md §8.10）。"
+          },
           "indoorClimate": {
             "type": [
               "object",
@@ -6036,6 +6233,19 @@
                   },
                   "detailsSchemaVersion": {
                     "const": "watering-assessment/v1"
+                  },
+                  "details": {
+                    "type": "object",
+                    "description": "watering-assessment/v1 详情。",
+                    "properties": {
+                      "missingEvidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "缺失证据类别。光照不可用且结果为 insufficient_evidence 时追加 outdoor_radiation（室外辐射取不到）或 plant_light（植物位置 Lux 锚点不可用），见 watering-advice-http-contract.md。"
+                      }
+                    }
                   }
                 }
               }
@@ -6108,7 +6318,8 @@
                   "TEMPORARY_CASE_LIMIT_REACHED",
                   "USER_PLANT_ARCHIVED",
                   "CARE_PROPOSAL_NOT_CONFIRMABLE",
-                  "CARE_PLAN_VERSION_CONFLICT"
+                  "CARE_PLAN_VERSION_CONFLICT",
+                  "CARE_PLAN_EXPIRED"
                 ]
               },
               "message": {

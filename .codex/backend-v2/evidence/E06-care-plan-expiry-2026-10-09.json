@@ -1,0 +1,116 @@
+{
+  "capturedAt": "2026-10-09",
+  "ticket": "E06 / [P4] 盆土视觉和四类养护能力（z8v0kmr973）",
+  "decisions": {
+    "user": "用户 2026-10-09 裁决：长期养护检查计划加定时任务写入 expired",
+    "coordinator": "主代理 2026-10-09 配置裁决：planned 且 now > scheduledAt + 72h → expired（与 soilEvidenceMaxHours=72 对齐，owner=care，confirmed）；每小时一次、每批 500、单次时长上限=函数超时的一半"
+  },
+  "contract": {
+    "file": "cloudfunctions-v2/models/care/long-term-care-contract.md",
+    "sections": [
+      "§7 错误集合增补 CARE_PLAN_EXPIRED",
+      "§11 配置增补",
+      "§12 计划过期（判定、并发安全、409、可见行为、扫描运行、审计日志、部署形态）"
+    ]
+  },
+  "configurationCatalog": {
+    "added": [
+      "care.plans.expiry_grace_hours=72（hard_rule/hard_rule，care_algorithms）",
+      "care.plans.expiry_scan={cron:'0 0 * * * * *',intervalHours:1,batchSize:500,runBudgetFractionOfFunctionTimeout:0.5}（hard_rule/hard_rule，reliability_ops）"
+    ],
+    "ticketBinding": "沿用既有 [P4] 盆土视觉和四类养护能力 → z8v0kmr973（目录测试要求真实 ticket 绑定，未用 pending-ticket）",
+    "regenerated": [
+      "docs/backend-v2/architecture/configuration-variable-catalog.md",
+      "docs/backend-v2/architecture/manifest.json（catalog json/md SHA-256）"
+    ],
+    "layerDecision": {
+      "decidedAt": "2026-10-09",
+      "by": "主代理",
+      "from": "domain_policy/confirmed",
+      "to": "hard_rule/hard_rule",
+      "reason": "MVP 阶段极少变更，引入类型化策略 release 的复杂度大于收益；将来需调整再升级为 policy",
+      "red": "care-plan-expiry-rules.spec.ts > 常量与配置目录一致，且为不可配置硬规则、owner=care：改目录前 1 failed | 13 passed",
+      "green": "改目录后通过"
+    }
+  },
+  "triggerResearch": {
+    "conclusion": "CloudBase 定时触发器只支持普通（事件型）云函数；HTTP 云函数仅由 HTTP 请求触发",
+    "sources": [
+      ".agents/skills/cloudbase/references/cloud-functions/SKILL.md「Triggered by SDK calls or timers? → Event Function」与类型对比表",
+      "CloudBase 知识库 /cloud-function/quickstart/select-types：HTTP 云函数触发方式=HTTP 请求直接触发；普通云函数=SDK、定时器、云产品事件",
+      "CloudBase 知识库 /cbrf/vs：HTTP 调用形态『目前不支持定时器触发』",
+      "CloudBase 知识库 manageFunctions 参数：Event 函数 Node 运行时最高 Nodejs20.19；timer 使用 7 段 cron"
+    ],
+    "design": "新增 care 域事件函数入口 care-plan-expiry（exports.main，Handler index.main），复用 care Repository 与共享 mysql2 连接；构建按 node20 CommonJS 产出根目录 index.js"
+  },
+  "tdd": {
+    "path": "classic（先落 Expected 测试并在未改产品上 RED，再实现到 GREEN）",
+    "red": {
+      "command": "npx vitest run <7 个新/改测试文件>（产品未改）",
+      "result": "7 files failed；8 tests failed | 15 passed",
+      "failedCases": [
+        "care-plan-expiry-rules.spec.ts / mysql-care-plan-expiry-repository.spec.ts / expire-care-plans-job.spec.ts / care-plan-expiry-event-handler.spec.ts：模块不存在（整文件 RED）",
+        "complete-expired-care-plan.spec.ts > done（附浇水与盆土）→ 409 CARE_PLAN_EXPIRED，不写任何行（实际 CARE_PLAN_VERSION_CONFLICT）",
+        "complete-expired-care-plan.spec.ts > skipped 且版本已旧 → 仍是 CARE_PLAN_EXPIRED",
+        "complete-expired-care-plan.spec.ts > L3 用例返回 409 CARE_PLAN_EXPIRED → HTTP 409 原样公开（实际 500）",
+        "long-term-care-migrations.spec.ts > manifest 依次登记 025/026/027/028；028 只新增过期扫描索引（文件不存在）",
+        "long-term-care-contract.spec.ts > 写接口错误集合；OpenAPI 枚举；三个新错误类型可公开（AJV 拒绝 CARE_PLAN_EXPIRED）"
+      ],
+      "passedBeforeChange": "complete-expired-care-plan.spec.ts 中 completed/cancelled→CARE_PLAN_VERSION_CONFLICT、planned 正常完成 3 例为回归保护（characterization，非新行为）"
+    },
+    "green": {
+      "targeted": "9 files / 67 tests passed（含 p1-total-ddl、p1-configuration-architecture）",
+      "full": "cloudfunctions-v2 全量 vitest：274 files / 2881 tests passed，0 failed",
+      "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json：0 error",
+      "lint": "oxlint src test：0 error（仓库既有 warning 不变量级）"
+    },
+    "layers": {
+      "unit_fake": [
+        "mysql-care-plan-expiry-repository（记录型连接替身，断言条件更新 SQL）",
+        "expire-care-plans-job（合同谓词模型表 + 可控时钟）",
+        "complete-expired-care-plan（L1 真实用例+Repository SQL 函数，替换驱动/幂等/连接；L3 真实 node:http 路由链，用例替身）",
+        "care-plan-expiry-event-handler",
+        "care-plan-expiry-rules（规则部分）"
+      ],
+      "unit_real_data": [
+        "care-plan-expiry-rules（真实配置目录与 v2 浇水发布正文）",
+        "long-term-care-migrations / p1-total-ddl（真实迁移文件与 manifest）",
+        "long-term-care-contract（真实 route-registry、openapi、AJV）"
+      ]
+    },
+    "coverage": [
+      "到期标记",
+      "未到期与恰好 72h 不动",
+      "completed/cancelled/expired 不动",
+      "用户先完成的竞争（模型层）+ SQL 闸门形态",
+      "扫描先过期后用户完成 → 409 且零写入",
+      "分批 500/恰好 500/时长上限",
+      "重复运行幂等",
+      "批次数据库失败停止且下次补齐",
+      "日志/返回值不含标识与错误原文",
+      "取不到函数超时 → not_started",
+      "事件正文不能改参数"
+    ],
+    "notCovered": [
+      "真实 MySQL InnoDB 行锁复核语义与真实并发竞争（未执行 *.mysql.spec，按要求不写库）",
+      "028 索引在真实库执行与 EXPLAIN",
+      "CloudBase 事件上下文 time_limit_in_ms 字段真实读回",
+      "定时触发器真实触发",
+      "build.mjs 全量构建（会重写受版本控制的 package-manifest.json 并执行 npm ci，未运行；仅在 scratchpad 用 esbuild 单独打包确认导出 main）"
+    ]
+  },
+  "migration": {
+    "file": "docs/backend-v2/schema/028_care_plan_expiry_scan_index.sql",
+    "statement": "CREATE INDEX idx_care_plan_expiry_scan ON care_plans (status, scheduled_at_ms, id)",
+    "manifestOrder": 27,
+    "executed": false
+  },
+  "notDone": [
+    "未部署",
+    "未建触发器",
+    "未写库",
+    "未执行迁移",
+    "未提交 git",
+    "未改 src/**（前端）"
+  ]
+}

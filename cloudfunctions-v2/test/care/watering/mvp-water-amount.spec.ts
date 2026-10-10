@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { estimateMvpWaterAmount } from '../../../src/care/watering/estimate-mvp-water-amount.js'
 
 /**
- * Expected：models/care/mvp-watering-policy-contract.md 第4节；数值由独立手算（截锥装土体积、易利用水×消耗比例÷(1−排出比例)）。
+ * Expected：models/care/mvp-watering-policy-contract.md 第4节；数值由独立手算（截锥装土体积、可用水（AW，Bilderback 2005 口径）×消耗比例÷(1−排出比例)）。
  * 层次 L1 unit_fake：策略数值为显式夹具，不代表已发布参数；不覆盖真实基质或真实浇水验证。
  */
 const policy = {
@@ -69,12 +69,31 @@ describe('MVP 浇水量估算｜L1 unit_fake', () => {
   it('U4：重复选择同一材料与只选一次结果相同', () => {
     expect(estimate({ materials: ['peat', 'peat'] })).toEqual(estimate({ materials: ['peat'] }))
   })
-  it('U3：易利用水上限超过容器持水量下限的策略自相矛盾，拒绝', () => {
+  it('U3：可用水（AW，Bilderback 2005 口径）上限超过容器持水量下限的策略自相矛盾，拒绝', () => {
     const contradictory = { ...policy, substrates: { peat: { containerCapacity: { min: 0.3, max: 0.4 }, availableWater: { min: 0.2, max: 0.35 } } } }
     expect(() => estimateMvpWaterAmount({ policy: contradictory, group: 'surface_dry', pot, materials: ['peat'] })).toThrow(RangeError)
   })
   it('未知材料代码或策略缺该材料时拒绝，不用其他材料替代', () => {
     expect(() => estimate({ materials: ['moon_dust'] })).toThrow(TypeError)
     expect(() => estimate({ materials: ['bark'] })).toThrow(TypeError)
+  })
+})
+
+describe('MVP 浇水量估算：混合基质主要材料（合同 8.10，用户 2026-10-10 审定）｜L1 unit_fake', () => {
+  // Expected：主材料至少占一半 → AW = [min(主.min, ½主.min+½其余.min), max(主.max, ½主.max+½其余.max)]；CC 上端同理。
+  // 夹具泥炭 AW [0.3,0.4]、珍珠岩 [0.15,0.25]：主材料泥炭 → AW [0.225,0.4]，净补水下端 = 80.184×0.225/0.15 = 120.276。
+  it('MX1 主材料泥炭 → 净补水 120.276～394.460 mL，建议浇入 130～490 mL', () => {
+    const result = estimate({ primaryMaterial: 'peat' })
+    if (result.status !== 'candidate') { throw new Error('应得到候选水量') }
+    expect(result.netDeficitMl.min).toBeCloseTo(120.276, 2)
+    expect(result.netDeficitMl.max).toBeCloseTo(394.460, 2)
+    expect(result.appliedAmountCandidateMl).toEqual({ min: 130, max: 490 })
+  })
+  it('MX2 未标主材料（null 或缺省）→ 与现行并集规则相同', () => {
+    expect(estimate({ primaryMaterial: null })).toEqual(estimate())
+  })
+  it('MX3 主材料不在所选材料中、或为未知代码 → 拒绝', () => {
+    expect(() => estimate({ materials: ['peat'], primaryMaterial: 'perlite' })).toThrow(TypeError)
+    expect(() => estimate({ primaryMaterial: 'moon_dust' })).toThrow(TypeError)
   })
 })

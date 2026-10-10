@@ -6,7 +6,8 @@ import { createPublicContractValidators } from '../../src/contracts/index.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 /**
- * unit_real_data（L1）。Expected：models/care/long-term-care-contract.md（2026-10-09 冻结）§0–§9、主代理裁决 T3（三个新错误类型）。
+ * unit_real_data（L1）。Expected：models/care/long-term-care-contract.md（2026-10-09 冻结）§0–§9、主代理裁决 T3（三个新错误类型）；
+ * §12.3（用户 2026-10-09 裁决计划过期）：completeCarePlan 增加 409 CARE_PLAN_EXPIRED。
  * 真实 AJV 校验器、真实 route-registry.json 与生成的 openapi.p1.json。
  */
 const apiDirectory = path.join(findProjectRoot(), 'docs/backend-v2/api')
@@ -28,7 +29,7 @@ describe('长期养护路由登记', () => {
   test('写接口错误集合', () => {
     expect(errors('createCareFact')).toEqual(common)
     expect(errors('confirmCareProposal')).toEqual([...common, 'CARE_PROPOSAL_NOT_CONFIRMABLE'].sort())
-    expect(errors('completeCarePlan')).toEqual([...common, 'CARE_PLAN_VERSION_CONFLICT'].sort())
+    expect(errors('completeCarePlan')).toEqual([...common, 'CARE_PLAN_VERSION_CONFLICT', 'CARE_PLAN_EXPIRED'].sort())
     expect(errors('createWateringAdvice')).toEqual([...common, 'NOT_FOUND'].sort())
   })
   test('网关前缀（用户 2026-10-09 裁决）：care 路由全部在 /api/v2/care 下；五个长期接口新路径', () => {
@@ -46,7 +47,7 @@ describe('长期养护路由登记', () => {
   })
   test('OpenAPI：三个新错误进入枚举；各写接口有请求组件；成功组件引用', () => {
     const doc = openapi()
-    expect(doc.components.schemas.ErrorResponse.properties.error.properties.type.enum).toEqual(expect.arrayContaining(['USER_PLANT_ARCHIVED', 'CARE_PROPOSAL_NOT_CONFIRMABLE', 'CARE_PLAN_VERSION_CONFLICT']))
+    expect(doc.components.schemas.ErrorResponse.properties.error.properties.type.enum).toEqual(expect.arrayContaining(['USER_PLANT_ARCHIVED', 'CARE_PROPOSAL_NOT_CONFIRMABLE', 'CARE_PLAN_VERSION_CONFLICT', 'CARE_PLAN_EXPIRED']))
     const requestRef = (p: string, method: string) => doc.paths[p]?.[method]?.requestBody?.content['application/json']?.schema.$ref
     const successRef = (p: string, method: string) => doc.paths[p]?.[method]?.responses['200']?.content?.['application/json']?.schema.$ref
     expect(requestRef('/api/v2/user-plants/{userPlantRef}/catalog-binding', 'put')).toBe('#/components/schemas/PutCatalogBindingRequest')
@@ -61,7 +62,7 @@ describe('长期养护路由登记', () => {
 describe('长期养护 DTO 校验器', () => {
   const v = createPublicContractValidators()
   test('三个新错误类型可公开', () => {
-    for (const type of ['USER_PLANT_ARCHIVED', 'CARE_PROPOSAL_NOT_CONFIRMABLE', 'CARE_PLAN_VERSION_CONFLICT']) {
+    for (const type of ['USER_PLANT_ARCHIVED', 'CARE_PROPOSAL_NOT_CONFIRMABLE', 'CARE_PLAN_VERSION_CONFLICT', 'CARE_PLAN_EXPIRED']) {
       expect(v.errorResponse({ error: { type, message: '固定消息' } })).toBe(true)
     }
   })

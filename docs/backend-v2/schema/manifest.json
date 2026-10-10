@@ -159,6 +159,12 @@
       "owner": "care",
       "file": "027_care_fact_immutability.sql",
       "sha256": "c8db44e799e5041c0bc9a28892de993077323af1c7db04030eacbd5f5f025bdd"
+    },
+    {
+      "order": 27,
+      "owner": "care",
+      "file": "028_care_plan_expiry_scan_index.sql",
+      "sha256": "9a3820af0b0b7a90d32c2623b86591de0eb7accb02a346f55daad90f7f686b73"
     }
   ]
 }

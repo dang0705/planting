@@ -28,8 +28,21 @@ const functionEntries = [
   { name: 'plant-knowledge', entry: 'src/entries/plant-knowledge.ts' },
   { name: 'user-plant', entry: 'src/entries/user-plant.ts' },
   { name: 'diagnosis', entry: 'src/entries/diagnosis.ts' },
-  { name: 'care', entry: 'src/entries/care.ts' }
+  { name: 'weather', entry: 'src/entries/weather.ts' },
+  { name: 'care', entry: 'src/entries/care.ts' },
+  // 定时触发只支持普通（事件型）云函数（long-term-care-contract.md §12.7）：care 域计划过期扫描。
+  { name: 'care-plan-expiry', entry: 'src/entries/care-plan-expiry.ts', kind: 'event' }
 ]
+
+/**
+ * 函数包形态。HTTP 函数：`dist/server.cjs` + `scf_bootstrap`，Node 22；
+ * 事件函数：根目录 `index.js` 导出 `main`（Handler `index.main`），无 bootstrap。
+ * CloudBase 事件函数运行时清单最高为 Nodejs20.19（cloudbase 知识库 manageFunctions 运行时说明），故按 node20 产出 CommonJS。
+ */
+const packageKinds = {
+  http: { target: 'node22', runtime: 'Nodejs22.21', entrypoint: 'dist/server.cjs', bootstrap: 'scf_bootstrap', handler: null },
+  event: { target: 'node20', runtime: 'Nodejs20.19', entrypoint: 'index.js', bootstrap: null, handler: 'index.main' }
+}
 
 /** 生产依赖锁定版本；必须与 package.json 的 dependencies 完全一致。 */
 const productionDependencies = { ajv: '8.20.0', mysql2: '3.24.4', pino: '10.3.1', suncalc: '2.1.0' }
@@ -77,13 +90,13 @@ async function fileDigest(filePath) {
 }
 
 /** 用固定参数把单个 TypeScript 入口打包为 CommonJS 产物，依赖保持外部引用。 */
-async function bundleEntry(entryPath, outfile) {
+async function bundleEntry(entryPath, outfile, target = packageKinds.http.target) {
   await build({
     entryPoints: [join(projectDir, entryPath)],
     outfile,
     bundle: true,
     platform: 'node',
-    target: 'node22',
+    target,
     format: 'cjs',
     packages: 'external',
     sourcemap: false,
@@ -96,15 +109,19 @@ async function bundleEntry(entryPath, outfile) {
  * 把已打包产物组装为可上传的函数包：bootstrap、锁文件、仅生产依赖与文件清单。
  * @param {string} bundlePath esbuild 产物路径
  * @param {string} packageDir 函数包目录
+ * @param {'http' | 'event'} [kind='http'] 函数包形态
  * @returns {Promise<string>} 清单 JSON 正文
  */
-async function assemblePackage(bundlePath, packageDir) {
-  await mkdir(join(packageDir, 'dist'), { recursive: true })
-  await cp(bundlePath, join(packageDir, 'dist/server.cjs'))
-  await cp(join(projectDir, 'scf_bootstrap'), join(packageDir, 'scf_bootstrap'))
+async function assemblePackage(bundlePath, packageDir, kind = 'http') {
+  const shape = packageKinds[kind]
+  await mkdir(dirname(join(packageDir, shape.entrypoint)), { recursive: true })
+  await cp(bundlePath, join(packageDir, shape.entrypoint))
+  if (shape.bootstrap !== null) {
+    await cp(join(projectDir, 'scf_bootstrap'), join(packageDir, shape.bootstrap))
+    await chmod(join(packageDir, shape.bootstrap), 0o755)
+  }
   await cp(join(projectDir, 'package.json'), join(packageDir, 'package.json'))
   await cp(join(projectDir, 'package-lock.json'), join(packageDir, 'package-lock.json'))
-  await chmod(join(packageDir, 'scf_bootstrap'), 0o755)
 
   // 部署目录仅按锁文件安装生产依赖，确保 TypeScript、Vitest、esbuild 和 Node 类型不会入包。
   execFileSync('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], {
@@ -136,11 +153,12 @@ async function assemblePackage(bundlePath, packageDir) {
   /** 部署包清单：运行时、入口、生产依赖版本、产物摘要与文件列表。 */
   const manifest = {
     schemaVersion: 1,
-    runtime: 'Nodejs22.21',
-    entrypoint: 'dist/server.cjs',
-    bootstrap: 'scf_bootstrap',
+    runtime: shape.runtime,
+    entrypoint: shape.entrypoint,
+    ...(shape.bootstrap === null ? {} : { bootstrap: shape.bootstrap }),
+    ...(shape.handler === null ? {} : { handler: shape.handler }),
     productionDependencies,
-    artifacts: { 'dist/server.cjs': await fileDigest(bundlePath) },
+    artifacts: { [shape.entrypoint]: await fileDigest(bundlePath) },
     files
   }
   /** 清单 JSON 正文（末尾换行，便于与其他制品对齐）。 */
@@ -164,6 +182,7 @@ await writeFile(join(projectDir, 'package-manifest.json'), probeManifestBody, 'u
 
 for (const functionEntry of functionEntries) {
   const bundlePath = join(buildDir, 'bundles', `${functionEntry.name}.cjs`)
-  await bundleEntry(functionEntry.entry, bundlePath)
-  await assemblePackage(bundlePath, join(functionsDir, functionEntry.name))
+  const kind = functionEntry.kind ?? 'http'
+  await bundleEntry(functionEntry.entry, bundlePath, packageKinds[kind].target)
+  await assemblePackage(bundlePath, join(functionsDir, functionEntry.name), kind)
 }

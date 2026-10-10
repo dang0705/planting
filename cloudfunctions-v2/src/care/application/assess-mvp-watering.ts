@@ -1,7 +1,10 @@
 import type { MvpWateringPolicySnapshot } from '../../configuration/mvp-watering-policy.js'
 import type { WaterFrequencyTier, WaterTriggerState } from '../../plant-knowledge/watering/compile-water-state.js'
+import { deriveCultivationDrying, type CultivationDrying } from '../cultivation/derive-cultivation-drying.js'
 import { deriveMeasuredPot, type MeasuredPotInput } from '../cultivation/derive-measured-pot.js'
-import { estimateMvpWaterAmount, type MvpWaterAmountResult } from '../watering/estimate-mvp-water-amount.js'
+import { combineMvpSubstrateMix } from '../watering/combine-mvp-substrate-mix.js'
+import { estimateMvpWaterAmount, normalizeMvpMaterialSelection, type MvpWaterAmountResult } from '../watering/estimate-mvp-water-amount.js'
+import { fillMvpDryingGaps } from '../watering/fill-mvp-drying-gaps.js'
 import { mapMvpSoilObservation, type MvpSoilObservation } from '../watering/map-mvp-soil-observation.js'
 import type { DryingInterval, DryingRange } from '../watering/replay-dry-progress.js'
 import { resolveMvpMoistureGroup } from '../watering/resolve-mvp-moisture-group.js'
@@ -47,6 +50,8 @@ export interface AssessMvpWateringInput {
   readonly pot: MeasuredPotInput
   /** 用户在界面勾选的基质材料列表。 */
   readonly materials: readonly (string | null | undefined)[]
+  /** 用户标注的主要材料（占一半及以上，合同 8.10）；未标为 null 或缺省。v1/v2 策略忽略此项以保持已发布语义。 */
+  readonly primaryMaterial?: string | null
   /** 观察或浇水起点之后的环境时段。 */
   readonly environment: readonly MvpEnvironmentInterval[]
   /** 植物所在地明确时区。 */
@@ -86,8 +91,18 @@ function vaporEnvelope(vpd: DryingRange, dref: number, s: number): DryingRange {
   return { min: Math.min(a, b), max }
 }
 
-/** 合同第2节：每参考日的相对环境需求区间；超出有效域返回 null（缺段）。 */
-function environmentDemand(policy: Readonly<MvpWateringPolicySnapshot>, interval: MvpEnvironmentInterval): DryingRange | null {
+/** v1/v2 与缺证据时的中性盆倍率：需求不按盆伸缩。 */
+const neutralScales = { plant: { min: 1, max: 1 }, evaporation: { min: 1, max: 1 } } as const
+/** 需求两分量各自的盆倍率：植物比只乘叶片项，蒸发面比只乘基质蒸发项（合同 8.5）。 */
+interface DemandScales {
+  /** 植物需求比 P：乘叶片（蒸腾）项。 */
+  readonly plant: DryingRange
+  /** 蒸发面比 Ae：乘基质蒸发项。 */
+  readonly evaporation: DryingRange
+}
+
+/** 合同第2节＋8.5：每参考日的相对环境需求区间；超出有效域返回 null（缺段）。 */
+function environmentDemand(policy: Readonly<MvpWateringPolicySnapshot>, interval: Pick<MvpEnvironmentInterval, 'ppfd' | 'indoorVpdKpa'>, scales: DemandScales = neutralScales): DryingRange | null {
   const vpd = interval.indoorVpdKpa ?? policy.indoorVpdFallbackKpa
   const ppfd = interval.ppfd
   if (ppfd === null) { return null }
@@ -98,9 +113,23 @@ function environmentDemand(policy: Readonly<MvpWateringPolicySnapshot>, interval
   const vapor = vaporEnvelope(vpd, policy.referenceVpdKpa, policy.vpdSensitivity)
   const w = policy.transpirationShare
   return {
-    min: w * lightResponse(ppfd.min, k) / reference * vapor.min + (1 - w) * vpd.min / policy.referenceVpdKpa,
-    max: w * lightResponse(ppfd.max, k) / reference * vapor.max + (1 - w) * vpd.max / policy.referenceVpdKpa,
+    min: w * lightResponse(ppfd.min, k) / reference * vapor.min * scales.plant.min + (1 - w) * vpd.min / policy.referenceVpdKpa * scales.evaporation.min,
+    max: w * lightResponse(ppfd.max, k) / reference * vapor.max * scales.plant.max + (1 - w) * vpd.max / policy.referenceVpdKpa * scales.evaporation.max,
   }
+}
+
+/**
+ * v3（合同第 8 节）：由实测盆与基质推导存量比与需求倍率；v1/v2 保持固定保水带与中性需求。
+ * 材料选择与主要材料先校验（非法即拒绝），再按 8.10 混合规则得到可用水（AW，Bilderback 2005 口径）区间。
+ */
+function cultivationDrying(policy: Readonly<MvpWateringPolicySnapshot>, input: AssessMvpWateringInput): CultivationDrying {
+  if (policy.contractVersion !== 'care-watering-mvp/v3') {
+    return { storage: policy.cultivationRetention, plantDemandScale: neutralScales.plant, evaporationAreaScale: neutralScales.evaporation, basis: 'fallback' }
+  }
+  const selection = normalizeMvpMaterialSelection(policy.substrates, input.materials, input.primaryMaterial)
+  const availableWater = selection.materials.length === 0 ? null
+    : combineMvpSubstrateMix(selection.materials.map(material => ({ material, range: policy.substrates[material].availableWater })), selection.primaryMaterial)
+  return deriveCultivationDrying(policy, input.pot, availableWater)
 }
 
 /** 水量结论转为结果投影的供水评估。 */
@@ -124,13 +153,20 @@ export function assessMvpWatering(input: AssessMvpWateringInput): WateringCapabi
   }
   const profile = resolveMvpMoistureGroup(input.baseline.tier, input.baseline.trigger)
   const baseline = input.baseline.baselineDays
-  const intervals: DryingInterval[] = []
+  const drying = cultivationDrying(policy, input)
+  const scales = { plant: drying.plantDemandScale, evaporation: drying.evaporationAreaScale }
+  const toInterval = (start: number, end: number, demand: DryingRange): DryingInterval => ({ start, end, environmentDemand: demand,
+    cultivationRetention: drying.storage, personalCalibration: { min: 1, max: 1 } })
+  const measured: DryingInterval[] = []
   for (const interval of input.environment) {
-    const demand = environmentDemand(policy, interval)
+    const demand = environmentDemand(policy, interval, scales)
     if (demand === null) { continue }
-    intervals.push({ start: interval.start, end: interval.end, environmentDemand: demand,
-      cultivationRetention: policy.cultivationRetention, personalCalibration: { min: 1, max: 1 } })
+    measured.push(toInterval(interval.start, interval.end, demand))
   }
+  // 合同 8.11（v3 起）：≤6 小时的内部缺段用有效域上的保守需求全区间补齐；v1/v2 保持缺段即中断。
+  const conservative = environmentDemand(policy, { ppfd: policy.validPpfd, indoorVpdKpa: policy.validVpdKpa }, scales)
+  const intervals = policy.contractVersion === 'care-watering-mvp/v3' && conservative !== null
+    ? fillMvpDryingGaps(measured, (start, end) => toInterval(start, end, conservative)) : measured
   // 盆土证据有效期按策略版本：v1 固定 TTL；v2 按干湿循环（用户 2026-10-09 裁决 U6）。
   const validUntil = input.soil === null || input.soil.state === 'uncertain' ? undefined
     : resolveMvpSoilEvidenceValidUntil({ policy, baseline, group: profile, observation: input.soil, intervals, lastConfirmedWateringAt: input.lastConfirmedWateringAt })
@@ -143,7 +179,8 @@ export function assessMvpWatering(input: AssessMvpWateringInput): WateringCapabi
     soil: mapped.soil, observedRemaining: mapped.observedRemaining, waterDeficit: null, timezone: input.timezone,
   })
   const amount = watering.decision.action === 'water_allowed'
-    ? estimateMvpWaterAmount({ policy, group: profile.group, pot: input.pot, materials: input.materials }) : null
+    ? estimateMvpWaterAmount({ policy, group: profile.group, pot: input.pot, materials: input.materials,
+      primaryMaterial: policy.contractVersion === 'care-watering-mvp/v3' ? input.primaryMaterial ?? null : null }) : null
   const { candidate } = projectWateringReplayResult(watering, toApplication(amount))
   const netDeficitMl = amount?.status === 'candidate' && candidate.details.amountMl !== null ? { ...amount.netDeficitMl } : null
   return {

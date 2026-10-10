@@ -33,7 +33,7 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
       soil: { state: 'moist', scope: 'root_zone', observedAt: now - 120_000 },
       lastWateringAtMs: now - 3 * 86_400_000,
       pot: { actualInnerPotConfirmed: true, drainageAvailable: true, potTopDiameterCm: 16, potBottomDiameterCm: 12, potHeightCm: 14 },
-      materials: ['peat', 'perlite'],
+      materials: ['peat', 'perlite'], primaryMaterial: null,
       indoorClimate: { temperatureC: 23.5, relativeHumidityPercent: 45, measuredAtMs: now - 60_000 },
     } })
   })
@@ -53,7 +53,7 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
       location: { latitude: 39.9, longitude: 116.4 }, window: { azimuthDeg: 90, glassLayers: null },
       lightReading: null, soil: null, lastWateringAtMs: null,
       pot: { actualInnerPotConfirmed: null, drainageAvailable: null, potTopDiameterCm: null, potBottomDiameterCm: null, potHeightCm: null },
-      materials: [], indoorClimate: null,
+      materials: [], primaryMaterial: null, indoorClimate: null,
     } })
   })
   it.each([
@@ -89,3 +89,21 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
     expect(serialized).not.toContain('case_abc123')
   })
 })
+
+describe('watering-advice 主要材料字段 primarySubstrateMaterial（合同修订 2026-10-10）｜L1 unit_fake', () => {
+  // Expected：用户 2026-10-10 审定「让用户标主要材料」；watering-advice-http-contract.md 字段表。
+  it('PS1 主要材料在所选材料中 → 映射为 primaryMaterial', () => {
+    const result = parse({ ...full(), primarySubstrateMaterial: 'peat' })
+    expect(result.status === 'ok' && result.command.primaryMaterial).toBe('peat')
+  })
+  it('PS2 显式 null 或缺省 → primaryMaterial 为 null（退回并集）', () => {
+    const explicit = parse({ ...full(), primarySubstrateMaterial: null })
+    expect(explicit.status === 'ok' && explicit.command.primaryMaterial).toBeNull()
+  })
+  it('PS3 主要材料不在所选材料中、未选材料却标主要材料、未知代码 → VALIDATION_FAILED', () => {
+    expect(parse({ ...full(), primarySubstrateMaterial: 'bark' })).toEqual(invalid)
+    expect(parse({ ...full(), substrateMaterials: [], primarySubstrateMaterial: 'peat' })).toEqual(invalid)
+    expect(parse({ ...full(), primarySubstrateMaterial: 'moon_dust' })).toEqual(invalid)
+  })
+})
+

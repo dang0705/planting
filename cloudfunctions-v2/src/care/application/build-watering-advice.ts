@@ -52,6 +52,28 @@ function lightSummary(light: MvpPlantLightResult | null): CanonicalJsonObject {
     : { status: 'insufficient_evidence', reason: light.reason }
 }
 
+/** 光照与室外辐射缺失码（watering-advice-http-contract.md，2026-10-10 增补）。 */
+type LightMissingCode = 'outdoor_radiation' | 'plant_light'
+
+/**
+ * 由辐射与光照派生状态得出应追加的缺失码：室外辐射取不到（Provider 空或测量时刻无覆盖）→ outdoor_radiation；
+ * 未测 Lux、读数过期、测量时段太暗或读数不一致 → plant_light。两者可同时出现。
+ */
+function lightMissingCodes(command: WateringAdviceCommand, radiation: NormalizedOutdoorRadiation | null, light: MvpPlantLightResult | null): LightMissingCode[] {
+  const codes: LightMissingCode[] = []
+  const reason = light?.status === 'insufficient_evidence' ? light.reason : null
+  if (radiation === null || reason === 'anchor_radiation') { codes.push('outdoor_radiation') }
+  if (command.lightReading === null || (reason !== null && reason !== 'anchor_radiation')) { codes.push('plant_light') }
+  return codes
+}
+
+/** 只在 insufficient_evidence 且不是缺植物基线时追加，原有类别保留在前。 */
+function withLightMissing(result: WateringCapabilityResult, codes: readonly LightMissingCode[]): WateringCapabilityResult {
+  const missing = result.details.missingEvidence
+  if (result.status !== 'insufficient_evidence' || codes.length === 0 || missing.includes('plant_baseline')) { return result }
+  return { ...result, details: { ...result.details, missingEvidence: [...missing, ...codes.filter(code => !missing.includes(code))] } }
+}
+
 /**
  * 命令 + 策略 + 基线 + 辐射 → 公开结果与留存正文（纯计算，不访问网络或数据库）。
  * 单通道 Lux 法已包含玻璃效应，故不读取玻璃策略；glassLayers 只进入输入清单。
@@ -64,7 +86,7 @@ export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWater
     : null
   const environment = light?.status === 'available' ? light.intervals : []
   const timezone = radiation?.timezone ?? null
-  const result = assessMvpWatering({
+  const assessed = assessMvpWatering({
     policy: policy?.snapshot ?? null,
     now: nowMs,
     baseline,
@@ -72,9 +94,11 @@ export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWater
     lastConfirmedWateringAt: command.lastWateringAtMs,
     pot: command.pot,
     materials: command.materials,
+    primaryMaterial: command.primaryMaterial,
     environment,
     timezone
   })
+  const result = withLightMissing(assessed, lightMissingCodes(command, radiation, light))
   const inputManifest: CanonicalJsonObject = {
     contractVersion: inputManifestVersion,
     catalogTaxonRef: command.catalogTaxonRef,
@@ -85,6 +109,8 @@ export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWater
     lastWateringAtMs: command.lastWateringAtMs,
     pot: { ...command.pot },
     materials: [...command.materials],
+    // 仅在用户标了主要材料时写入，保持未标请求的输入清单与哈希不变。
+    ...(command.primaryMaterial === null ? {} : { primaryMaterial: command.primaryMaterial }),
     indoorClimate: command.indoorClimate === null ? null : { ...command.indoorClimate }
   }
   const algorithmReleaseManifest: CanonicalJsonObject = {
