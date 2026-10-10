@@ -2721,7 +2721,9 @@
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
       "decisionGroup": "diagnosis_releases",
       "configurationTier": "policy",
-      "codeLocations": [],
+      "codeLocations": [
+        "cloudfunctions-v2/src/diagnosis/provider/visual-model-registry.ts"
+      ],
       "id": "diagnosis.visual_gen.model_code",
       "chineseName": "视觉诊断生成式模型代码（含兜底候选顺序）",
       "valueType": "string",
@@ -2756,7 +2758,85 @@
           "qwen3.7-flash"
         ]
       },
-      "decisionNote": "用户 2026-10-10 给出兜底顺序（同日更新：qwen3.7-flash 优先）；主代理裁定为候选顺序，不改成 confirmed。正式模型须与提示词、Schema、请求参数组成同一版本组，经评测后发布"
+      "decisionNote": "用户 2026-10-10 给出兜底顺序（同日更新：qwen3.7-flash 优先）；主代理裁定为候选顺序，不改成 confirmed。正式模型须与提示词、Schema、请求参数组成同一版本组，经评测后发布；代码只接收策略给出的顺序（visual-model-registry.ts），没有默认模型"
+    },
+    {
+      "domain": "diagnosis",
+      "layer": "provider_runtime",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "env",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/bailian-diagnosis-environment.ts",
+        "cloudfunctions-v2/src/diagnosis/provider/bailian-visual-model-client.ts"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+        "docs/backend-v2/diagnosis-eval/probe-run-2026-10-10.json"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "blockingScope": "视觉诊断生成式调用（缺失时不创建 Provider，接口返回 503）",
+      "id": "diagnosis.visual_gen.provider_total_deadline_ms",
+      "chineseName": "视觉诊断单个模型单次调用总时限",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "environmentName": "V2_BAILIAN_DIAGNOSIS_TOTAL_DEADLINE_MS",
+      "formatBounds": {
+        "minimum": 5000,
+        "maximum": 120000
+      },
+      "proposedValue": 60000,
+      "changePolicy": "部署环境变量；改动需重启实例",
+      "fallback": "未设置时不创建 Provider，不使用代码默认值",
+      "expected": "超时即中止该次请求并按不可用处理（可在同模型内按尝试次数重试，或切换下一个模型）",
+      "pendingReason": "探针实测平均 19～28 秒、最长约 41 秒；建议 60 秒，待主代理裁定",
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnc）：运维参数，只来自环境变量，无代码默认值"
+    },
+    {
+      "domain": "diagnosis",
+      "layer": "provider_runtime",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "decisionGroup": "provider_runtime",
+      "configurationTier": "env",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/bailian-diagnosis-environment.ts",
+        "cloudfunctions-v2/src/diagnosis/provider/bailian-visual-model-client.ts"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+        "docs/backend-v2/diagnosis-eval/probe-run-2026-10-10.json"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "blockingScope": "视觉诊断生成式调用（缺失时不创建 Provider，接口返回 503）",
+      "id": "diagnosis.visual_gen.provider_max_attempts",
+      "chineseName": "视觉诊断单个模型内的最多尝试次数",
+      "valueType": "integer",
+      "unit": "次",
+      "environmentName": "V2_BAILIAN_DIAGNOSIS_MAX_ATTEMPTS",
+      "formatBounds": {
+        "minimum": 1,
+        "maximum": 3
+      },
+      "proposedValue": 2,
+      "changePolicy": "部署环境变量；改动需重启实例",
+      "fallback": "未设置时不创建 Provider，不使用代码默认值",
+      "expected": "只对不可用与限流在同一模型内重试；免费额度用完、额度不足时直接切下一个模型；请求不合法时不重试也不切换",
+      "pendingReason": "建议 2 次（1 次重试），待主代理裁定",
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnc）：运维参数，只来自环境变量，无代码默认值；与安全门重试（maxModelLoops，成本策略）是两件事"
     },
     {
       "domain": "diagnosis",
@@ -7650,8 +7730,8 @@
         "USER_DIAGNOSIS_VISUAL"
       ],
       "status": "pending",
-      "endpointProfile": "P1_PENDING",
-      "credentialRef": "P1_PENDING",
+      "endpointProfile": "env:LLM_ALIYUN_BAILIAN_BASE_URL（未设置时为官方北京端点 https://dashscope.aliyuncs.com/compatible-mode/v1）",
+      "credentialRef": "env:LLM_ALIYUN_BAILIAN_API_KEY",
       "connectTimeoutMs": "P1_PENDING",
       "readTimeoutMs": "P1_PENDING",
       "totalDeadlineMs": "P1_PENDING",
@@ -7680,7 +7760,8 @@
         "docs/backend-v2/contracts/care-points-and-ai-quota.md",
         "docs/backend-v2/contracts/schemas/diagnosis-model-output.v1.schema.json",
         "docs/backend-v2/contracts/prompts/diagnosis-visual.v1.release.json",
-        "docs/backend-v2/audits/P1-bailian-qwen35-flash-freeze.md"
+        "docs/backend-v2/audits/P1-bailian-qwen35-flash-freeze.md",
+        "docs/backend-v2/contracts/diagnosis-visual-api.md"
       ],
       "decisionGroup": "provider_runtime",
       "productModelFamily": "qwen3.5-flash",

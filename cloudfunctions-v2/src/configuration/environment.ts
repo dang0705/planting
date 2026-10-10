@@ -47,6 +47,7 @@ export const CREDENTIAL_ENVIRONMENT_NAMES = Object.freeze([
   'DOUYIN_APP_SECRET',
   'PLATFORM_SUBJECT_HMAC_KEY_V1',
   'CLOUDBASE_STORAGE_API_KEY',
+  'LLM_ALIYUN_BAILIAN_API_KEY',
 ] as const)
 
 /** 平台登录凭证变量名（凭证清单的子集）。 */
