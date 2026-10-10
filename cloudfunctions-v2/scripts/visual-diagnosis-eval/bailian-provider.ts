@@ -29,7 +29,12 @@ export interface BailianRequestInput extends ProviderRequest {
   readonly maxPixels: number
   /** 是否要求 JSON 对象输出（response_format=json_object）；未给出视为关闭。 */
   readonly jsonMode?: boolean
+  /** 仅评测：允许图片 data URL（产品运行时仍只允许 HTTPS）。 */
+  readonly allowInlineImages?: boolean
 }
+
+/** 评测内联图片 data URL 的唯一允许格式。 */
+const inlineImagePattern = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/
 
 /** 文本内容块。 */
 interface TextBlock {
@@ -73,7 +78,8 @@ export interface BailianRequestBody {
 /** 构造请求体；图片地址必须是 HTTPS。 */
 export function buildBailianRequestBody(input: BailianRequestInput): BailianRequestBody {
   for (const url of input.imageUrls) {
-    if (!/^https:\/\//i.test(url)) {
+    const inlineAllowed = input.allowInlineImages === true && inlineImagePattern.test(url)
+    if (!/^https:\/\//i.test(url) && !inlineAllowed) {
       throw new Error('image_url_must_be_https')
     }
   }
@@ -121,6 +127,8 @@ export interface BailianProviderOptions {
   readonly maxPixels?: number
   /** JSON 输出模式。 */
   readonly jsonMode?: boolean
+  /** 仅评测：允许图片 data URL。 */
+  readonly allowInlineImages?: boolean
 }
 
 /** 读取数字字段。 */
@@ -159,7 +167,8 @@ export function createBailianProvider(options: BailianProviderOptions): EvalProv
         enableThinking,
         maxTokens,
         maxPixels,
-        jsonMode: options.jsonMode === true
+        jsonMode: options.jsonMode === true,
+        allowInlineImages: options.allowInlineImages === true
       })
       const startedAt = Date.now()
       const response = await options.fetchImpl(`${baseUrl}/chat/completions`, {
@@ -188,7 +197,8 @@ export function createBailianProvider(options: BailianProviderOptions): EvalProv
           cacheCreationTokens:
             numberAt(json, 'usage', 'prompt_tokens_details', 'cache_creation_input_tokens') ||
             numberAt(json, 'usage', 'cache_creation_input_tokens'),
-          reasoningTokens: numberAt(json, 'usage', 'completion_tokens_details', 'reasoning_tokens')
+          reasoningTokens: numberAt(json, 'usage', 'completion_tokens_details', 'reasoning_tokens'),
+          imageTokens: numberAt(json, 'usage', 'prompt_tokens_details', 'image_tokens')
         },
         latencyMs: Date.now() - startedAt
       }

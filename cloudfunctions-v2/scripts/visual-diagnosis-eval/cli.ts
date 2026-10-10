@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util'
 import { createBailianProvider } from './bailian-provider.js'
 import {
   extractPrefixFromDraft,
+  resolveLocalImageRef,
   runEvaluation,
   type EvalCase,
   type EvalProvider,
@@ -48,6 +49,8 @@ const { values } = parseArgs({
     'max-tokens': { type: 'string' },
     'max-pixels': { type: 'string' },
     out: { type: 'string' },
+    'image-dir': { type: 'string' },
+    'allow-inline-images': { type: 'boolean', default: false },
     apply: { type: 'boolean', default: false }
   },
   strict: true
@@ -71,7 +74,25 @@ function positive(name: keyof typeof values): number {
   return value
 }
 
-const cases = JSON.parse(readFileSync(resolve(required('cases')), 'utf8')) as EvalCase[]
+const rawCases = JSON.parse(readFileSync(resolve(required('cases')), 'utf8')) as EvalCase[]
+const allowInlineImages = values['allow-inline-images'] === true
+/** 仅评测：`local:<文件名>` 在显式开启内联时解析为 data URL；图片只作为数据读取。 */
+const cases: EvalCase[] = rawCases.map(evalCase => {
+  const hasLocal = evalCase.imageUrls.some(url => url.startsWith('local:'))
+  if (!hasLocal) {
+    return evalCase
+  }
+  if (!allowInlineImages) {
+    throw new Error('案例含本地图片引用，必须显式给出 --allow-inline-images 与 --image-dir')
+  }
+  const imageDir = resolve(required('image-dir'))
+  return {
+    ...evalCase,
+    imageUrls: evalCase.imageUrls.map(url =>
+      resolveLocalImageRef(url, imageDir, path => readFileSync(path))
+    )
+  }
+})
 const prefixText = extractPrefixFromDraft(readFileSync(resolve(required('prefix-draft')), 'utf8'))
 const price = JSON.parse(readFileSync(resolve(required('price-snapshot')), 'utf8')) as PriceSnapshot
 const apply = values.apply === true
@@ -95,6 +116,7 @@ const provider = apply
       model: required('model'),
       enableThinking: thinking === 'on',
       jsonMode: jsonMode === 'on',
+      allowInlineImages,
       maxTokens: positive('max-tokens'),
       maxPixels: positive('max-pixels')
     })

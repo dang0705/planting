@@ -4,6 +4,7 @@ import {
   BudgetExceededError,
   estimateCaseCostCny,
   extractPrefixFromDraft,
+  resolveLocalImageRef,
   runEvaluation,
   scoreModelText,
   type EvalCase,
@@ -465,5 +466,76 @@ describe('视觉诊断评测脚本：真实探针所需的增量能力', () => {
     const response = await provider.complete({ prefixText: 'p', dynamicText: 'd', imageUrls: [] })
     expect(response.usage.reasoningTokens).toBe(20)
     expect(response.usage.cachedTokens).toBe(4)
+  })
+})
+
+/**
+ * 2026-10-10 增量 Expected：真实探针发现百炼无法下载 Wikimedia 图片地址（Download multimodal file timed out），
+ * 协调方要求「下载的文件只作为数据传给评测脚本」。因此评测脚本在显式开关下允许把本地图片以
+ * data URL 内联发送（产品运行时仍只允许 HTTPS，不受影响）；回包中的 image_tokens 单独记录。测试层次：unit_fake。
+ */
+describe('视觉诊断评测脚本：本地图片内联（仅评测）', () => {
+  const base = {
+    model: 'qwen3.6-flash',
+    enableThinking: false,
+    maxTokens: 16,
+    maxPixels: 1048576,
+    prefixText: 'p',
+    dynamicText: 'd'
+  }
+  const dataUrl = 'data:image/jpeg;base64,/9j/4AAQ'
+
+  test('默认拒绝 data URL', () => {
+    expect(() => buildBailianRequestBody({ ...base, imageUrls: [dataUrl] })).toThrow()
+  })
+
+  test('显式开启后接受图片 data URL，但仍拒绝非图片类型', () => {
+    const body = buildBailianRequestBody({ ...base, imageUrls: [dataUrl], allowInlineImages: true })
+    expect(body.messages[1].content[1]).toMatchObject({ type: 'image_url' })
+    expect(() =>
+      buildBailianRequestBody({
+        ...base,
+        imageUrls: ['data:text/html;base64,PGh0bWw+'],
+        allowInlineImages: true
+      })
+    ).toThrow()
+  })
+
+  test('本地图片引用解析为 data URL，并拒绝目录穿越与非图片扩展名', () => {
+    const read = (file: string) => Buffer.from(`bytes-of-${file}`)
+    expect(resolveLocalImageRef('local:P01.jpg', '/imgs', read)).toBe(
+      `data:image/jpeg;base64,${Buffer.from('bytes-of-/imgs/P01.jpg').toString('base64')}`
+    )
+    expect(resolveLocalImageRef('local:P02.png', '/imgs', read)).toMatch(/^data:image\/png;base64,/)
+    expect(resolveLocalImageRef('https://example.invalid/a.jpg', '/imgs', read)).toBe(
+      'https://example.invalid/a.jpg'
+    )
+    expect(() => resolveLocalImageRef('local:../secret.jpg', '/imgs', read)).toThrow()
+    expect(() => resolveLocalImageRef('local:run.sh', '/imgs', read)).toThrow()
+  })
+
+  test('回包中的图片 tokens 单独记录', async () => {
+    const provider = createBailianProvider({
+      env: { [BAILIAN_API_KEY_ENV_NAME]: 'k' },
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{}' } }],
+            usage: {
+              prompt_tokens: 2141,
+              completion_tokens: 16,
+              prompt_tokens_details: { image_tokens: 2122, text_tokens: 19 }
+            }
+          }),
+          { status: 200 }
+        ),
+      model: 'qwen3.6-flash',
+      enableThinking: false,
+      jsonMode: false,
+      maxTokens: 16,
+      maxPixels: 1048576
+    })
+    const response = await provider.complete({ prefixText: 'p', dynamicText: 'd', imageUrls: [] })
+    expect(response.usage.imageTokens).toBe(2122)
   })
 })

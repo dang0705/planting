@@ -65,6 +65,8 @@ export interface ProviderUsage {
   readonly cacheCreationTokens: number
   /** 思考 tokens（包含在 completionTokens 内，单独记录用于成本分析）。 */
   readonly reasoningTokens?: number
+  /** 图片 tokens（供应商在 prompt_tokens_details.image_tokens 中返回时记录）。 */
+  readonly imageTokens?: number
 }
 
 /** Provider 回包：text 只在内存中用于评分。 */
@@ -207,6 +209,30 @@ const statusOnlyStatuses = new Set(['not_plant', 'insufficient_evidence'])
 const maxConsecutiveErrors = 3
 /** 允许名单（待园艺来源审核）。 */
 const allowedAgents = new Set(agentAllowlist.agents.map(agent => agent.nameZh))
+
+/** 允许内联的本地图片文件名：只含安全字符，扩展名限 jpg/jpeg/png。 */
+const localImageNamePattern = /^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.(jpe?g|png)$/i
+
+/**
+ * 仅评测用：把 `local:<文件名>` 解析为图片 data URL（供应商无法下载外部图片地址时使用）。
+ * 文件只作为数据读取，不执行；拒绝目录穿越与非图片扩展名。非 local: 引用原样返回。
+ */
+export function resolveLocalImageRef(
+  ref: string,
+  imageDir: string,
+  readFile: (absolutePath: string) => Buffer
+): string {
+  if (!ref.startsWith('local:')) {
+    return ref
+  }
+  const name = ref.slice('local:'.length)
+  if (!localImageNamePattern.test(name) || name.includes('..')) {
+    throw new Error('local_image_name_invalid')
+  }
+  const mime = /\.png$/i.test(name) ? 'image/png' : 'image/jpeg'
+  const data = readFile(`${imageDir.replace(/\/+$/, '')}/${name}`)
+  return `data:${mime};base64,${data.toString('base64')}`
+}
 
 /** 从提示词草案中提取两条分隔线之间的前缀正文（保留唯一末尾换行）。 */
 export function extractPrefixFromDraft(draft: string): string {
