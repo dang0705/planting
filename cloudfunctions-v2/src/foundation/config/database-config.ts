@@ -1,3 +1,5 @@
+import { inspect } from 'node:util'
+
 /**
  * v2 云函数连接 MySQL 所需的最小参数。
  *
@@ -37,6 +39,23 @@ const portPattern = /^[1-9][0-9]{0,4}$/u
 const maximumPort = 65_535
 const databaseNamePattern = /^[A-Za-z0-9_]{1,64}$/u
 
+/** 脱敏占位文本，与 configuration/environment.ts 的凭证容器保持一致。 */
+const redactedText = '[已脱敏]'
+
+/**
+ * 在源头为连接参数挂上脱敏：password 不可枚举（对象展开、Object.keys/values 均拿不到），
+ * JSON.stringify / util.inspect / 字符串拼接只输出端口与库名，主机、账号、密码一律为 `[已脱敏]`。
+ * 调用方无需自行记得脱敏；Adapter 仍按属性名 `config.password` 读取原值。
+ */
+function redactConnectionConfig(config: DatabaseConnectionConfig): DatabaseConnectionConfig {
+  const safeView = () => ({ host: redactedText, port: config.port, database: config.database, user: redactedText, password: redactedText })
+  Object.defineProperty(config, 'password', { enumerable: false })
+  Object.defineProperty(config, 'toJSON', { value: safeView, enumerable: false })
+  Object.defineProperty(config, 'toString', { value: () => redactedText, enumerable: false })
+  Object.defineProperty(config, inspect.custom, { value: () => inspect(safeView()), enumerable: false })
+  return Object.freeze(config)
+}
+
 /**
  * 从环境变量严格读取数据库连接参数；任一项缺失或非法时抛出 `DatabaseConfigError`，
  * 由入口在启动阶段失败关闭，不回退到任何默认值。
@@ -60,11 +79,11 @@ export function readDatabaseConnectionConfig(
     throw new DatabaseConfigError(`数据库连接参数不合法：${environmentNames.database}`)
   }
 
-  return {
+  return redactConnectionConfig({
     host: environment[environmentNames.host] ?? '',
     port,
     database,
     user: environment[environmentNames.user] ?? '',
     password: environment[environmentNames.password] ?? ''
-  }
+  })
 }
