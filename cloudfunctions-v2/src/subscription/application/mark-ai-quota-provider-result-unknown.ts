@@ -28,6 +28,8 @@ export type MarkAiQuotaProviderResultUnknownCommand = {
   readonly reservationRef: string
   /** 服务端可信业务发生时间，UTC 毫秒。 */
   readonly occurredAtMs: number
+  /** 待对账原因：省略即供应商结果未知；预占已过 TTL 时传 reservation_ttl_expired。 */
+  readonly reason?: 'reservation_ttl_expired'
 }
 
 /** 标记用例的封闭结果。 */
@@ -111,7 +113,8 @@ export function createMarkAiQuotaProviderResultUnknownUseCase<
             reservationInternalId: reservation.reservationInternalId,
             reservationRef: reservation.reservationRef,
             reservationVersion: reservation.reservationVersion,
-            occurredAtMs: command.occurredAtMs
+            occurredAtMs: command.occurredAtMs,
+            ...(command.reason === undefined ? {} : { reason: command.reason })
           })
           return { kind: 'pending_reconciliation', reservationRef: reservation.reservationRef }
         }

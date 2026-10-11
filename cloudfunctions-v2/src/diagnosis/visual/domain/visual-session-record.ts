@@ -17,10 +17,18 @@ import type { VisualModelCall } from './visual-cost.js'
  */
 
 /** 会话状态。 */
-export type VisualSessionStatus = 'processing' | 'completed' | 'released_no_charge' | 'failed_no_charge'
+export type VisualSessionStatus =
+  | 'processing'
+  | 'completed'
+  | 'released_no_charge'
+  | 'failed_no_charge'
 
 /** 不扣点的结束原因。 */
-export type VisualReleaseReason = 'not_plant' | 'image_unusable' | 'model_failed' | 'safety_gate_rejected'
+export type VisualReleaseReason =
+  | 'not_plant'
+  | 'image_unusable'
+  | 'model_failed'
+  | 'safety_gate_rejected'
 
 /** 额度结局：已结算、已释放、待对账，或结算调用失败未确认（由对账兜底）。 */
 export type VisualQuotaOutcome = 'settled' | 'released' | 'pending_reconciliation' | 'unconfirmed'
@@ -58,7 +66,16 @@ export interface VisualVersionGroup {
   readonly agentAllowlistVersion: string
   /** 单图字节上限（来自 user-plant/asset_rules 策略快照），处理时下载校验使用。 */
   readonly maxImageBytes: number
+  /** 创建时锁定的 AI 额度预占有效期秒数（subscription/ai_reservation）。 */
+  readonly reservationTtlSeconds: number
+  /** 本次预占的到期时刻，UTC 毫秒；到期后不得结算，只能转入对账。 */
+  readonly reservationExpiresAtMs: number
+  /** 整单截止时刻 = 预占到期 − 60 秒（硬规则 diagnosis.visual.processing_deadline），UTC 毫秒。 */
+  readonly processingDeadlineMs: number
 }
+
+/** 整单时长相对预占有效期的安全余量（硬规则 diagnosis.visual.processing_deadline：留 60 秒给结算与写终态）。 */
+export const VISUAL_PROCESSING_SAFETY_MARGIN_MS = 60_000
 
 /** 新建会话（处理中）。 */
 export interface NewVisualSession {
@@ -114,7 +131,10 @@ export interface VisualSessionFinalization {
 
 /** 规范化记录摘要：版本组 + 输入 + 终态（不含摘要本身），用于审计与回放一致性校验。 */
 export function calculateVisualRecordSha256(
-  session: Pick<NewVisualSession, 'visualDiagnosisRef' | 'imageRefs' | 'userQuestionZh' | 'versionGroup' | 'contextSummary'>,
+  session: Pick<
+    NewVisualSession,
+    'visualDiagnosisRef' | 'imageRefs' | 'userQuestionZh' | 'versionGroup' | 'contextSummary'
+  >,
   finalization: Omit<VisualSessionFinalization, 'recordSha256'>
 ): string {
   return calculateCanonicalJsonSha256({
@@ -175,7 +195,9 @@ export interface VisualSessionPublicRow {
 }
 
 /** 仓储行 → 公开响应：只输出合同白名单字段，不含用户、预占、模型、成本等内部字段。 */
-export function projectVisualSessionResponse(row: VisualSessionPublicRow): VisualDiagnosisSessionResponse {
+export function projectVisualSessionResponse(
+  row: VisualSessionPublicRow
+): VisualDiagnosisSessionResponse {
   const base = {
     visualDiagnosisRef: row.visualDiagnosisRef,
     status: row.status,
@@ -215,7 +237,9 @@ export function projectVisualListItem(row: VisualSessionPublicRow): VisualDiagno
     visualDiagnosisRef: row.visualDiagnosisRef,
     status: row.status,
     createdAt: new Date(row.createdAtMs).toISOString(),
-    ...(typeof title === 'string' && title.length > 0 ? { titleZh: [...title].slice(0, 40).join('') } : {}),
+    ...(typeof title === 'string' && title.length > 0
+      ? { titleZh: [...title].slice(0, 40).join('') }
+      : {}),
     ...(row.userPlantRef === null ? {} : { userPlantRef: row.userPlantRef })
   }
 }

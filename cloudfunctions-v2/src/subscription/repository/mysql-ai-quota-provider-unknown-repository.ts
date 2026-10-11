@@ -84,6 +84,8 @@ export type MarkAiQuotaProviderResultUnknownInput = {
   readonly reservationVersion: number
   /** 状态变更的服务端可信时间，UTC 毫秒。 */
   readonly occurredAtMs: number
+  /** 待对账原因：省略为 provider_result_unknown；预占已过 TTL 时为 reservation_ttl_expired。 */
+  readonly reason?: 'reservation_ttl_expired'
 }
 
 /** “供应商结果未知”专用 MySQL Repository 端口。 */
@@ -188,11 +190,14 @@ export function createMysqlAiQuotaProviderUnknownRepository<
       transaction,
       `UPDATE \`ai_quota_reservations\`
        SET \`status\` = 'pending_reconciliation',
-           \`reconciliation_reason\` = 'provider_result_unknown',
+           \`reconciliation_reason\` = ?,
            \`version\` = \`version\` + 1, \`updated_at_ms\` = ?
        WHERE \`id\` = ? AND \`reservation_ref\` = ? AND \`version\` = ?
          AND \`status\` = 'reserved' AND \`settled_amount\` IS NULL`,
       [
+        input.reason === 'reservation_ttl_expired'
+          ? 'reservation_ttl_expired'
+          : 'provider_result_unknown',
         input.occurredAtMs,
         input.reservationInternalId,
         input.reservationRef,

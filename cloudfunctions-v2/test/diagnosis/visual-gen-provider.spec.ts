@@ -107,6 +107,23 @@ describe('视觉模型 Provider：按策略顺序兜底', () => {
     expect(ok.attempts).toEqual([{ modelCode: 'a', outcome: 'succeeded', httpStatus: 200 }])
   })
 
+  // Expected 来源：主代理 2026-10-11 裁决「兜底链遵守整单总时长：剩余时间不够再调一次模型时，就不再切换到下一个模型」。
+  test('剩余时间不够再调一次时不再切换模型，按 processing_deadline_exceeded 失败关闭并携带已有尝试', async () => {
+    const client = fakeClient({
+      a: () => Promise.reject(new ModelProviderError('free_tier_only', 403)),
+      b: okResponse('b')
+    })
+    let checks = 0
+    const error = await callVisualModelWithFallback(client, ['a', 'b'], request, {
+      canAttempt: () => (checks += 1) === 1
+    }).catch((caught: unknown) => caught)
+    expect(error).toMatchObject({
+      kind: 'processing_deadline_exceeded',
+      attempts: [{ modelCode: 'a', outcome: 'free_tier_only', httpStatus: 403 }]
+    })
+    expect(client.calls).toEqual(['a'])
+  })
+
   test('全部候选都不可用时失败关闭', async () => {
     const client = fakeClient({
       a: () => Promise.reject(new ModelProviderError('free_tier_only', 403))

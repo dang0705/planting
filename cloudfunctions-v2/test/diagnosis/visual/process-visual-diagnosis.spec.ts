@@ -54,7 +54,10 @@ function session(overrides: Partial<VisualSessionProcessingRow> = {}): VisualSes
       promptReleaseSha256: promptRelease.promptReleaseSha256,
       outputSchemaVersion: promptRelease.outputSchemaVersion,
       agentAllowlistVersion: promptRelease.agentAllowlistVersion,
-      maxImageBytes: 5_242_880
+      maxImageBytes: 5_242_880,
+      reservationTtlSeconds: 300,
+      reservationExpiresAtMs: fixtureNow + 300_000,
+      processingDeadlineMs: fixtureNow + 240_000
     },
     contextSummary: null,
     createdAtMs: fixtureNow,
@@ -158,6 +161,7 @@ function harness(
       unknowns.push(command as never)
       return { kind: 'pending_reconciliation', reservationRef: command.reservationRef }
     },
+    modelCallBudgetMs: 120_000,
     now: () => fixtureNow + 5000,
     ...options.overrides
   }
@@ -282,6 +286,37 @@ describe('处理视觉诊断：完成路径', () => {
     expect(over.finalizations[0]).toMatchObject({
       status: 'completed',
       chargedPoints: 23,
+      quotaOutcome: 'pending_reconciliation'
+    })
+  })
+})
+
+describe('处理视觉诊断：整单时长与预占到期（主代理 2026-10-11 裁决）', () => {
+  test('剩余时间不够一次模型调用：不调用模型，失败关闭并释放点数', async () => {
+    const h = harness({ overrides: { now: () => fixtureNow + 200_000 } })
+    expect(await h.process(ref)).toBe('finalized')
+    expect(h.requests).toEqual([])
+    expect(h.settlements[0]).toMatchObject({ settledAmount: 0 })
+    expect(h.finalizations[0]).toMatchObject({
+      status: 'failed_no_charge',
+      releaseReason: 'model_failed',
+      chargedPoints: 0,
+      quotaOutcome: 'released'
+    })
+  })
+
+  test('结算前预占已过期：不结算，按 reservation_ttl_expired 转入对账', async () => {
+    const h = harness({ overrides: { now: () => fixtureNow + 300_000 } })
+    await h.process(ref)
+    expect(h.settlements).toEqual([])
+    expect(h.unknowns).toEqual([
+      expect.objectContaining({
+        reservationRef: 'aqr_fixture_10000',
+        reason: 'reservation_ttl_expired'
+      })
+    ])
+    expect(h.finalizations[0]).toMatchObject({
+      status: 'failed_no_charge',
       quotaOutcome: 'pending_reconciliation'
     })
   })

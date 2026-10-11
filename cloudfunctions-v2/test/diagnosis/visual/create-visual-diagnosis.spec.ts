@@ -56,6 +56,7 @@ function harness(overrides: Partial<CreateVisualDiagnosisDependencies> = {}) {
       idempotencyRetentionHours: 168
     }),
     isModelProviderConfigured: () => true,
+    modelCallBudgetMs: 120_000,
     readContextSummary: async () => null,
     runIdempotent: async (idempotency, work) => {
       const key = `${idempotency.principalScopeHash}:${idempotency.idempotencyKeyHash}`
@@ -130,7 +131,11 @@ function harness(overrides: Partial<CreateVisualDiagnosisDependencies> = {}) {
         ...command,
         reservationRef: `aqr_fixture_${reservations.length + 1}0000`
       })
-      return { kind: 'reserved', reservationRef: `aqr_fixture_${reservations.length}0000` } as never
+      return {
+        kind: 'reserved',
+        reservationRef: `aqr_fixture_${reservations.length}0000`,
+        expiresAtMs: command.expiresAtMs
+      } as never
     },
     scheduleProcessing: ref => {
       scheduled.push(ref)
@@ -223,6 +228,25 @@ describe('发起视觉诊断：成功路径', () => {
       readPromptRelease: async () => ({ ...promptRelease, promptReleaseSha256: 'f'.repeat(64) })
     })
     await expect(call(mismatch)).rejects.toMatchObject({ status: 503, type: 'SERVICE_UNAVAILABLE' })
+  })
+
+  // Expected 来源：主代理 2026-10-11 裁决——整单时长不得超过「预占有效期 − 60 秒」（由 TTL 推导，不单独配置）。
+  test('版本组锁定预占有效期、预占到期时刻与整单截止时刻（创建时刻 + TTL − 60 秒）', async () => {
+    const h = harness()
+    await call(h)
+    expect([...h.sessions.values()][0]).toMatchObject({
+      versionGroup: {
+        reservationTtlSeconds: 900,
+        reservationExpiresAtMs: fixtureNow + 900_000,
+        processingDeadlineMs: fixtureNow + 840_000
+      }
+    })
+  })
+
+  test('TTL − 60 秒连一次模型调用都放不下时 503，不预占', async () => {
+    const h = harness({ readReservationTtlSeconds: async () => 150 })
+    await expect(call(h)).rejects.toMatchObject({ status: 503, type: 'SERVICE_UNAVAILABLE' })
+    expect(h.reservations).toHaveLength(0)
   })
 
   test('本人有效登录临时案例可诊断，不读取长期植物上下文', async () => {

@@ -125,11 +125,38 @@ node scripts/policy-release.mjs list --domain <d> --policy <p>
 
 - 三个百炼变量缺任一个，都不创建模型客户端，发起诊断返回 503（不会预占点数）。越界时函数启动失败，错误信息只含变量名。
 - 函数超时建议不低于 300 秒（与预占有效期相同），并在冒烟时实测（见第 7 节风险 B）。
+- **整单时长硬规则**（主代理 2026-10-11 裁决，配置目录 `diagnosis.visual.processing_deadline`）：一次诊断从认领到写入终态不得超过「预占有效期 − 60 秒」，按 300 秒算即 240 秒。
+  - 截止时刻在创建时写进版本组：`processingDeadlineMs = 预占到期 − 60 秒`。
+  - 剩余时间放不下一次完整模型调用（`V2_BAILIAN_DIAGNOSIS_TOTAL_DEADLINE_MS × V2_BAILIAN_DIAGNOSIS_MAX_ATTEMPTS`）时，不再调用，也不再切换兜底模型；该诊断失败关闭（`failed_no_charge / model_failed`）并释放点数。
+  - 结算前若预占已到期，就不结算，按 `reservation_ttl_expired` 转入对账。
+  - 如果「TTL − 60 秒」连一次模型调用都放不下（例如把调用时限调到 120 秒 × 2 次），发起诊断直接 503。所以调整这两个环境变量时，乘积必须 ≤ 240 000 毫秒。
 - 函数包约 27 MB（压缩后约 10 MB），不需要 Layer。
+
+## 3.1 新增事件函数 `diagnosis-maintenance-sweep`（主代理 2026-10-11 裁决）
+
+- **为什么不接进 care-maintenance-sweep**：care 函数若直接调用 subscription 与 diagnosis 的仓储，就违反了「云函数按业务域拆分」（宪章 §4）。
+  - 因此改在 diagnosis 域新增一个低频事件函数，频率与 care 补扫相同。
+  - subscription 目前没有部署入口；AI 额度现在唯一的调用方是视觉诊断，所以先由 diagnosis 承担预占到期扫描，等 subscription 函数上线后再迁过去。
+- 形态：普通（事件型）云函数，`Nodejs20.19`，Handler `index.main`，产物 `dist/functions/diagnosis-maintenance-sweep`。不挂网关、不带 sharp。
+- 定时触发器 cron：`0 25 0,4,7,11,14,16,19,21 * * * *`（北京时间，与 `care.maintenance_sweep` 相同，见配置目录 `diagnosis.maintenance_sweep`），必须与代码一致。
+- 环境变量：`V2_MYSQL_HOST` / `V2_MYSQL_PORT` / `V2_MYSQL_DATABASE` / `V2_MYSQL_USER` / `V2_MYSQL_PASSWORD`，以及可选的 `LOG_LEVEL`。
+- 函数超时：建议 60 秒。每次运行两个独立阶段，各占函数超时的 40%，前一阶段失败不影响后一阶段：
+  1. AI 额度预占到期扫描：复用 subscription 的到期扫描，每批 500 条；到期仍未结算的预占转为 `pending_reconciliation / reservation_ttl_expired`。
+  2. 卡住的视觉诊断回收：处于 `processing` 且整单截止时刻已过的会话，每批 100 条，写成 `failed_no_charge / model_failed`。额度按情况处理：
+     - 从未被认领：全部释放；
+     - 已认领（可能已调用模型，结果未知）：转入对账；
+     - 预占已到期：按 TTL 到期转入对账。
+- 部署后手动调用一次（无参数），返回值只含计数，例如：
+
+```json
+{ "reservations": { "outcome": "drained", "pendingCount": 0 }, "sessions": { "outcome": "drained", "recovered": 0 } }
+```
+
+  `outcome = not_started` 说明读不到函数超时（`time_limit_in_ms`），需要核对运行时上下文。
 
 ## 4. 部署与网关
 
-1. 部署 `dist/functions/diagnosis`（HTTP 函数，Node.js 22，`scf_bootstrap`）。部署前在干净工作树重新构建。
+1. 部署 `dist/functions/diagnosis`（HTTP 函数，Node.js 22，`scf_bootstrap`）与 `dist/functions/diagnosis-maintenance-sweep`（事件函数，按第 3.1 节配置定时触发器）。部署前在干净工作树重新构建。
 2. 网关：`/api/v2/diagnosis/visual` 前缀转发到 diagnosis 函数。
    - 若现有 `/api/v2/diagnosis` 前缀已整体转发到 diagnosis 函数，无需新增路由，只需确认子路径没被其他规则截走。
    - 五个接口如下：
@@ -176,7 +203,7 @@ SELECT status, settled_amount, actual_cost_micros FROM qinghuazhi_v2_test.ai_quo
 | 诊断结果或成本异常，需要暂停视觉诊断 | 首次激活**没有上一版**：`rollback` 会返回 `not_found / NO_PREVIOUS_VERSION`（退出码 3），不能靠回滚来停用。要停用可以二选一：(1) 在网关停用 `/api/v2/diagnosis/visual` 前缀；(2) 部署上一版 diagnosis 函数（不含视觉路由）。已有结果保留在库中；在途会话的预占按第 7 节处理 |
 | 4/4 发布 v2 后需要退回 v1.3 | 回滚 `diagnosis/visual_generation` 到 v1.0.0。v1.3 提示词随包保留（按摘要取用），在途诊断按创建时锁定的摘要继续处理，不受影响 |
 | 能力目录 v1.1.0 有误 | `rollback --domain subscription --policy capability_catalog --expect-current subscription-capability-catalog/v1.1.0 …`，指回旧目录 |
-| 新代码需要回退 | 直接部署上一版 diagnosis 函数。旧代码不读 032 三张表和本次三个策略，可以保留不动。若有 `processing` 状态的会话，按第 7 节方法处理它们的预占 |
+| 新代码需要回退 | 直接部署上一版 diagnosis 函数，并停用 `diagnosis-maintenance-sweep` 的定时触发器（它只处理 032 新表与 AI 预占，停用不影响其他功能）。旧代码不读 032 三张表和本次三个策略，可以保留不动。若有 `processing` 状态的会话，按第 7 节方法处理它们的预占 |
 | 迁移 032 需要撤下 | 不在本清单内。先停视觉诊断路由，再由 DBA 另行批准删表；已写记录按不可变要求保留 |
 
 ## 7. 必须在云端验证的两项风险
@@ -212,7 +239,16 @@ SELECT status, processing_claimed_at_ms, completed_at_ms, created_at_ms
   - (a) POST 在同一请求内同步处理完再返回。合同允许 POST 返回终态，但请求耗时会上到约 30–60 秒，网关超时需要相应放宽；
   - (b) 写入发件箱，由事件函数或定时任务处理；
   - (c) GET 请求时发现会话超过一定时长仍未认领，就补触发处理。
-- 兜底现状：同一幂等键重试会重新调度处理，同一会话只认领一次。注意：**AI 额度预占的到期扫描（`createScanExpiredAiQuotaReservationsUseCase`）目前没有接到任何定时函数**。如果处理一直没完成，预占会停在 `reserved`、点数一直被冻结，需要人工按对账处理，或在后续票里把到期扫描接入低频补扫。
+- 兜底现状（2026-10-11 已补齐）：
+  - 同一幂等键重试会重新调度处理，同一会话只认领一次；
+  - 超过整单截止时刻仍在 `processing` 的会话，由 `diagnosis-maintenance-sweep` 回收为失败、不扣点；
+  - 到期仍为 `reserved` 的预占，由同一个补扫转入对账。
+- 补扫最长间隔约 4 小时，这段时间内用户会看到「处理中」。若风险 B 成立，仍需按上面 (a)/(b)/(c) 另行裁决。
+- 验证补扫：
+  1. 在风险 B 的「不轮询测试」里，若会话停在 `processing`，等到截止时刻（创建后 240 秒）之后手动调用一次 `diagnosis-maintenance-sweep`；
+  2. 读回该会话为 `failed_no_charge`；
+  3. 读回 `quota_outcome`：未认领为 `released`，已认领为 `pending_reconciliation`；
+  4. 读回对应预占状态与之一致。
 
 ## 8. 首个发布版未覆盖的范围
 

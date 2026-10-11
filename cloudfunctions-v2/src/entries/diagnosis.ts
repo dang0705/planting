@@ -82,6 +82,7 @@ const visual = {
   storage: environment.storage ? createCloudbaseStorageHttpAdapter({ fetch: globalThis.fetch, ...environment.storage }) : null,
   uploader: environment.storage ? createCloudbaseStorageHttpUploader({ fetch: globalThis.fetch, ...environment.storage }) : null,
   normalizer: createImageNormalizer(),
+  modelCallBudgetMs: bailian ? bailian.totalDeadlineMs * bailian.maxAttemptsPerModel : null,
   createModelClient: bailian
     ? (maxOutputTokens: number) => createBailianVisualModelClient({ config: bailian, maxOutputTokens, fetchImpl: globalThis.fetch })
     : null,

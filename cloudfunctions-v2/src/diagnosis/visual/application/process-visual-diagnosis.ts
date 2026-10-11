@@ -64,6 +64,8 @@ export interface ProcessVisualDiagnosisDependencies {
   readonly markProviderUnknown: (
     command: MarkAiQuotaProviderResultUnknownCommand
   ) => Promise<MarkAiQuotaProviderResultUnknownResult>
+  /** 一次模型调用（同一模型内全部尝试）的最长耗时毫秒；剩余整单时长不足它时不再发起调用。 */
+  readonly modelCallBudgetMs: number
   /** 服务端时钟，返回 UTC 毫秒。 */
   readonly now: () => number
 }
@@ -151,6 +153,9 @@ async function generate(
   if (client === null) {
     return { kind: 'dependency_failed' }
   }
+  if (deps.now() + deps.modelCallBudgetMs > row.versionGroup.processingDeadlineMs) {
+    return { kind: 'dependency_failed' }
+  }
   const imageUrls = await prepareImageUrls(deps, row, nowMs)
   if (!Array.isArray(imageUrls)) {
     return imageUrls as PreparationFailure
@@ -175,7 +180,10 @@ async function generate(
     context: { edibleContext: 'unknown', causeCatalog: prompt.causeCatalog },
     maxModelLoops: rules.costPolicy.maxModelLoops,
     canStartNextLoop: calls =>
-      sumVisualCostMicros(calls, rules.tariffs) < rules.costPolicy.maxCostMicros
+      sumVisualCostMicros(calls, rules.tariffs) < rules.costPolicy.maxCostMicros,
+    // 整单时长硬规则：剩余时间放不下一次完整调用（含同一模型内重试）就不再调用，也不再切换兜底模型。
+    canAttemptModelCall: () =>
+      deps.now() + deps.modelCallBudgetMs <= row.versionGroup.processingDeadlineMs
   })
 }
 
@@ -191,6 +199,16 @@ async function settle(
   }
 ): Promise<VisualQuotaOutcome> {
   try {
+    // 预占已到期：不得静默结算，按 reservation_ttl_expired 转入对账（由人工或对账流程裁决）。
+    if (input.nowMs >= row.versionGroup.reservationExpiresAtMs) {
+      await deps.markProviderUnknown({
+        userRef: row.userRef as never,
+        reservationRef: row.reservationRef,
+        occurredAtMs: input.nowMs,
+        reason: 'reservation_ttl_expired'
+      })
+      return 'pending_reconciliation'
+    }
     if (input.providerResultUnknown) {
       await deps.markProviderUnknown({
         userRef: row.userRef as never,

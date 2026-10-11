@@ -41,6 +41,8 @@ export interface RunVisualGenerationInput {
   readonly maxModelLoops: number
   /** 成本闸门：发起第 2 次及以后的调用前，用已发生的调用判断累计成本是否仍在上限内；false 则不再调用。 */
   readonly canStartNextLoop: (calls: readonly VisualModelCall[]) => boolean
+  /** 整单时长闸门：每次发起模型调用前判断剩余时间是否还够一次调用（含切换兜底模型）；false 则不再调用。 */
+  readonly canAttemptModelCall: () => boolean
 }
 
 /** 单张图片的脱敏评估。 */
@@ -158,7 +160,9 @@ export async function runVisualGeneration(
     }
     let call
     try {
-      call = await callVisualModelWithFallback(client, input.modelOrder, input.request)
+      call = await callVisualModelWithFallback(client, input.modelOrder, input.request, {
+        canAttempt: input.canAttemptModelCall
+      })
     } catch (error) {
       if (error instanceof ModelProviderError) {
         attempts.push(...error.attempts)

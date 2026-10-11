@@ -119,6 +119,16 @@ const care = {
   openMeteoRequestWindowDays: fromCatalog('care.lighting.open_meteo_request_window_days', '天', { maxPastDays: 92, maxForecastDays: 16 }),
 }
 
+/** diagnosis 域低频补扫（主代理 2026-10-11 裁决：AI 额度预占到期扫描 + 卡住的视觉诊断回收，两阶段各自批量与预算）。 */
+const diagnosis = {
+  /** cron 与 care-maintenance-sweep 相同（北京时间 7 段）；两阶段预算占函数超时的比例之和小于 1。 */
+  maintenanceSweep: fromCatalog('diagnosis.maintenance_sweep', 'cron / 条 / 比例', {
+    cron: '0 25 0,4,7,11,14,16,19,21 * * * *',
+    reservationExpiry: { batchSize: 500, budgetFractionOfFunctionTimeout: 0.4 },
+    staleSessions: { batchSize: 100, budgetFractionOfFunctionTimeout: 0.4 },
+  }),
+}
+
 /** 共享云存储运维参数（消费方：user-plant 入口）。 */
 const storage = {
   /** CloudBase 云存储 HTTP API 总时限毫秒（Provider `cloudbase_storage.totalDeadlineMs`）；运维可覆盖。 */
@@ -178,4 +188,4 @@ const policyBounds = {
  * 代码层运行参数注册表：按领域分组的只读对象。
  * 读取方式：`RUNTIME_PARAMETERS.care.outboxDispatch.value`；运维参数的生效值以 environment.ts 读取结果为准（可能被环境变量覆盖）。
  */
-export const RUNTIME_PARAMETERS = deepFreeze({ http, identity, care, storage, userPlant, policyBounds })
+export const RUNTIME_PARAMETERS = deepFreeze({ http, identity, care, diagnosis, storage, userPlant, policyBounds })

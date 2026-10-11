@@ -21,6 +21,7 @@ import { AiQuotaReservationPersistenceError } from '../../../subscription/reposi
 import { assertVisualInputBudget } from '../../domain/visual-input-budget.js'
 import { sanitizeContextSummary, type ContextSummary } from '../domain/context-summary.js'
 import {
+  VISUAL_PROCESSING_SAFETY_MARGIN_MS,
   projectVisualSessionResponse,
   type NewVisualSession,
   type VisualVersionGroup
@@ -99,6 +100,8 @@ export interface CreateVisualDiagnosisDependencies {
   readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
   /** 模型供应商环境是否已配置（凭证、时限、重试次数）。 */
   readonly isModelProviderConfigured: () => boolean
+  /** 一次模型调用（同一模型内全部尝试）的最长耗时毫秒 = 单次总时限 × 最多尝试次数；用于判断整单时长是否放得下。 */
+  readonly modelCallBudgetMs: number
   /** 读取长期植物上下文摘要。 */
   readonly readContextSummary: ReadVisualContextSummary
   /** 幂等写端口（同键同参返回首次结果）。 */
@@ -154,7 +157,8 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
       prompt.agentAllowlistVersion !== requestedPrompt.agentAllowlistVersion ||
       ttlSeconds === null ||
       writeRules === null ||
-      !deps.isModelProviderConfigured()
+      !deps.isModelProviderConfigured() ||
+      ttlSeconds * 1000 - VISUAL_PROCESSING_SAFETY_MARGIN_MS < deps.modelCallBudgetMs
     ) {
       throw unavailable('视觉诊断暂不可用')
     }
@@ -175,14 +179,18 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
       path: createVisualDiagnosisRoutePath,
       body: requestBody
     } as never)
-    const versionGroup: VisualVersionGroup = {
+    const versionGroupBase: Omit<
+      VisualVersionGroup,
+      'reservationExpiresAtMs' | 'processingDeadlineMs'
+    > = {
       policyReleaseVersion: policy.releaseVersion,
       policyContentSha256: policy.contentSha256,
       rules: policy.rules,
       promptReleaseSha256: prompt.promptReleaseSha256,
       outputSchemaVersion: prompt.outputSchemaVersion,
       agentAllowlistVersion: prompt.agentAllowlistVersion,
-      maxImageBytes: assetRules.maxImageBytes
+      maxImageBytes: assetRules.maxImageBytes,
+      reservationTtlSeconds: ttlSeconds
     }
     // 上下文摘要是外部只读来源，放在事务外读取；读不到或不合格时按「无摘要」处理（全部写「未知」）。
     let contextSummary: ContextSummary | null = null
@@ -266,6 +274,12 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
           reservation.status !== 'reserved'
         ) {
           throw new IdempotentWriteRetryLaterError('额度预占已结束，请稍后重试')
+        }
+        const reservationExpiresAtMs = reservation.expiresAtMs
+        const versionGroup: VisualVersionGroup = {
+          ...versionGroupBase,
+          reservationExpiresAtMs,
+          processingDeadlineMs: reservationExpiresAtMs - VISUAL_PROCESSING_SAFETY_MARGIN_MS
         }
         const session: NewVisualSession = {
           visualDiagnosisRef: deps.createRef('vds_'),

@@ -93,6 +93,28 @@ describe('AI 额度预占标记供应商结果未知用例', () => {
     )
   })
 
+  // Expected 来源：主代理 2026-10-11 裁决「结算前检查预占是否已过期；已过期就转入对账，不得静默结算」与额度合同的待对账原因
+  // reservation_ttl_expired（预占 TTL 到期）。同一用例按调用方给出的原因标记，其余规则不变。
+  test('预占已过期时按 reservation_ttl_expired 标记待对账', async () => {
+    const dependencies = createDependencies('reserved')
+    const mark = createMarkAiQuotaProviderResultUnknownUseCase(dependencies)
+
+    await expect(mark({ ...command, reason: 'reservation_ttl_expired' })).resolves.toEqual({
+      kind: 'pending_reconciliation',
+      reservationRef
+    })
+    expect(dependencies.providerUnknownRepository.markProviderResultUnknown).toHaveBeenCalledWith(
+      transaction,
+      {
+        reservationInternalId: '91',
+        reservationRef,
+        reservationVersion: 2,
+        occurredAtMs: nowMs,
+        reason: 'reservation_ttl_expired'
+      }
+    )
+  })
+
   test.each(['settled', 'released', 'pending_reconciliation'] as const)(
     '已是 %s → 返回 replayed 与当前状态，零写入并正常提交',
     async status => {

@@ -105,6 +105,14 @@ export interface VisualListCursor {
   readonly visualDiagnosisRef: string
 }
 
+/** 卡在处理中的会话（低频补扫回收对象）。 */
+export interface StaleVisualSession {
+  /** 诊断公开引用，格式 vds_…。 */
+  readonly visualDiagnosisRef: string
+  /** 是否已被后台处理认领（已认领说明可能已调用模型，额度结果未知）。 */
+  readonly claimed: boolean
+}
+
 /** 最小反馈写入。 */
 export interface NewVisualFeedback {
   /** 高熵反馈公开引用 dvf_…。 */
@@ -199,7 +207,10 @@ function mapImageRow(row: Record<string, unknown>): VisualImageRow {
 
 /** 编码历史游标（base64url JSON）。 */
 export function encodeVisualListCursor(cursor: VisualListCursor): string {
-  return Buffer.from(JSON.stringify([cursor.createdAtMs, cursor.visualDiagnosisRef]), 'utf8').toString('base64url')
+  return Buffer.from(
+    JSON.stringify([cursor.createdAtMs, cursor.visualDiagnosisRef]),
+    'utf8'
+  ).toString('base64url')
 }
 
 /** 解码历史游标；不合法返回 null（调用方按 400 处理）。 */
@@ -224,7 +235,10 @@ export function decodeVisualListCursor(text: string): VisualListCursor | null {
 /** 创建视觉诊断 Repository。 */
 export function createMysqlVisualDiagnosisRepository() {
   /** 读取 active 用户内部主键；不存在返回 null。 */
-  async function readUserInternalId(context: VisualSqlContext, userRef: string): Promise<string | null> {
+  async function readUserInternalId(
+    context: VisualSqlContext,
+    userRef: string
+  ): Promise<string | null> {
     const rows = await context.connection.query(
       "SELECT id FROM users WHERE BINARY public_user_id = ? AND status = 'active' LIMIT 1",
       [userRef]
@@ -237,7 +251,9 @@ export function createMysqlVisualDiagnosisRepository() {
     context: VisualSqlContext,
     input: {
       readonly userInternalId: string
-      readonly subject: { readonly userPlantRef: string } | { readonly ephemeralPlantCaseRef: string }
+      readonly subject:
+        | { readonly userPlantRef: string }
+        | { readonly ephemeralPlantCaseRef: string }
       readonly nowMs: number
     }
   ): Promise<VisualSubjectRead | null> {
@@ -262,11 +278,17 @@ export function createMysqlVisualDiagnosisRepository() {
         WHERE user_internal_id = ? AND BINARY ephemeral_plant_case_ref = ? AND status = 'active' AND expires_at_ms > ? LIMIT 1`,
       [input.userInternalId, input.subject.ephemeralPlantCaseRef, input.nowMs]
     )
-    return rows[0] === undefined ? null : { kind: 'authenticated_ephemeral', internalId: toId(rows[0].id) }
+    return rows[0] === undefined
+      ? null
+      : { kind: 'authenticated_ephemeral', internalId: toId(rows[0].id) }
   }
 
   /** 读取同一文件已登记的引用（只认本人）。 */
-  async function readImageByFile(context: VisualSqlContext, userInternalId: string, storageFileId: string) {
+  async function readImageByFile(
+    context: VisualSqlContext,
+    userInternalId: string,
+    storageFileId: string
+  ) {
     const rows = await context.connection.query(
       'SELECT image_ref, user_internal_id FROM diagnosis_visual_images WHERE BINARY storage_file_id = ? LIMIT 1',
       [storageFileId]
@@ -284,7 +306,11 @@ export function createMysqlVisualDiagnosisRepository() {
   /** 登记图片：同一文件重复登记返回已有引用（幂等）。 */
   async function insertImages(
     context: VisualSqlContext,
-    input: { readonly userInternalId: string; readonly images: readonly NewVisualImage[]; readonly nowMs: number }
+    input: {
+      readonly userInternalId: string
+      readonly images: readonly NewVisualImage[]
+      readonly nowMs: number
+    }
   ): Promise<readonly { readonly imageRef: string }[]> {
     const result: { imageRef: string }[] = []
     for (const image of input.images) {
@@ -297,11 +323,23 @@ export function createMysqlVisualDiagnosisRepository() {
         await context.connection.execute(
           `INSERT INTO diagnosis_visual_images (_openid, image_ref, user_internal_id, storage_file_id, mime_type, byte_size, content_sha256, registered_at_ms, created_at_ms, updated_at_ms)
             VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [image.imageRef, input.userInternalId, image.storageFileId, image.mimeType, image.byteSize, image.contentSha256, input.nowMs, input.nowMs, input.nowMs]
+          [
+            image.imageRef,
+            input.userInternalId,
+            image.storageFileId,
+            image.mimeType,
+            image.byteSize,
+            image.contentSha256,
+            input.nowMs,
+            input.nowMs,
+            input.nowMs
+          ]
         )
         result.push({ imageRef: image.imageRef })
       } catch (error) {
-        const raced = isDuplicate(error) ? await readImageByFile(context, input.userInternalId, image.storageFileId) : null
+        const raced = isDuplicate(error)
+          ? await readImageByFile(context, input.userInternalId, image.storageFileId)
+          : null
         if (raced === null) {
           throw error
         }
@@ -332,7 +370,10 @@ export function createMysqlVisualDiagnosisRepository() {
   }
 
   /** 创建处理中会话。 */
-  async function insertSession(context: VisualSqlContext, session: NewVisualSession): Promise<void> {
+  async function insertSession(
+    context: VisualSqlContext,
+    session: NewVisualSession
+  ): Promise<void> {
     await context.connection.execute(
       `INSERT INTO diagnosis_visual_sessions (_openid, visual_diagnosis_ref, user_internal_id, subject_kind, user_plant_internal_id,
           ephemeral_case_internal_id, image_refs_json, user_question_zh, reservation_ref, version_group_json, context_summary_json,
@@ -394,7 +435,11 @@ export function createMysqlVisualDiagnosisRepository() {
     }
     const subject: VisualSubjectRecord =
       row.subject_kind === 'user_plant'
-        ? { kind: 'user_plant', internalId: toId(row.user_plant_internal_id), userPlantRef: String(row.public_user_plant_id) }
+        ? {
+            kind: 'user_plant',
+            internalId: toId(row.user_plant_internal_id),
+            userPlantRef: String(row.public_user_plant_id)
+          }
         : { kind: 'authenticated_ephemeral', internalId: toId(row.ephemeral_case_internal_id) }
     return {
       visualDiagnosisRef: String(row.visual_diagnosis_ref),
@@ -444,6 +489,25 @@ export function createMysqlVisualDiagnosisRepository() {
     return result.affectedRows === 1 ? 'finalized' : 'not_processing'
   }
 
+  /** 列出 processing 且整单截止时刻（版本组 processingDeadlineMs）已过的会话，按截止时刻先后、限量；标明是否已被认领。 */
+  async function listStaleProcessingSessions(
+    context: VisualSqlContext,
+    input: { readonly nowMs: number; readonly limit: number }
+  ): Promise<readonly StaleVisualSession[]> {
+    const rows = await context.connection.query(
+      `SELECT visual_diagnosis_ref, processing_claimed_at_ms FROM diagnosis_visual_sessions
+        WHERE status = 'processing'
+          AND CAST(JSON_UNQUOTE(JSON_EXTRACT(version_group_json, '$.processingDeadlineMs')) AS UNSIGNED) < ?
+        ORDER BY CAST(JSON_UNQUOTE(JSON_EXTRACT(version_group_json, '$.processingDeadlineMs')) AS UNSIGNED), id
+        LIMIT ?`,
+      [input.nowMs, input.limit]
+    )
+    return rows.map(row => ({
+      visualDiagnosisRef: String(row.visual_diagnosis_ref),
+      claimed: row.processing_claimed_at_ms !== null && row.processing_claimed_at_ms !== undefined
+    }))
+  }
+
   /** 读取本人会话的公开字段；非本人或不存在返回 null。 */
   async function readOwnedSession(
     context: VisualSqlContext,
@@ -466,8 +530,12 @@ export function createMysqlVisualDiagnosisRepository() {
       readonly cursor: VisualListCursor | string | null
       readonly limit: number
     }
-  ): Promise<{ readonly rows: readonly VisualSessionPublicRow[]; readonly nextCursor: string | null }> {
-    const cursor = typeof input.cursor === 'string' ? decodeVisualListCursor(input.cursor) : input.cursor
+  ): Promise<{
+    readonly rows: readonly VisualSessionPublicRow[]
+    readonly nextCursor: string | null
+  }> {
+    const cursor =
+      typeof input.cursor === 'string' ? decodeVisualListCursor(input.cursor) : input.cursor
     const conditions = ['s.user_internal_id = ?']
     const parameters: (string | number)[] = [input.userInternalId]
     if (input.userPlantRef !== null) {
@@ -475,7 +543,9 @@ export function createMysqlVisualDiagnosisRepository() {
       parameters.push(input.userPlantRef)
     }
     if (cursor !== null) {
-      conditions.push('(s.created_at_ms < ? OR (s.created_at_ms = ? AND BINARY s.visual_diagnosis_ref < ?))')
+      conditions.push(
+        '(s.created_at_ms < ? OR (s.created_at_ms = ? AND BINARY s.visual_diagnosis_ref < ?))'
+      )
       parameters.push(cursor.createdAtMs, cursor.createdAtMs, cursor.visualDiagnosisRef)
     }
     const rows = await context.connection.query(
@@ -490,7 +560,10 @@ export function createMysqlVisualDiagnosisRepository() {
       rows: page,
       nextCursor:
         mapped.length > input.limit && last !== undefined
-          ? encodeVisualListCursor({ createdAtMs: last.createdAtMs, visualDiagnosisRef: last.visualDiagnosisRef })
+          ? encodeVisualListCursor({
+              createdAtMs: last.createdAtMs,
+              visualDiagnosisRef: last.visualDiagnosisRef
+            })
           : null
     }
   }
@@ -540,6 +613,7 @@ export function createMysqlVisualDiagnosisRepository() {
     claimProcessing,
     readSessionForProcessing,
     finalizeSession,
+    listStaleProcessingSessions,
     readOwnedSession,
     listOwnedSessions,
     insertFeedback

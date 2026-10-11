@@ -891,13 +891,14 @@
       "consumers": [
         "subscription",
         "diagnosis",
-        "CloudBase Agent"
+        "CloudBase Agent",
+        "diagnosis-maintenance-sweep"
       ],
       "changePolicy": "发布新的 subscription/ai_reservation 不可变版本并切换 active 指针（策略发布 CLI）；取值须在 subscription.ai_reservation.absolute_bounds 之内",
       "fallback": "无可信活动发布时生成式 AI 接口返回 503，不预占、不调用模型",
       "phase": "P3",
       "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
-      "expected": "过期预占只能经对账结算或释放",
+      "expected": "过期预占只能经对账结算或释放；到期扫描由 diagnosis-maintenance-sweep 低频执行（主代理 2026-10-11 裁决）",
       "blockingScope": "生成式 AI 调用",
       "decisionGroup": "entitlements_cost_rewards",
       "configurationTier": "policy",
@@ -2677,6 +2678,79 @@
         "cloudfunctions-v2/src/diagnosis/image/image-normalizer.ts"
       ],
       "decisionNote": "用户 2026-10-11 裁决：安装 sharp 0.35.5；长边不超过 1024、只缩不放大、统一 JPEG、清除 EXIF 和 GPS；不接收 HEIC。jpegQuality 85 与 maxInputPixels 5000 万为本轮实现取值（解压炸弹防护），请主代理复核"
+    },
+    {
+      "id": "diagnosis.visual.processing_deadline",
+      "chineseName": "视觉诊断整单处理时长上限",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "safetyMarginSeconds": 60,
+        "formulaZh": "整单截止时刻 = 预占到期时刻 − 60 秒（按预占有效期 300 秒即 240 秒）；由 TTL 推导，不单独配置"
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-test-rollout-2026-10-11.md",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "diagnosis-maintenance-sweep"
+      ],
+      "changePolicy": "不可配置，变更需架构重审",
+      "fallback": "剩余时间不够一次模型调用时不再调用也不再切换兜底模型，失败关闭并释放点数；超过截止仍未完成的会话由低频补扫回收；预占已到期一律转入对账，不静默结算",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "认领到写终态不超过 TTL − 60 秒；TTL − 60 秒放不下一次模型调用（单次总时限 × 尝试次数）时发起诊断返回 503",
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/diagnosis/visual/domain/visual-session-record.ts",
+        "cloudfunctions-v2/src/diagnosis/visual/application/process-visual-diagnosis.ts"
+      ],
+      "decisionNote": "主代理 2026-10-11 裁决"
+    },
+    {
+      "id": "diagnosis.maintenance_sweep",
+      "chineseName": "diagnosis 低频补扫（预占到期扫描与卡住诊断回收）",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "unit": "cron / 条 / 比例",
+      "status": "hard_rule",
+      "currentValue": {
+        "cron": "0 25 0,4,7,11,14,16,19,21 * * * *",
+        "reservationExpiry": {
+          "batchSize": 500,
+          "budgetFractionOfFunctionTimeout": 0.4
+        },
+        "staleSessions": {
+          "batchSize": 100,
+          "budgetFractionOfFunctionTimeout": 0.4
+        }
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-test-rollout-2026-10-11.md",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "diagnosis-maintenance-sweep"
+      ],
+      "changePolicy": "代码层运维默认值，随版本发布；cron 必须与定时触发器一致",
+      "fallback": "函数超时读不到时两阶段都不启动；任一阶段失败不影响另一阶段",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "cron 与 care-maintenance-sweep 相同；两阶段各自批量与预算，预算比例之和小于 1",
+      "decisionGroup": "reliability_ops",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/diagnosis/visual/application/visual-maintenance-sweep.ts"
+      ],
+      "decisionNote": "主代理 2026-10-11 裁决：把 AI 额度预占到期扫描与卡住的视觉诊断回收接入低频补扫，作为独立阶段各自有预算；架构核对后放在 diagnosis 域事件函数 diagnosis-maintenance-sweep（care 函数调用 subscription/diagnosis 仓储违反按业务域拆分），频率与 care-maintenance-sweep 相同。批量与预算比例按 care-maintenance-sweep 同口径由实现方给出（预占到期每批 500、卡住会话每批 100、各占函数超时 40%），请主代理复核"
     },
     {
       "id": "diagnosis.evaluation.ai_budget_cny",

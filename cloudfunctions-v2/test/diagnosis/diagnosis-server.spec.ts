@@ -76,6 +76,7 @@ test('视觉诊断路由按装配接线：未装配 404，装配后无凭证 401
     uploader: null,
     normalizer: { normalize: async () => { throw new Error('不应压缩') } },
     createModelClient: null,
+    modelCallBudgetMs: null,
     onProcessingError: () => undefined
   }
   for (const [server, expected] of [

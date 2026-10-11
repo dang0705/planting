@@ -100,6 +100,8 @@ export interface VisualModuleDependencies {
   readonly normalizer: ImageNormalizer
   /** 按输出上限创建模型客户端；供应商未配置时为 null。 */
   readonly createModelClient: ((maxOutputTokens: number) => VisualModelClient) | null
+  /** 一次模型调用（同一模型内全部尝试）的最长耗时毫秒 = 单次总时限 × 最多尝试次数；供应商未配置时为 null。 */
+  readonly modelCallBudgetMs: number | null
   /** 后台处理调度；默认在当前进程下一轮事件循环执行。 */
   readonly scheduleProcessing?: (run: () => Promise<unknown>) => void
   /** 后台处理异常的脱敏观测。 */
@@ -195,6 +197,7 @@ export function createVisualDiagnosisModule(deps: VisualModuleDependencies) {
       createModelClient === null ? null : createModelClient(maxOutputTokens),
     settleQuota,
     markProviderUnknown,
+    modelCallBudgetMs: deps.modelCallBudgetMs ?? Number.MAX_SAFE_INTEGER,
     now: deps.now
   })
   const schedule =
@@ -211,6 +214,7 @@ export function createVisualDiagnosisModule(deps: VisualModuleDependencies) {
     readPromptRelease: deps.readPromptRelease,
     readReservationTtlSeconds: deps.readReservationTtlSeconds,
     readHttpWriteRules: deps.readHttpWriteRules,
+    modelCallBudgetMs: deps.modelCallBudgetMs ?? Number.MAX_SAFE_INTEGER,
     isModelProviderConfigured: () =>
       createModelClient !== null && deps.storage !== null && deps.uploader !== null,
     readContextSummary: deps.readContextSummary,

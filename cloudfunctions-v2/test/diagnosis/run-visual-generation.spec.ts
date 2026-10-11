@@ -116,7 +116,8 @@ const baseInput = {
   request: { prefixText: 'p', dynamicText: 'd', imageUrls: ['https://example.invalid/a.jpg'] },
   context: { edibleContext: 'unknown' as const, causeCatalog: ['pest_whitefly'] },
   maxModelLoops: 2,
-  canStartNextLoop: () => true
+  canStartNextLoop: () => true,
+  canAttemptModelCall: () => true
 }
 
 describe('视觉生成编排：安全门重试与失败关闭', () => {
@@ -216,6 +217,22 @@ describe('视觉生成编排：成本闸门、逐次计量与结果未知', () =
       baseInput
     )
     expect(known).toMatchObject({
+      status: 'failed',
+      failureReason: 'model_failed',
+      providerResultUnknown: false
+    })
+  })
+})
+
+describe('视觉生成编排：整单时长', () => {
+  test('剩余时间不够再调一次模型时不发起调用，按模型失败关闭（结果确定、不进入对账）', async () => {
+    const client = clientReturning([validText])
+    const outcome = await runVisualGeneration(client, {
+      ...baseInput,
+      canAttemptModelCall: () => false
+    })
+    expect(client.calls).toBe(0)
+    expect(outcome).toMatchObject({
       status: 'failed',
       failureReason: 'model_failed',
       providerResultUnknown: false

@@ -68,6 +68,7 @@ export type ModelProviderErrorKind =
   | 'invalid_request'
   | 'model_order_unavailable'
   | 'all_models_unavailable'
+  | 'processing_deadline_exceeded'
 
 /** 可切换到下一个模型的失败类型。 */
 const switchableKinds: ReadonlySet<ModelProviderErrorKind> = new Set([
@@ -117,16 +118,26 @@ export interface FallbackCallResult {
  * 按策略给出的模型顺序依次调用：可切换的失败就换下一个，不可切换的失败立即失败关闭。
  * 模型顺序为空（策略缺失）时拒绝调用；全部候选都失败时抛 all_models_unavailable。
  */
+/** 兜底调用选项。 */
+export interface FallbackCallOptions {
+  /** 每次发起调用（含切换到下一个模型）前判断剩余整单时长是否还够一次调用；false 则不再调用。 */
+  readonly canAttempt: () => boolean
+}
+
 export async function callVisualModelWithFallback(
   client: VisualModelClient,
   modelOrder: readonly string[],
-  request: VisualModelRequest
+  request: VisualModelRequest,
+  options: FallbackCallOptions = { canAttempt: () => true }
 ): Promise<FallbackCallResult> {
   if (modelOrder.length === 0) {
     throw new ModelProviderError('model_order_unavailable')
   }
   const attempts: ModelAttempt[] = []
   for (const modelCode of modelOrder) {
+    if (!options.canAttempt()) {
+      throw new ModelProviderError('processing_deadline_exceeded', 0, attempts)
+    }
     try {
       const response = await client.complete(modelCode, request)
       attempts.push({ modelCode, outcome: 'succeeded', httpStatus: 200 })

@@ -61,6 +61,8 @@ describe('代码层运行参数注册表（configuration-layers/v1 §2.3）', ()
       'care.outboxInlineDispatchBudgetMs': 1500,
       'care.maintenanceSweep': { cron: '0 25 0,4,7,11,14,16,19,21 * * * *', maxGapHours: 4, outboxBudgetFractionOfFunctionTimeout: 0.3 },
       'care.openMeteoTotalDeadlineMs': 8000,
+      // 主代理 2026-10-11 裁决：diagnosis 低频补扫（cron 同 care 补扫；两阶段各自批量与预算）。
+      'diagnosis.maintenanceSweep': { cron: '0 25 0,4,7,11,14,16,19,21 * * * *', reservationExpiry: { batchSize: 500, budgetFractionOfFunctionTimeout: 0.4 }, staleSessions: { batchSize: 100, budgetFractionOfFunctionTimeout: 0.4 } },
       'care.openMeteoRequestWindowDays': { maxPastDays: 92, maxForecastDays: 16 },
       'storage.cloudbaseStorageTotalDeadlineMs': 10_000,
       'userPlant.guestClaimProcessingLeaseSeconds': 30,
