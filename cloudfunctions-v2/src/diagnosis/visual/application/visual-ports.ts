@@ -29,11 +29,14 @@ export interface VisualPromptRelease {
   readonly strictOutputSchema: object | null
 }
 
-/** 读取当前提示词发布。 */
-export type ReadVisualPromptRelease = () => Promise<VisualPromptRelease | null>
+/** 按前缀摘要读取已发布的提示词（打包的发布文件）；没有对应发布时返回 null（接口 503）。 */
+export type ReadVisualPromptRelease = (
+  promptReleaseSha256: string
+) => Promise<VisualPromptRelease | null>
 
 /** 读取视觉诊断生成策略快照（diagnosis/visual_generation）。 */
-export type ReadVisualGenerationPolicy = () => Promise<TypedPolicySnapshot<DiagnosisVisualGenerationRules> | null>
+export type ReadVisualGenerationPolicy =
+  () => Promise<TypedPolicySnapshot<DiagnosisVisualGenerationRules> | null>
 
 /** 读取上传资产策略（user-plant/asset_rules：图片类型白名单与单图字节上限）。 */
 export type ReadVisualAssetRules = () => Promise<Readonly<UserPlantAssetRules> | null>
@@ -42,7 +45,9 @@ export type ReadVisualAssetRules = () => Promise<Readonly<UserPlantAssetRules> |
 export type ReadReservationTtlSeconds = () => Promise<number | null>
 
 /** 读取能力快照；失效抛 CapabilitySnapshotExpiredError，不可用抛 CapabilitySnapshotUnavailableError。 */
-export type ReadCapabilitySnapshot = (principal: UserPrincipalDto) => Promise<UserCapabilitySnapshotDto>
+export type ReadCapabilitySnapshot = (
+  principal: UserPrincipalDto
+) => Promise<UserCapabilitySnapshotDto>
 
 /** 读取长期植物的诊断上下文摘要（diagnosis-context-summary/v1）；读不到返回 null，由 diagnosis 写「未知」。 */
 export type ReadVisualContextSummary = (input: {

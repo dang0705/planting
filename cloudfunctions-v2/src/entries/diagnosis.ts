@@ -3,6 +3,7 @@ import pino from 'pino'
 import {
   DIAGNOSIS_VISUAL_GENERATION_POLICY,
   HTTP_REQUEST_WRITE_POLICY,
+  SUBSCRIPTION_AI_RESERVATION_POLICY,
   USER_PLANT_ASSET_RULES_POLICY,
   USER_PLANT_LIST_RULES_POLICY
 } from '../configuration/business-policies/index.js'
@@ -14,6 +15,7 @@ import { createCloudbaseStorageHttpUploader } from '../foundation/storage/cloudb
 import { createMysqlCapabilitySnapshotReader } from '../subscription/repository/mysql-capability-snapshot-reader.js'
 import { createImageNormalizer } from '../diagnosis/image/image-normalizer.js'
 import { createBailianVisualModelClient } from '../diagnosis/provider/bailian-visual-model-client.js'
+import { createBundledVisualPromptReleaseReader } from '../diagnosis/visual/application/bundled-prompt-release.js'
 import {
   createMysql2ConnectionSource,
   withReadConnection,
@@ -64,17 +66,18 @@ const resolvePrincipal = createResolveGuestOrUserPrincipal({
 const readHttpWriteRules = policyRulesPort(createMysqlTypedPolicyReader(source, HTTP_REQUEST_WRITE_POLICY), () => Date.now())
 const now = () => Date.now()
 /**
- * 生成式视觉诊断装配（ClickUp z8v0kmvhnd）。以下三项按配置目录仍为 pending，入口固定返回 null，接口因此返回 503，
- * 不在代码里写默认值：提示词发布（diagnosis.visual_gen.prompt_release_sha256 / output_schema_version / agent_allowlist_ref）、
- * AI 额度预占有效期（subscription.ai_reservation.ttl_seconds）。长期植物上下文摘要的 user-plant 内部接口尚未实现，暂按「无摘要」拼装。
+ * 生成式视觉诊断装配（ClickUp z8v0kmvhnd）。提示词按生效策略登记的摘要取打包发布（v1.3 首个发布版，用户 2026-10-11 裁决）；
+ * 预占有效期读 subscription/ai_reservation 策略（300 秒）；策略缺失时接口 503，不在代码里写默认值。
+ * 长期植物上下文摘要的 user-plant 内部接口尚未实现，暂按「无摘要」拼装（全部写「未知」）。
  */
+const readReservationRules = policyRulesPort(createMysqlTypedPolicyReader(source, SUBSCRIPTION_AI_RESERVATION_POLICY), () => Date.now())
 const visual = {
   readGenerationPolicy: () => createMysqlTypedPolicyReader(source, DIAGNOSIS_VISUAL_GENERATION_POLICY).read(now()),
   readAssetRules: policyRulesPort(createMysqlTypedPolicyReader(source, USER_PLANT_ASSET_RULES_POLICY), now),
   readListRules: policyRulesPort(createMysqlTypedPolicyReader(source, USER_PLANT_LIST_RULES_POLICY), now),
   readCapabilitySnapshot: createMysqlCapabilitySnapshotReader(source, now),
-  readPromptRelease: async () => null,
-  readReservationTtlSeconds: async () => null,
+  readPromptRelease: createBundledVisualPromptReleaseReader(),
+  readReservationTtlSeconds: async () => (await readReservationRules())?.ttlSeconds ?? null,
   readContextSummary: async () => null,
   storage: environment.storage ? createCloudbaseStorageHttpAdapter({ fetch: globalThis.fetch, ...environment.storage }) : null,
   uploader: environment.storage ? createCloudbaseStorageHttpUploader({ fetch: globalThis.fetch, ...environment.storage }) : null,

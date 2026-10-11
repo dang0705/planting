@@ -73,7 +73,9 @@ describe('代码层运行参数注册表（configuration-layers/v1 §2.3）', ()
       'policyBounds.userPlantAssetRules': { replacedCoverCleanupDays: { min: 1, max: 90 }, maxImageBytes: { min: 65536, max: 10485760 }, supportedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'] },
       'policyBounds.httpRequestWrite': { idempotencyRetentionHours: { min: 24, max: 720 }, jsonBodyLimitBytes: 1048576 },
       // 2026-10-11 新增（ClickUp z8v0kmvhnd）：图片最多 3 张、输入 ≤32K 档、1 点 = 800 微元（额度合同）。
-      'policyBounds.diagnosisVisualGeneration': { modelOrderMaxItems: 8, maxImages: { min: 1, max: 3 }, maxModelLoops: { min: 1, max: 3 }, maxInputTokens: { min: 1000, max: 32000 }, maxOutputTokens: { min: 256, max: 8192 }, microsPerPoint: 800 }
+      'policyBounds.diagnosisVisualGeneration': { modelOrderMaxItems: 8, maxImages: { min: 1, max: 3 }, maxModelLoops: { min: 1, max: 3 }, maxInputTokens: { min: 1000, max: 32000 }, maxOutputTokens: { min: 256, max: 8192 }, microsPerPoint: 800 },
+      // 2026-10-11 新增（用户裁决预占有效期 300 秒；绝对边界 60～3600 秒）。
+      'policyBounds.subscriptionAiReservation': { ttlSeconds: { min: 60, max: 3600 } }
     })
   })
 

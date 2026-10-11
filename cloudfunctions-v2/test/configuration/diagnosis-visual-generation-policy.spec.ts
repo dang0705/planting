@@ -29,8 +29,7 @@ const load = () => {
   return loaded
 }
 const body = () => structuredClone(load().policy) as Record<string, any>
-const resolve = (policy: unknown) =>
-  definition()!.resolve(policy, 'diagnosis-visual-generation/v1')
+const resolve = (policy: unknown) => definition()!.resolve(policy, 'diagnosis-visual-generation/v1')
 
 /** 价目快照：元/百万 tokens → 微元/百万 tokens（×1,000,000），倍率 → 基点（×10,000）。 */
 function tariffFromSnapshot(file: string) {
@@ -102,7 +101,14 @@ describe('diagnosis/visual_generation 策略发布文档（v1）', () => {
   it('配置目录三项已冻结并指向本发布文档字段', () => {
     const catalog = JSON.parse(
       readRepoFile('docs/backend-v2/architecture/configuration-variable-catalog.json')
-    ) as { variables: { id: string; status: string; currentValue: unknown; policyRelease?: { field: string } }[] }
+    ) as {
+      variables: {
+        id: string
+        status: string
+        currentValue: unknown
+        policyRelease?: { field: string }
+      }[]
+    }
     const item = (id: string) => catalog.variables.find(variable => variable.id === id)
     expect(item('diagnosis.visual_gen.model_code')).toMatchObject({
       status: 'confirmed',
@@ -124,25 +130,93 @@ describe('diagnosis/visual_generation 策略发布文档（v1）', () => {
       readRepoFile('docs/backend-v2/architecture/configuration-variable-catalog.json')
     ) as { variables: { id: string; currentValue: unknown }[] }
     expect(RUNTIME_PARAMETERS.policyBounds.diagnosisVisualGeneration.value).toEqual(
-      catalog.variables.find(variable => variable.id === 'diagnosis.visual_generation.absolute_bounds')
-        ?.currentValue
+      catalog.variables.find(
+        variable => variable.id === 'diagnosis.visual_generation.absolute_bounds'
+      )?.currentValue
     )
   })
 })
 
 describe('diagnosis/visual_generation 越界或不一致时解析失败（不回退默认值）', () => {
   it.each([
-    ['开启 thinking', (p: Record<string, any>) => { p.requestParams.enableThinking = true }],
-    ['未知格式模式', (p: Record<string, any>) => { p.requestParams.responseFormat = 'text' }],
-    ['模型顺序为空', (p: Record<string, any>) => { p.modelOrder = [] }],
-    ['模型顺序重复', (p: Record<string, any>) => { p.modelOrder = ['qwen3.7-flash', 'qwen3.7-flash'] }],
-    ['兜底模型缺价目', (p: Record<string, any>) => { delete p.tariffs['qwen3.6-plus'] }],
-    ['图片超过 3 张硬上限', (p: Record<string, any>) => { p.costPolicy.maxImages = 4 }],
-    ['调用次数超过上限', (p: Record<string, any>) => { p.costPolicy.maxModelLoops = 4 }],
-    ['预占点数与上限成本不符', (p: Record<string, any>) => { p.costPolicy.estimatedPoints = 22 }],
-    ['上限成本与首选模型价目不符', (p: Record<string, any>) => { p.costPolicy.maxCostMicros = 10_000 }],
-    ['输入超过 32K 档', (p: Record<string, any>) => { p.costPolicy.maxInputTokens = 40_000 }],
-    ['混入额外字段', (p: Record<string, any>) => { p.extra = 1 }]
+    [
+      '开启 thinking',
+      (p: Record<string, any>) => {
+        p.requestParams.enableThinking = true
+      }
+    ],
+    [
+      '未知格式模式',
+      (p: Record<string, any>) => {
+        p.requestParams.responseFormat = 'text'
+      }
+    ],
+    [
+      '模型顺序为空',
+      (p: Record<string, any>) => {
+        p.modelOrder = []
+      }
+    ],
+    [
+      '模型顺序重复',
+      (p: Record<string, any>) => {
+        p.modelOrder = ['qwen3.7-flash', 'qwen3.7-flash']
+      }
+    ],
+    [
+      '兜底模型缺价目',
+      (p: Record<string, any>) => {
+        delete p.tariffs['qwen3.6-plus']
+      }
+    ],
+    [
+      '图片超过 3 张硬上限',
+      (p: Record<string, any>) => {
+        p.costPolicy.maxImages = 4
+      }
+    ],
+    [
+      '调用次数超过上限',
+      (p: Record<string, any>) => {
+        p.costPolicy.maxModelLoops = 4
+      }
+    ],
+    [
+      '预占点数与上限成本不符',
+      (p: Record<string, any>) => {
+        p.costPolicy.estimatedPoints = 22
+      }
+    ],
+    [
+      '上限成本与首选模型价目不符',
+      (p: Record<string, any>) => {
+        p.costPolicy.maxCostMicros = 10_000
+      }
+    ],
+    [
+      '输入超过 32K 档',
+      (p: Record<string, any>) => {
+        p.costPolicy.maxInputTokens = 40_000
+      }
+    ],
+    [
+      '缺少提示词发布',
+      (p: Record<string, any>) => {
+        delete p.promptRelease
+      }
+    ],
+    [
+      '提示词摘要格式不合法',
+      (p: Record<string, any>) => {
+        p.promptRelease.promptReleaseSha256 = 'abc'
+      }
+    ],
+    [
+      '混入额外字段',
+      (p: Record<string, any>) => {
+        p.extra = 1
+      }
+    ]
   ])('%s', (_name, mutate) => {
     const policy = body()
     mutate(policy)

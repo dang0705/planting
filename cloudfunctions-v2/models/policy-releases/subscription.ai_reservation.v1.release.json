@@ -1,0 +1,13 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "subscription",
+  "policyCode": "ai_reservation",
+  "schemaVersion": "subscription-ai-reservation/v1",
+  "releaseVersion": "subscription-ai-reservation/v1.0.0",
+  "effectiveAt": "2026-10-11T00:00:00Z",
+  "changeNote": "用户 2026-10-11 裁决：AI 额度预占有效期 300 秒",
+  "policy": {
+    "contractVersion": "subscription-ai-reservation/v1",
+    "ttlSeconds": 300
+  }
+}

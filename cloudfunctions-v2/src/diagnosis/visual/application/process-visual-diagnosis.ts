@@ -1,4 +1,7 @@
-import type { SettleAiQuotaCommand, SettleAiQuotaResult } from '../../../subscription/application/settle-ai-quota.js'
+import type {
+  SettleAiQuotaCommand,
+  SettleAiQuotaResult
+} from '../../../subscription/application/settle-ai-quota.js'
 import type {
   MarkAiQuotaProviderResultUnknownCommand,
   MarkAiQuotaProviderResultUnknownResult
@@ -7,7 +10,11 @@ import type { PrivateObjectStorage } from '../../../foundation/storage/cloudbase
 import type { PrivateObjectUploader } from '../../../foundation/storage/cloudbase-storage-http-uploader.js'
 import { ImageNormalizationError, type ImageNormalizer } from '../../image/image-normalizer.js'
 import type { VisualModelClient } from '../../provider/visual-model-registry.js'
-import { runVisualGeneration, type PublicImageAssessment, type VisualGenerationOutcome } from '../../application/run-visual-generation.js'
+import {
+  runVisualGeneration,
+  type PublicImageAssessment,
+  type VisualGenerationOutcome
+} from '../../application/run-visual-generation.js'
 import { renderVisualDynamicText } from '../domain/context-summary.js'
 import { computeVisualChargedPoints, sumVisualCostMicros } from '../domain/visual-cost.js'
 import { buildNormalizedImageObjectId } from '../domain/visual-image-path.js'
@@ -37,8 +44,11 @@ export interface ProcessVisualDiagnosisDependencies {
   /** 在一个数据库事务中执行（认领与写终态各自一个短事务）。 */
   readonly runTransaction: <T>(work: (context: VisualSqlContext) => Promise<T>) => Promise<T>
   /** 视觉诊断仓储（只用到下列方法）。 */
-  readonly repository: Pick<MysqlVisualDiagnosisRepository, 'claimProcessing' | 'readSessionForProcessing' | 'finalizeSession'>
-  /** 读取当前提示词发布（必须与创建时锁定的摘要一致）。 */
+  readonly repository: Pick<
+    MysqlVisualDiagnosisRepository,
+    'claimProcessing' | 'readSessionForProcessing' | 'finalizeSession'
+  >
+  /** 按创建时锁定的摘要读取提示词发布（与当前生效策略无关）。 */
   readonly readPromptRelease: ReadVisualPromptRelease
   /** 私有云存储（下载原图、取压缩图临时地址）。 */
   readonly storage: PrivateObjectStorage
@@ -51,7 +61,9 @@ export interface ProcessVisualDiagnosisDependencies {
   /** AI 额度结算用例（settledAmount = 0 即全部释放）。 */
   readonly settleQuota: (command: SettleAiQuotaCommand) => Promise<SettleAiQuotaResult>
   /** 供应商结果未知时把预占转入对账。 */
-  readonly markProviderUnknown: (command: MarkAiQuotaProviderResultUnknownCommand) => Promise<MarkAiQuotaProviderResultUnknownResult>
+  readonly markProviderUnknown: (
+    command: MarkAiQuotaProviderResultUnknownCommand
+  ) => Promise<MarkAiQuotaProviderResultUnknownResult>
   /** 服务端时钟，返回 UTC 毫秒。 */
   readonly now: () => number
 }
@@ -95,10 +107,17 @@ async function prepareImageUrls(
       }
       normalized = await deps.normalizer.normalize(Buffer.from(bytes), image.mimeType)
     } catch (error) {
-      return error instanceof ImageNormalizationError ? { kind: 'image_unusable' } : { kind: 'dependency_failed' }
+      return error instanceof ImageNormalizationError
+        ? { kind: 'image_unusable' }
+        : { kind: 'dependency_failed' }
     }
     try {
-      const objectId = buildNormalizedImageObjectId(row.userRef, nowMs, row.visualDiagnosisRef, index + 1)
+      const objectId = buildNormalizedImageObjectId(
+        row.userRef,
+        nowMs,
+        row.visualDiagnosisRef,
+        index + 1
+      )
       const uploaded = await deps.uploader.upload(objectId, normalized.bytes, normalized.mime)
       const url = await deps.storage.getDownloadUrl(uploaded.cloudObjectId)
       if (url === null || !url.startsWith('https://')) {
@@ -121,7 +140,11 @@ async function generate(
 ): Promise<VisualGenerationOutcome | PreparationFailure> {
   const rules = row.versionGroup.rules
   const strict = rules.requestParams.responseFormat === 'json_schema_strict'
-  if (prompt === null || prompt.promptReleaseSha256 !== row.versionGroup.promptReleaseSha256 || (strict && prompt.strictOutputSchema === null)) {
+  if (
+    prompt === null ||
+    prompt.promptReleaseSha256 !== row.versionGroup.promptReleaseSha256 ||
+    (strict && prompt.strictOutputSchema === null)
+  ) {
     return { kind: 'dependency_failed' }
   }
   const client = deps.createModelClient(rules.costPolicy.maxOutputTokens)
@@ -144,12 +167,15 @@ async function generate(
       }),
       imageUrls,
       ...(strict && prompt.strictOutputSchema !== null
-        ? { strictSchema: { name: 'diagnosis_visual_gen_output', schema: prompt.strictOutputSchema } }
+        ? {
+            strictSchema: { name: 'diagnosis_visual_gen_output', schema: prompt.strictOutputSchema }
+          }
         : {})
     },
     context: { edibleContext: 'unknown', causeCatalog: prompt.causeCatalog },
     maxModelLoops: rules.costPolicy.maxModelLoops,
-    canStartNextLoop: calls => sumVisualCostMicros(calls, rules.tariffs) < rules.costPolicy.maxCostMicros
+    canStartNextLoop: calls =>
+      sumVisualCostMicros(calls, rules.tariffs) < rules.costPolicy.maxCostMicros
   })
 }
 
@@ -157,11 +183,20 @@ async function generate(
 async function settle(
   deps: ProcessVisualDiagnosisDependencies,
   row: VisualSessionProcessingRow,
-  input: { readonly requestedPoints: number; readonly costMicros: number; readonly providerResultUnknown: boolean; readonly nowMs: number }
+  input: {
+    readonly requestedPoints: number
+    readonly costMicros: number
+    readonly providerResultUnknown: boolean
+    readonly nowMs: number
+  }
 ): Promise<VisualQuotaOutcome> {
   try {
     if (input.providerResultUnknown) {
-      await deps.markProviderUnknown({ userRef: row.userRef as never, reservationRef: row.reservationRef, occurredAtMs: input.nowMs })
+      await deps.markProviderUnknown({
+        userRef: row.userRef as never,
+        reservationRef: row.reservationRef,
+        occurredAtMs: input.nowMs
+      })
       return 'pending_reconciliation'
     }
     const cost = row.versionGroup.rules.costPolicy
@@ -172,10 +207,16 @@ async function settle(
       settledAmount: input.requestedPoints,
       actualCostMicros: input.costMicros,
       usageEvidenceRef: `vds:${row.visualDiagnosisRef}`,
-      platformAbsorbedCostMicros: overage ? input.costMicros - cost.estimatedPoints * cost.microsPerPoint : 0,
+      platformAbsorbedCostMicros: overage
+        ? input.costMicros - cost.estimatedPoints * cost.microsPerPoint
+        : 0,
       occurredAtMs: input.nowMs
     })
-    return result.kind === 'replayed' ? (result.status === 'pending_reconciliation' ? 'pending_reconciliation' : result.status) : result.kind
+    return result.kind === 'replayed'
+      ? result.status === 'pending_reconciliation'
+        ? 'pending_reconciliation'
+        : result.status
+      : result.kind
   } catch {
     return 'unconfirmed'
   }
@@ -191,11 +232,15 @@ export function createProcessVisualDiagnosisUseCase(deps: ProcessVisualDiagnosis
     if (!claimed) {
       return 'skipped'
     }
-    const row = await deps.runTransaction(context => deps.repository.readSessionForProcessing(context, visualDiagnosisRef))
+    const row = await deps.runTransaction(context =>
+      deps.repository.readSessionForProcessing(context, visualDiagnosisRef)
+    )
     if (row === null || row.status !== 'processing') {
       return 'skipped'
     }
-    const prompt = await deps.readPromptRelease().catch(() => null)
+    const prompt = await deps
+      .readPromptRelease(row.versionGroup.promptReleaseSha256)
+      .catch(() => null)
     const outcome = await generate(deps, row, prompt, claimedAtMs)
     const nowMs = deps.now()
     const rules = row.versionGroup.rules
@@ -203,7 +248,8 @@ export function createProcessVisualDiagnosisUseCase(deps: ProcessVisualDiagnosis
     const costMicros = sumVisualCostMicros(calls, rules.tariffs)
     const points = computeVisualChargedPoints(costMicros, rules.costPolicy)
     const completed = 'status' in outcome && outcome.status === 'completed'
-    const providerResultUnknown = 'status' in outcome && outcome.status === 'failed' && outcome.providerResultUnknown
+    const providerResultUnknown =
+      'status' in outcome && outcome.status === 'failed' && outcome.providerResultUnknown
     const quotaOutcome = await settle(deps, row, {
       requestedPoints: completed ? points.requestedPoints : 0,
       costMicros,
@@ -222,18 +268,61 @@ export function createProcessVisualDiagnosisUseCase(deps: ProcessVisualDiagnosis
     if ('kind' in outcome) {
       finalization =
         outcome.kind === 'image_unusable'
-          ? { ...base, status: 'released_no_charge', releaseReason: 'image_unusable', publicResult: null, imageAssessment: unusableAssessment(row.images.length), modelCode: null, chargedPoints: 0 }
-          : { ...base, status: 'failed_no_charge', releaseReason: 'model_failed', publicResult: null, imageAssessment: null, modelCode: null, chargedPoints: 0 }
+          ? {
+              ...base,
+              status: 'released_no_charge',
+              releaseReason: 'image_unusable',
+              publicResult: null,
+              imageAssessment: unusableAssessment(row.images.length),
+              modelCode: null,
+              chargedPoints: 0
+            }
+          : {
+              ...base,
+              status: 'failed_no_charge',
+              releaseReason: 'model_failed',
+              publicResult: null,
+              imageAssessment: null,
+              modelCode: null,
+              chargedPoints: 0
+            }
     } else if (outcome.status === 'completed') {
-      finalization = { ...base, status: 'completed', releaseReason: null, publicResult: outcome.result, imageAssessment: outcome.imageAssessment, modelCode: outcome.modelCode, chargedPoints: points.publicChargedPoints }
+      finalization = {
+        ...base,
+        status: 'completed',
+        releaseReason: null,
+        publicResult: outcome.result,
+        imageAssessment: outcome.imageAssessment,
+        modelCode: outcome.modelCode,
+        chargedPoints: points.publicChargedPoints
+      }
     } else if (outcome.status === 'released') {
-      finalization = { ...base, status: 'released_no_charge', releaseReason: outcome.releaseReason, publicResult: null, imageAssessment: outcome.imageAssessment, modelCode: outcome.modelCode, chargedPoints: 0 }
+      finalization = {
+        ...base,
+        status: 'released_no_charge',
+        releaseReason: outcome.releaseReason,
+        publicResult: null,
+        imageAssessment: outcome.imageAssessment,
+        modelCode: outcome.modelCode,
+        chargedPoints: 0
+      }
     } else {
-      finalization = { ...base, status: 'failed_no_charge', releaseReason: outcome.failureReason, publicResult: null, imageAssessment: null, modelCode: null, chargedPoints: 0 }
+      finalization = {
+        ...base,
+        status: 'failed_no_charge',
+        releaseReason: outcome.failureReason,
+        publicResult: null,
+        imageAssessment: null,
+        modelCode: null,
+        chargedPoints: 0
+      }
     }
     const recordSha256 = calculateVisualRecordSha256(row, finalization)
     const written = await deps.runTransaction(context =>
-      deps.repository.finalizeSession(context, { visualDiagnosisRef, finalization: { ...finalization, recordSha256 } })
+      deps.repository.finalizeSession(context, {
+        visualDiagnosisRef,
+        finalization: { ...finalization, recordSha256 }
+      })
     )
     return written === 'finalized' ? 'finalized' : 'skipped'
   }

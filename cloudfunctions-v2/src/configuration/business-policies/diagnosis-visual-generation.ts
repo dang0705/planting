@@ -1,5 +1,10 @@
 import { RUNTIME_PARAMETERS } from '../runtime-parameters.js'
-import { compilePolicySchema, freezePolicy, integerWithin, type TypedPolicyDefinition } from './typed-policy.js'
+import {
+  compilePolicySchema,
+  freezePolicy,
+  integerWithin,
+  type TypedPolicyDefinition
+} from './typed-policy.js'
 
 /**
  * 视觉诊断生成策略（diagnosis / visual_generation，正文 `diagnosis-visual-generation/v1`）。
@@ -19,6 +24,20 @@ export interface VisualRequestParams {
   readonly enableThinking: false
   /** 输出格式模式；默认 json_object（理由见策略发布文档）。 */
   readonly responseFormat: VisualResponseFormat
+}
+
+/** 提示词发布（版本组中由代码制品承载的部分：固定前缀、输出结构与药剂名单）。 */
+export interface VisualPromptReleaseRef {
+  /** 提示词发布版本，例如 visual-diagnosis-prompt/v1.3。 */
+  readonly releaseVersion: string
+  /** 固定前缀正文 UTF-8 的 SHA-256；运行时按它取打包的发布文件。 */
+  readonly promptReleaseSha256: string
+  /** 模型输出结构版本（前缀【7】段）。 */
+  readonly outputSchemaVersion: string
+  /** 药剂允许名单版本。 */
+  readonly agentAllowlistVersion: string
+  /** 药剂允许名单 JSON 的规范化 SHA-256。 */
+  readonly agentAllowlistSha256: string
 }
 
 /** 单次视觉诊断产品动作的成本策略。 */
@@ -72,6 +91,8 @@ export interface DiagnosisVisualGenerationRules {
   readonly modelOrder: readonly string[]
   /** 请求参数组（思考模式与输出格式），属于版本组。 */
   readonly requestParams: VisualRequestParams
+  /** 提示词发布（前缀摘要、输出结构与药剂名单版本），属于版本组。 */
+  readonly promptRelease: VisualPromptReleaseRef
   /** 成本策略：上限、预占点数与换算规则。 */
   readonly costPolicy: VisualCostPolicy
   /** 逐模型价目；必须覆盖 modelOrder 中的每个模型。 */
@@ -83,7 +104,14 @@ const modelCodePattern = '^[a-z0-9][a-z0-9.\\-]{0,79}$'
 const validate = compilePolicySchema<DiagnosisVisualGenerationRules>({
   type: 'object',
   additionalProperties: false,
-  required: ['contractVersion', 'modelOrder', 'requestParams', 'costPolicy', 'tariffs'],
+  required: [
+    'contractVersion',
+    'modelOrder',
+    'requestParams',
+    'promptRelease',
+    'costPolicy',
+    'tariffs'
+  ],
   properties: {
     contractVersion: { const: 'diagnosis-visual-generation/v1' },
     modelOrder: {
@@ -100,6 +128,24 @@ const validate = compilePolicySchema<DiagnosisVisualGenerationRules>({
       properties: {
         enableThinking: { const: false },
         responseFormat: { enum: ['json_object', 'json_schema_strict'] }
+      }
+    },
+    promptRelease: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'releaseVersion',
+        'promptReleaseSha256',
+        'outputSchemaVersion',
+        'agentAllowlistVersion',
+        'agentAllowlistSha256'
+      ],
+      properties: {
+        releaseVersion: { type: 'string', pattern: '^[A-Za-z0-9._/-]{1,64}$' },
+        promptReleaseSha256: { type: 'string', pattern: '^[0-9a-f]{64}$' },
+        outputSchemaVersion: { type: 'string', pattern: '^[A-Za-z0-9._/-]{1,64}$' },
+        agentAllowlistVersion: { type: 'string', pattern: '^[A-Za-z0-9._/-]{1,64}$' },
+        agentAllowlistSha256: { type: 'string', pattern: '^[0-9a-f]{64}$' }
       }
     },
     costPolicy: {

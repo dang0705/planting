@@ -16,7 +16,10 @@ export const fixtureNow = Date.UTC(2026, 9, 11, 8, 0, 0)
 export const generationRules = (
   JSON.parse(
     fs.readFileSync(
-      path.join(findProjectRoot(), 'cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json'),
+      path.join(
+        findProjectRoot(),
+        'cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json'
+      ),
       'utf8'
     )
   ) as { policy: DiagnosisVisualGenerationRules }
@@ -34,7 +37,10 @@ export const generationSnapshot = {
 /** 提示词发布（测试用短前缀）。 */
 export const promptRelease: VisualPromptRelease = {
   prefixText: '固定前缀（测试）',
-  promptReleaseSha256: 'b'.repeat(64),
+  // 与策略发布文档 promptRelease 登记的摘要一致（运行时按摘要取发布）。
+  promptReleaseSha256: (
+    generationRules as unknown as { promptRelease: { promptReleaseSha256: string } }
+  ).promptRelease.promptReleaseSha256,
   outputSchemaVersion: 'diagnosis-visual-gen-output/v1',
   agentAllowlistVersion: 'diagnosis-visual-gen-agent-allowlist/v1',
   causeCatalog: ['pest_whitefly', 'none_no_obvious_problem'],
@@ -71,7 +77,9 @@ export const validModelText = JSON.stringify({
     usable: 'good',
     qualityIssues: [],
     overallStatus: 'problem_found',
-    candidates: [{ rank: 1, causeCode: 'pest_whitefly', certaintyBand: 'likely', directMarkerKeys: [] }],
+    candidates: [
+      { rank: 1, causeCode: 'pest_whitefly', certaintyBand: 'likely', directMarkerKeys: [] }
+    ],
     severity: 'mild',
     urgency: 'soon',
     isolation: 'uncertain'
@@ -89,10 +97,24 @@ export const validModelText = JSON.stringify({
   identificationBasis: [{ aspectZh: '虫体', detailZh: '叶背白虫', imageIndex: 1 }],
   alternatives: [],
   immediateActions: [
-    { stepNo: 1, titleZh: '隔离', detailZh: '搬开', causeCodes: ['pest_whitefly'], riskLevel: 'low', agentNames: [] }
+    {
+      stepNo: 1,
+      titleZh: '隔离',
+      detailZh: '搬开',
+      causeCodes: ['pest_whitefly'],
+      riskLevel: 'low',
+      agentNames: []
+    }
   ],
   ongoingCare: [
-    { stepNo: 1, titleZh: '通风', detailZh: '放在通风处', causeCodes: ['pest_whitefly'], careProposalKind: 'ventilation', agentNames: [] }
+    {
+      stepNo: 1,
+      titleZh: '通风',
+      detailZh: '放在通风处',
+      causeCodes: ['pest_whitefly'],
+      careProposalKind: 'ventilation',
+      agentNames: []
+    }
   ],
   prevention: [],
   cautions: [],

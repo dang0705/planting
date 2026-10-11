@@ -1,17 +1,30 @@
 import { createHash } from 'node:crypto'
 
-import { idempotencyRetentionMs, type HttpRequestWriteRules } from '../../../configuration/business-policies/index.js'
+import {
+  idempotencyRetentionMs,
+  type HttpRequestWriteRules
+} from '../../../configuration/business-policies/index.js'
 import type { UserPrincipalDto } from '../../../contracts/types.js'
 import type { PolicyRulesPort } from '../../../foundation/policy/require-policy.js'
 import { PublicRequestError } from '../../../foundation/http/request-chain.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../../foundation/idempotency/http-idempotency.js'
-import { IdempotentWriteRetryLaterError, publicErrorSnapshot } from '../../../foundation/idempotency/run-idempotent-write.js'
+import {
+  IdempotentWriteRetryLaterError,
+  publicErrorSnapshot
+} from '../../../foundation/idempotency/run-idempotent-write.js'
 import { calculateCanonicalJsonSha256 } from '../../../foundation/json/canonical-json-sha256.js'
-import type { ReserveAiQuotaCommand, ReserveAiQuotaResult } from '../../../subscription/application/reserve-ai-quota.js'
+import type {
+  ReserveAiQuotaCommand,
+  ReserveAiQuotaResult
+} from '../../../subscription/application/reserve-ai-quota.js'
 import { AiQuotaReservationPersistenceError } from '../../../subscription/repository/ai-quota-reservation-repository-types.js'
 import { assertVisualInputBudget } from '../../domain/visual-input-budget.js'
 import { sanitizeContextSummary, type ContextSummary } from '../domain/context-summary.js'
-import { projectVisualSessionResponse, type NewVisualSession, type VisualVersionGroup } from '../domain/visual-session-record.js'
+import {
+  projectVisualSessionResponse,
+  type NewVisualSession,
+  type VisualVersionGroup
+} from '../domain/visual-session-record.js'
 import type { MysqlVisualDiagnosisRepository } from '../repository/mysql-visual-diagnosis-repository.js'
 import { assertVisualCapability } from './visual-capability.js'
 import type {
@@ -46,7 +59,9 @@ export interface VisualEphemeralSubjectRequest {
 }
 
 /** 诊断对象（二选一）。 */
-export type VisualDiagnosisSubjectRequest = VisualUserPlantSubjectRequest | VisualEphemeralSubjectRequest
+export type VisualDiagnosisSubjectRequest =
+  | VisualUserPlantSubjectRequest
+  | VisualEphemeralSubjectRequest
 
 /** 发起诊断的公开请求（已通过 DTO 校验）。 */
 export interface CreateVisualDiagnosisRequest {
@@ -89,7 +104,10 @@ export interface CreateVisualDiagnosisDependencies {
   /** 幂等写端口（同键同参返回首次结果）。 */
   readonly runIdempotent: RunVisualIdempotentWrite
   /** 视觉诊断仓储（只用到下列方法）。 */
-  readonly repository: Pick<MysqlVisualDiagnosisRepository, 'readUserInternalId' | 'readSubject' | 'readOwnedImages' | 'insertSession'>
+  readonly repository: Pick<
+    MysqlVisualDiagnosisRepository,
+    'readUserInternalId' | 'readSubject' | 'readOwnedImages' | 'insertSession'
+  >
   /** AI 额度预占用例（独立事务）。 */
   readonly reserveQuota: (command: ReserveAiQuotaCommand) => Promise<ReserveAiQuotaResult>
   /** 调度后台处理（不等待）。 */
@@ -106,24 +124,34 @@ export const createVisualDiagnosisRoutePath = '/api/v2/diagnosis/visual/sessions
 export const createVisualDiagnosisOperationId = 'createVisualDiagnosis'
 
 const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
-const unavailable = (message = '服务暂时不可用') => new PublicRequestError(503, 'SERVICE_UNAVAILABLE', message)
+const unavailable = (message = '服务暂时不可用') =>
+  new PublicRequestError(503, 'SERVICE_UNAVAILABLE', message)
 
 /** 创建发起视觉诊断用例。 */
 export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDependencies) {
-  return async (input: CreateVisualDiagnosisInput): Promise<HttpIdempotencyPublicResponseSnapshot> => {
+  return async (
+    input: CreateVisualDiagnosisInput
+  ): Promise<HttpIdempotencyPublicResponseSnapshot> => {
     const { principal, request } = input
     await assertVisualCapability(deps.readCapabilitySnapshot, principal)
-    const [policy, assetRules, prompt, ttlSeconds, writeRules] = await Promise.all([
+    const [policy, assetRules, ttlSeconds, writeRules] = await Promise.all([
       deps.readGenerationPolicy(),
       deps.readAssetRules(),
-      deps.readPromptRelease(),
       deps.readReservationTtlSeconds(),
       deps.readHttpWriteRules()
     ])
+    const requestedPrompt = policy?.rules.promptRelease
+    const prompt =
+      requestedPrompt === undefined
+        ? null
+        : await deps.readPromptRelease(requestedPrompt.promptReleaseSha256)
     if (
       policy === null ||
       assetRules === null ||
       prompt === null ||
+      prompt.promptReleaseSha256 !== requestedPrompt?.promptReleaseSha256 ||
+      prompt.outputSchemaVersion !== requestedPrompt.outputSchemaVersion ||
+      prompt.agentAllowlistVersion !== requestedPrompt.agentAllowlistVersion ||
       ttlSeconds === null ||
       writeRules === null ||
       !deps.isModelProviderConfigured()
@@ -131,7 +159,10 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
       throw unavailable('视觉诊断暂不可用')
     }
     const cost = policy.rules.costPolicy
-    assertVisualInputBudget({ maxInputTokens: cost.maxInputTokens, maxImages: cost.maxImages }, { imageCount: request.imageRefs.length })
+    assertVisualInputBudget(
+      { maxInputTokens: cost.maxInputTokens, maxImages: cost.maxImages },
+      { imageCount: request.imageRefs.length }
+    )
 
     const nowMs = deps.now()
     const keyHash = sha256(input.idempotencyKey)
@@ -140,7 +171,10 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
       imageRefs: request.imageRefs,
       ...(request.userQuestionZh === undefined ? {} : { userQuestionZh: request.userQuestionZh })
     }
-    const requestHash = calculateCanonicalJsonSha256({ path: createVisualDiagnosisRoutePath, body: requestBody } as never)
+    const requestHash = calculateCanonicalJsonSha256({
+      path: createVisualDiagnosisRoutePath,
+      body: requestBody
+    } as never)
     const versionGroup: VisualVersionGroup = {
       policyReleaseVersion: policy.releaseVersion,
       policyContentSha256: policy.contentSha256,
@@ -154,7 +188,12 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
     let contextSummary: ContextSummary | null = null
     if ('userPlantRef' in request.subject) {
       contextSummary = sanitizeContextSummary(
-        await deps.readContextSummary({ userRef: principal.user_id, userPlantRef: request.subject.userPlantRef }).catch(() => null),
+        await deps
+          .readContextSummary({
+            userRef: principal.user_id,
+            userPlantRef: request.subject.userPlantRef
+          })
+          .catch(() => null),
         'long_term_plant'
       )
     }
@@ -176,7 +215,11 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
         if (userInternalId === null) {
           throw new IdempotentWriteRetryLaterError('用户状态暂不可用')
         }
-        const subject = await deps.repository.readSubject(context, { userInternalId, subject: request.subject, nowMs })
+        const subject = await deps.repository.readSubject(context, {
+          userInternalId,
+          subject: request.subject,
+          nowMs
+        })
         if (subject === null) {
           return 'userPlantRef' in request.subject
             ? publicErrorSnapshot(404, 'USER_PLANT_NOT_FOUND', '用户植物不存在')
@@ -185,7 +228,10 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
         if (subject.kind === 'user_plant' && subject.lifecycle === 'archived') {
           return publicErrorSnapshot(409, 'USER_PLANT_ARCHIVED', '用户植物已归档')
         }
-        const images = await deps.repository.readOwnedImages(context, { userInternalId, imageRefs: request.imageRefs })
+        const images = await deps.repository.readOwnedImages(context, {
+          userInternalId,
+          imageRefs: request.imageRefs
+        })
         if (images.length !== request.imageRefs.length) {
           return publicErrorSnapshot(404, 'NOT_FOUND', '图片不存在')
         }
@@ -203,7 +249,10 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
             occurredAtMs: nowMs
           })
         } catch (error) {
-          if (error instanceof AiQuotaReservationPersistenceError && error.type === 'IDEMPOTENCY_CONFLICT') {
+          if (
+            error instanceof AiQuotaReservationPersistenceError &&
+            error.type === 'IDEMPOTENCY_CONFLICT'
+          ) {
             return publicErrorSnapshot(409, 'IDEMPOTENCY_CONFLICT', '请求与已记录内容冲突')
           }
           throw new IdempotentWriteRetryLaterError('额度服务暂不可用')
@@ -211,7 +260,11 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
         if (reservation.kind === 'insufficient_quota') {
           return publicErrorSnapshot(409, 'AI_QUOTA_INSUFFICIENT', 'AI 点数不足')
         }
-        if (reservation.kind === 'replayed' && 'status' in reservation && reservation.status !== 'reserved') {
+        if (
+          reservation.kind === 'replayed' &&
+          'status' in reservation &&
+          reservation.status !== 'reserved'
+        ) {
           throw new IdempotentWriteRetryLaterError('额度预占已结束，请稍后重试')
         }
         const session: NewVisualSession = {
@@ -219,7 +272,11 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
           userInternalId,
           subject:
             subject.kind === 'user_plant'
-              ? { kind: 'user_plant', internalId: subject.internalId, userPlantRef: subject.userPlantRef }
+              ? {
+                  kind: 'user_plant',
+                  internalId: subject.internalId,
+                  userPlantRef: subject.userPlantRef
+                }
               : { kind: 'authenticated_ephemeral', internalId: subject.internalId },
           imageRefs: request.imageRefs,
           userQuestionZh: request.userQuestionZh ?? null,
@@ -248,8 +305,13 @@ export function createCreateVisualDiagnosisUseCase(deps: CreateVisualDiagnosisDe
         }
       }
     )
-    const data = (snapshot.body as { data?: { visualDiagnosisRef?: unknown; status?: unknown } }).data
-    if (snapshot.status === 202 && data?.status === 'processing' && typeof data.visualDiagnosisRef === 'string') {
+    const data = (snapshot.body as { data?: { visualDiagnosisRef?: unknown; status?: unknown } })
+      .data
+    if (
+      snapshot.status === 202 &&
+      data?.status === 'processing' &&
+      typeof data.visualDiagnosisRef === 'string'
+    ) {
       deps.scheduleProcessing(data.visualDiagnosisRef)
     }
     return snapshot

@@ -1,0 +1,116 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "subscription",
+  "policyCode": "capability_catalog",
+  "schemaVersion": "subscription-capability-catalog/v1",
+  "releaseVersion": "subscription-capability-catalog/v1.1.0",
+  "effectiveAt": "2026-10-11T00:00:00Z",
+  "changeNote": "2026-10-11：USER_DIAGNOSIS_VISUAL 范围改为 user_plant_or_authenticated_ephemeral（本人用户植物或本人登录临时案例，游客不可用）；其余能力不变",
+  "policy": {
+    "catalogVersion": "subscription-capability-catalog/v1",
+    "capabilities": [
+      {
+        "code": "PLANT_IDENTIFICATION",
+        "tiers": [
+          "guest",
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": false,
+        "scope": "public"
+      },
+      {
+        "code": "FIXED_DIAGNOSIS",
+        "tiers": [
+          "guest",
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": false,
+        "scope": "public"
+      },
+      {
+        "code": "INDEPENDENT_WATERING",
+        "tiers": [
+          "guest",
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": false,
+        "scope": "public"
+      },
+      {
+        "code": "SOIL_VISUAL_EVIDENCE",
+        "tiers": [
+          "guest",
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": false,
+        "scope": "public"
+      },
+      {
+        "code": "USER_PLANT_CREATE",
+        "tiers": [
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": false,
+        "scope": "user_plant"
+      },
+      {
+        "code": "POINTS_LEVEL_QUERY",
+        "tiers": [
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": false,
+        "scope": "user"
+      },
+      {
+        "code": "REWARDED_AI",
+        "tiers": [
+          "free",
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": true,
+        "scope": "reward_grant"
+      },
+      {
+        "code": "USER_AGENT_TEXT",
+        "tiers": [
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": true,
+        "scope": "user"
+      },
+      {
+        "code": "USER_DIAGNOSIS_TEXT",
+        "tiers": [
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": true,
+        "scope": "user_plant"
+      },
+      {
+        "code": "USER_DIAGNOSIS_VISUAL",
+        "tiers": [
+          "trial",
+          "member"
+        ],
+        "consumesAiPoints": true,
+        "scope": "user_plant_or_authenticated_ephemeral"
+      }
+    ],
+    "unknownCapabilityPolicy": "deny"
+  }
+}

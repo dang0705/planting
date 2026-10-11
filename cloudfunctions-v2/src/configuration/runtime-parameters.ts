@@ -170,6 +170,8 @@ const policyBounds = {
     modelOrderMaxItems: 8, maxImages: { min: 1, max: 3 }, maxModelLoops: { min: 1, max: 3 },
     maxInputTokens: { min: 1000, max: 32_000 }, maxOutputTokens: { min: 256, max: 8192 }, microsPerPoint: 800,
   }),
+  /** subscription/ai_reservation：预占有效期 1 分钟～1 小时（下限防止模型未返回就过期，上限防止点数被长期冻结）。 */
+  subscriptionAiReservation: fromCatalog('subscription.ai_reservation.absolute_bounds', '秒', { ttlSeconds: { min: 60, max: 3600 } }),
 }
 
 /**

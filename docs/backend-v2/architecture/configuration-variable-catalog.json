@@ -881,27 +881,70 @@
       "layer": "domain_policy",
       "valueType": "integer",
       "unit": "秒",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": 300,
       "owner": "subscription",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "cloudfunctions-v2/models/policy-releases/subscription.ai_reservation.v1.release.json"
       ],
       "consumers": [
         "subscription",
         "diagnosis",
         "CloudBase Agent"
       ],
-      "changePolicy": "成本策略版本",
-      "fallback": "未冻结前不开放真实模型调用",
+      "changePolicy": "发布新的 subscription/ai_reservation 不可变版本并切换 active 指针（策略发布 CLI）；取值须在 subscription.ai_reservation.absolute_bounds 之内",
+      "fallback": "无可信活动发布时生成式 AI 接口返回 503，不预占、不调用模型",
       "phase": "P3",
       "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
       "expected": "过期预占只能经对账结算或释放",
-      "pendingReason": "合同定义 expiresAt 但未冻结时长",
       "blockingScope": "生成式 AI 调用",
       "decisionGroup": "entitlements_cost_rewards",
       "configurationTier": "policy",
-      "codeLocations": []
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/business-policies/subscription-ai-reservation.ts"
+      ],
+      "decisionNote": "用户 2026-10-11 裁决（协调方转达）：定为 300 秒，改为 confirmed",
+      "policyRelease": {
+        "domainCode": "subscription",
+        "policyCode": "ai_reservation",
+        "schemaVersion": "subscription-ai-reservation/v1",
+        "field": "ttlSeconds",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/subscription.ai_reservation.v1.release.json",
+        "absoluteBoundsKey": "subscription.ai_reservation.absolute_bounds"
+      }
+    },
+    {
+      "id": "subscription.ai_reservation.absolute_bounds",
+      "chineseName": "AI 额度预占有效期策略绝对边界",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "ttlSeconds": {
+          "min": 60,
+          "max": 3600
+        }
+      },
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription"
+      ],
+      "changePolicy": "代码层硬边界；变更须同步合同与测试，随版本发布",
+      "fallback": "策略取值越界时策略校验失败，读取方按无可信发布处理（503）",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "预占有效期在 1 分钟到 1 小时之间",
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ],
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnd 收尾）：下限防止模型尚未返回预占就过期，上限防止点数被长期冻结"
     },
     {
       "id": "subscription.ai_action.required_budget_fields",
@@ -2666,21 +2709,24 @@
     {
       "domain": "diagnosis",
       "layer": "domain_policy",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": "20c6418e6684a068bd861f5af98262ee6453e98cb6357ed8ce9fa56d9635fe80",
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
       "decisionGroup": "diagnosis_releases",
       "configurationTier": "policy",
-      "codeLocations": [],
+      "codeLocations": [
+        "cloudfunctions-v2/src/diagnosis/visual/application/bundled-prompt-release.ts"
+      ],
       "id": "diagnosis.visual_gen.prompt_release_sha256",
       "chineseName": "视觉诊断生成式提示词发布哈希",
       "valueType": "string",
       "unit": "SHA-256",
       "sourceRefs": [
         "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
-        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.3.release.json"
       ],
       "consumers": [
         "diagnosis",
@@ -2689,26 +2735,29 @@
       "changePolicy": "不可变 Prompt release；与模型快照、输出 Schema、请求参数组成 diagnosis-visual-gen 版本组；不覆盖现行 diagnosis-visual/v1",
       "fallback": "哈希缺失或不匹配时阻断视觉生成式诊断，不静默回退到其他提示词",
       "expected": "前缀规范化后 SHA-256 与 release 一致才可调用",
-      "pendingReason": "提示词 v1 草案未经评测与园艺审核（用户 2026-10-10 裁决新增，修订 C12）",
-      "blockingScope": "视觉诊断生成式版本组"
+      "blockingScope": "视觉诊断生成式版本组",
+      "decisionNote": "用户 2026-10-11 裁决（协调方转达）：提示词 v1.3、对应输出 Schema 与现有药剂名单作为首个发布版，改为 confirmed；写入策略发布 diagnosis.visual_generation.v1 的 promptRelease；4/4 评测定稿后另发 v2，旧发布文件保留以便回滚"
     },
     {
       "domain": "diagnosis",
       "layer": "domain_policy",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": "diagnosis-visual-gen-output/v1",
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
       "decisionGroup": "diagnosis_releases",
       "configurationTier": "policy",
-      "codeLocations": [],
+      "codeLocations": [
+        "cloudfunctions-v2/src/diagnosis/visual/application/bundled-prompt-release.ts"
+      ],
       "id": "diagnosis.visual_gen.output_schema_version",
       "chineseName": "视觉诊断生成式模型输出 Schema 版本",
       "valueType": "string",
       "sourceRefs": [
         "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
-        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.3.release.json"
       ],
       "consumers": [
         "diagnosis",
@@ -2717,8 +2766,8 @@
       "changePolicy": "不可变 JSON Schema release（拟 diagnosis-visual-gen-output/v1）",
       "fallback": "校验失败整份拒绝",
       "expected": "模型输出先过 Schema 与服务端安全门才投影为 diagnosis-result/v2",
-      "pendingReason": "输出 Schema 仅在提示词草案中，未落盘冻结（修订 C12）",
-      "blockingScope": "视觉诊断生成式版本组"
+      "blockingScope": "视觉诊断生成式版本组",
+      "decisionNote": "用户 2026-10-11 裁决（协调方转达）：提示词 v1.3、对应输出 Schema 与现有药剂名单作为首个发布版，改为 confirmed；写入策略发布 diagnosis.visual_generation.v1 的 promptRelease；4/4 评测定稿后另发 v2，旧发布文件保留以便回滚"
     },
     {
       "domain": "diagnosis",
@@ -3040,21 +3089,28 @@
     {
       "domain": "diagnosis",
       "layer": "domain_policy",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": {
+        "agentAllowlistVersion": "diagnosis-visual-gen-agent-allowlist/v1",
+        "agentAllowlistRef": "docs/backend-v2/contracts/diagnosis-visual-gen-agent-allowlist.v1.json",
+        "agentAllowlistSha256": "46a36bba4bd565a66c7830d81fd5c99a9b4e498553ed7976f373f79ea0b64b60"
+      },
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
       "decisionGroup": "diagnosis_releases",
       "configurationTier": "policy",
-      "codeLocations": [],
+      "codeLocations": [
+        "cloudfunctions-v2/src/diagnosis/visual/application/bundled-prompt-release.ts"
+      ],
       "id": "diagnosis.visual_gen.agent_allowlist_ref",
       "chineseName": "视觉诊断生成式药剂允许名单引用",
-      "valueType": "string",
+      "valueType": "object",
       "sourceRefs": [
         "docs/backend-v2/contracts/diagnosis-visual-gen-agent-allowlist.v1.json",
         "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
-        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.3.release.json"
       ],
       "consumers": [
         "diagnosis",
@@ -3064,8 +3120,8 @@
       "changePolicy": "名单与 diagnosis-result/v2 Schema 的 agentName 枚举同版本发布；增删药剂即新名单版本",
       "fallback": "名单未通过园艺来源审核前，生成式版本组不得上线（离线评测可用草拟版）",
       "expected": "Schema 枚举与名单逐项一致；正文药剂名必须在名单内",
-      "pendingReason": "草拟名单 20 项已按用户 2026-10-10 裁定登记，待园艺来源审核",
-      "blockingScope": "视觉诊断生成式版本组线上发布"
+      "blockingScope": "视觉诊断生成式版本组线上发布",
+      "decisionNote": "用户 2026-10-11 裁决（协调方转达）：提示词 v1.3、对应输出 Schema 与现有药剂名单作为首个发布版，改为 confirmed；写入策略发布 diagnosis.visual_generation.v1 的 promptRelease；4/4 评测定稿后另发 v2，旧发布文件保留以便回滚"
     },
     {
       "id": "diagnosis.fixed_packages.release_refs",
@@ -4768,7 +4824,8 @@
       "sourceRefs": [
         "docs/backend-v2/contracts/principal-and-capability.md",
         "docs/backend-v2/contracts/diagnosis-visual-api.md",
-        "docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md"
+        "docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md",
+        "cloudfunctions-v2/models/policy-releases/subscription.capability_catalog.v1-1.release.json"
       ],
       "consumers": [
         "subscription",
@@ -4781,7 +4838,7 @@
       "allowed": "subscription-capability-catalog/v1 精确白名单；禁止通配符和目录外能力",
       "configurationTier": "policy",
       "codeLocations": [],
-      "decisionNote": "2026-10-11 主代理依据 README 业务流与 business-domain.md §9/§11 裁定：USER_DIAGNOSIS_VISUAL 范围为本人用户植物或本人登录临时案例（authenticated-ephemeral-plant-case/v1），扣点记在登录 user_id，临时结果不写入任何 user_plant 事实；游客不可用。已发布的测试环境策略仍为旧值，需另行发布新版本（本次未发布）"
+      "decisionNote": "2026-10-11 主代理依据 README 业务流与 business-domain.md §9/§11 裁定：USER_DIAGNOSIS_VISUAL 范围为本人用户植物或本人登录临时案例（authenticated-ephemeral-plant-case/v1），扣点记在登录 user_id，临时结果不写入任何 user_plant 事实；游客不可用。已发布的测试环境策略仍为旧值，需另行发布新版本（本次未发布）；2026-10-11：新版本发布文档 cloudfunctions-v2/models/policy-releases/subscription.capability_catalog.v1-1.release.json（subscription-capability-catalog/v1.1.0），由测试环境上线清单发布并激活"
     },
     {
       "owner": "subscription",

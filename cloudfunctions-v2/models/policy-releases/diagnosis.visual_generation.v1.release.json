@@ -5,7 +5,7 @@
   "schemaVersion": "diagnosis-visual-generation/v1",
   "releaseVersion": "diagnosis-visual-generation/v1.0.0",
   "effectiveAt": "2026-10-11T00:00:00Z",
-  "changeNote": "用户 2026-10-11 裁决：模型兜底顺序定稿并关闭 thinking；costPolicy 定稿（预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、最多 3 张图、最多 2 次调用、ceil(costMicros/800)，失败与非植物不扣点）；默认 json_object 格式（A2：严格模式下 system 必须纯字符串）；价目来自 2026-10-10 官方价目快照",
+  "changeNote": "用户 2026-10-11 裁决：模型兜底顺序定稿并关闭 thinking；costPolicy 定稿（预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、最多 3 张图、最多 2 次调用、ceil(costMicros/800)，失败与非植物不扣点）；默认 json_object 格式（A2：严格模式下 system 必须纯字符串）；价目来自 2026-10-10 官方价目快照；提示词 v1.3、输出结构 diagnosis-visual-gen-output/v1 与药剂名单 v1 作为首个发布版（用户 2026-10-11 裁决）",
   "policy": {
     "contractVersion": "diagnosis-visual-generation/v1",
     "modelOrder": [
@@ -19,6 +19,13 @@
     "requestParams": {
       "enableThinking": false,
       "responseFormat": "json_object"
+    },
+    "promptRelease": {
+      "releaseVersion": "visual-diagnosis-prompt/v1.3",
+      "promptReleaseSha256": "20c6418e6684a068bd861f5af98262ee6453e98cb6357ed8ce9fa56d9635fe80",
+      "outputSchemaVersion": "diagnosis-visual-gen-output/v1",
+      "agentAllowlistVersion": "diagnosis-visual-gen-agent-allowlist/v1",
+      "agentAllowlistSha256": "46a36bba4bd565a66c7830d81fd5c99a9b4e498553ed7976f373f79ea0b64b60"
     },
     "costPolicy": {
       "capability": "USER_DIAGNOSIS_VISUAL",
