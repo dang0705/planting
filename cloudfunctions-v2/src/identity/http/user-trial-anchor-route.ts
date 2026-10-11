@@ -1,19 +1,19 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
 import type { UserRef } from '../../contracts/types.js'
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import type { RouteHandler } from '../../foundation/http/route-dispatcher.js'
+import {
+  ServiceSignatureRejectedError,
+  claimServiceNonce,
+  verifyServiceSignature,
+  type ServiceSigningKey
+} from '../../foundation/http/service-signature.js'
 import { createMysqlUserTrialAnchorReader } from '../repository/mysql-user-trial-anchor-reader.js'
 
-/** 内部调用方签名材料，仅由受控密钥引用解析器在服务端提供。 */
-export type ServiceSigningKey = {
-  /** 与密钥绑定的唯一服务主体；本路由只接受 subscription。 */
-  readonly serviceName: string
-  /** HMAC 密钥原文，只驻留服务端内存，不写入日志、数据库或响应。 */
-  readonly key: Buffer
-}
+/** 内部调用方签名材料；与 foundation 服务签名模块共用同一类型。 */
+export type { ServiceSigningKey }
 
 /** 试用锚点路由的最小依赖；缺少密钥解析器时全部内部请求失败关闭。 */
 export type UserTrialAnchorRouteDependencies = {
@@ -54,35 +54,12 @@ class TrialAnchorRouteError extends Error {
   }
 }
 
+/** 本路由登记的唯一 requiredScope；白名单只授予 subscription 服务主体。 */
 const scope = 'identity.trial-anchor.read'
-const serviceName = 'subscription'
-const signatureVersion = 'http-api/v1'
-const bodySha256 = createHash('sha256').update('').digest('hex')
 const userRefFormat = /^usr_[A-Za-z0-9_-]{8,}$/u
-const keyIdFormat = /^[A-Za-z0-9._-]{1,64}$/u
-const nonceFormat = /^[A-Za-z0-9_-]{8,128}$/u
-const timestampFormat = /^(?:0|[1-9][0-9]*)$/u
-const signatureFormat = /^[A-Za-z0-9_-]{43}$/u
-/** 每秒毫秒数（单位换算）。 */
-const millisecondsPerSecond = 1000
 const invalidInput = new TrialAnchorRouteError(400, 'VALIDATION_FAILED')
 const invalidPrincipal = new TrialAnchorRouteError(401, 'PRINCIPAL_INVALID')
 const unavailable = new TrialAnchorRouteError(503, 'SERVICE_UNAVAILABLE')
-
-/** 读取恰好一次出现的签名请求头，拒绝大小写变体形成的重复头。 */
-function singleHeader(request: IncomingMessage, name: string): string | null {
-  let value: string | null = null
-  for (let index = 0; index < request.rawHeaders.length; index += 2) {
-    if (request.rawHeaders[index]?.toLowerCase() !== name) {
-      continue
-    }
-    if (value !== null) {
-      return null
-    }
-    value = request.rawHeaders[index + 1] ?? null
-  }
-  return value
-}
 
 /** 内部 GET 不接受正文；读取流可防止分块传输绕过 Content-Length 检查。 */
 async function rejectRequestBody(request: IncomingMessage): Promise<void> {
@@ -93,114 +70,10 @@ async function rejectRequestBody(request: IncomingMessage): Promise<void> {
   }
 }
 
-/** 按冻结合同的九段规范明文验证唯一 subscription scope 的 HMAC 签名。 */
-async function verifySignature(
-  request: IncomingMessage,
-  pathname: string,
-  dependencies: UserTrialAnchorRouteDependencies
-): Promise<{
-  readonly keyId: string
-  readonly nonceHash: string
-  readonly requestTimestampMs: number
-  readonly verifiedAtMs: number
-}> {
-  const keyId = singleHeader(request, 'x-qhz-key-id')
-  const timestamp = singleHeader(request, 'x-qhz-timestamp')
-  const nonce = singleHeader(request, 'x-qhz-nonce')
-  const suppliedBodyHash = singleHeader(request, 'x-qhz-body-sha256')
-  const suppliedScope = singleHeader(request, 'x-qhz-scope')
-  const signature = singleHeader(request, 'x-qhz-signature')
-  if (
-    keyId === null ||
-    !keyIdFormat.test(keyId) ||
-    timestamp === null ||
-    !timestampFormat.test(timestamp) ||
-    nonce === null ||
-    !nonceFormat.test(nonce) ||
-    suppliedBodyHash !== bodySha256 ||
-    suppliedScope !== scope ||
-    signature === null ||
-    !signatureFormat.test(signature)
-  ) {
-    throw invalidPrincipal
-  }
-  const requestTimestampMs = Number(timestamp) * 1_000
-  const verifiedAtMs = dependencies.now()
-  if (
-    !Number.isSafeInteger(requestTimestampMs) ||
-    !Number.isSafeInteger(verifiedAtMs) ||
-    Math.abs(verifiedAtMs - requestTimestampMs) > dependencies.serviceSignature.clockSkewSeconds * millisecondsPerSecond
-  ) {
-    throw invalidPrincipal
-  }
-  const signingKey = await dependencies.resolveServiceSigningKey?.(keyId)
-  if (signingKey?.serviceName !== serviceName || signingKey.key.length === 0) {
-    throw invalidPrincipal
-  }
-  const canonical = [
-    signatureVersion,
-    serviceName,
-    keyId,
-    timestamp,
-    nonce,
-    'GET',
-    pathname,
-    bodySha256,
-    scope
-  ].join('\n')
-  const expected = createHmac('sha256', signingKey.key).update(canonical).digest()
-  const received = Buffer.from(signature, 'base64url')
-  if (received.length !== expected.length || !timingSafeEqual(received, expected)) {
-    throw invalidPrincipal
-  }
-  return {
-    keyId,
-    nonceHash: createHash('sha256').update(nonce).digest('hex'),
-    requestTimestampMs,
-    verifiedAtMs
-  }
-}
-
-/** 使用数据库唯一约束原子占用 nonce；重复签名即使换密钥也不能重放。 */
-async function claimNonce(
-  source: MysqlConnectionPoolPort<Mysql2QueryConnection>,
-  verified: Awaited<ReturnType<typeof verifySignature>>,
-  nonceRetentionMs: number
-): Promise<void> {
-  const connection = await source.getConnection()
-  try {
-    await connection.execute(
-      `INSERT INTO service_replay_nonces
-       (service_name, key_id, nonce_hash, signature_version, request_timestamp_ms,
-        body_sha256, scope_code, verified_at_ms, expires_at_ms, created_at_ms, updated_at_ms)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        serviceName,
-        verified.keyId,
-        verified.nonceHash,
-        signatureVersion,
-        verified.requestTimestampMs,
-        bodySha256,
-        scope,
-        verified.verifiedAtMs,
-        verified.verifiedAtMs + nonceRetentionMs,
-        verified.verifiedAtMs,
-        verified.verifiedAtMs
-      ]
-    )
-    connection.release()
-  } catch (error: unknown) {
-    connection.destroy()
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === 'ER_DUP_ENTRY'
-    ) {
-      throw invalidPrincipal
-    }
-    throw unavailable
-  }
+/** 把 foundation 验签与 nonce 错误映射为本路由合同允许的稳定错误。 */
+function mapSignatureFailure(error: unknown): TrialAnchorRouteError {
+  // 验签或重放 → 401；nonce 存储不可用（ServiceNonceStoreUnavailableError）及其他异常一律失败关闭为 503。
+  return error instanceof ServiceSignatureRejectedError ? invalidPrincipal : unavailable
 }
 
 /** 只发送合同白名单字段和稳定错误，绝不回显签名头或数据库内部键。 */
@@ -233,8 +106,29 @@ export function createUserTrialAnchorRouteHandler(
         throw invalidInput
       }
       await rejectRequestBody(request)
-      const verified = await verifySignature(request, url.pathname, dependencies)
-      await claimNonce(dependencies.connectionSource, verified, dependencies.serviceSignature.nonceTtlSeconds * millisecondsPerSecond)
+      try {
+        const verified = await verifyServiceSignature(
+          {
+            method: 'GET',
+            canonicalTarget: url.pathname,
+            rawHeaders: request.rawHeaders,
+            rawBody: Buffer.alloc(0)
+          },
+          scope,
+          {
+            resolveServiceSigningKey: dependencies.resolveServiceSigningKey,
+            now: dependencies.now,
+            clockSkewSeconds: dependencies.serviceSignature.clockSkewSeconds
+          }
+        )
+        await claimServiceNonce(
+          dependencies.connectionSource,
+          verified,
+          dependencies.serviceSignature.nonceTtlSeconds
+        )
+      } catch (error: unknown) {
+        throw mapSignatureFailure(error)
+      }
       const anchor = await readAnchor(userRef as UserRef)
       if (anchor === null) {
         throw new TrialAnchorRouteError(404, 'NOT_FOUND')
