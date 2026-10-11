@@ -143,10 +143,10 @@ describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时�
 
 describe('各云函数环境读取器', () => {
   it('readFunctionEnvironment：日志级别 + 严格数据库参数；数据库缺失仍由 DatabaseConfigError 失败关闭', () => {
-    expect(readFunctionEnvironment(database)).toEqual({
-      logLevel: 'info',
-      database: { host: '10.0.0.8', port: 3306, database: 'qinghuazhi_v2_test', user: 'qhz_v2_app', password: secret }
-    })
+    const environment = readFunctionEnvironment(database)
+    expect(environment.logLevel).toBe('info')
+    expect({ ...environment.database }).toEqual({ host: '10.0.0.8', port: 3306, database: 'qinghuazhi_v2_test', user: 'qhz_v2_app' })
+    expect(environment.database.password).toBe(secret)
     expect(capture(() => readFunctionEnvironment({}))).toBeInstanceOf(DatabaseConfigError)
   })
 
@@ -242,5 +242,59 @@ describe('各云函数环境读取器', () => {
       'CLOUDBASE_STORAGE_API_KEY', 'DOUYIN_APPID', 'DOUYIN_APP_SECRET', 'LLM_ALIYUN_BAILIAN_API_KEY', 'PLATFORM_SUBJECT_HMAC_KEY_V1', 'V2_MYSQL_PASSWORD',
       'WECHAT_MINIPROGRAM_APPID', 'WECHAT_MINIPROGRAM_PRIVATE_KEY'
     ])
+  })
+})
+
+/**
+ * 数据库凭证在源头脱敏（L1 / unit_fake）。
+ * Expected 来源：CLAUDE.md / AGENTS.md §2「凭证不得写进日志、测试输出或公开响应」、§4「日志和错误不得暴露凭证」，
+ * 本文件头注释「凭证容器序列化 / inspect 一律输出 [已脱敏]」，database-config.ts 对 password「不得序列化、记录或回显」。
+ * 覆盖：所有 read*Environment 返回值整体 / database 子对象的 JSON.stringify、util.inspect（含 showHidden、无限深度）、
+ * 字符串拼接与对象展开；密码仍可按属性名交给 mysql2 Adapter。未覆盖：pino 实际序列化路径（pino 对对象走 JSON 序列化，与 toJSON 同源）。
+ */
+describe('数据库凭证在源头脱敏', () => {
+  const readers = {
+    readFunctionEnvironment,
+    readIdentityEnvironment,
+    readCareEnvironment,
+    readCareMaintenanceSweepEnvironment,
+    readCareOutboxDispatchEnvironment,
+    readCarePlanExpiryEnvironment,
+    readUserPlantEnvironment,
+    readDiagnosisEnvironment
+  } as const
+
+  for (const [name, read] of Object.entries(readers)) {
+    it(`${name}：整体 JSON.stringify 与 util.inspect 不含密码、主机与账号明文`, () => {
+      const environment = read(database)
+      const renderings = [
+        JSON.stringify(environment),
+        JSON.stringify({ environment }),
+        inspect(environment),
+        inspect(environment, { depth: Infinity, showHidden: true, getters: true })
+      ]
+      for (const rendered of renderings) {
+        expect(rendered).not.toContain(secret)
+        expect(rendered).not.toContain(database.V2_MYSQL_HOST)
+        expect(rendered).not.toContain(database.V2_MYSQL_USER)
+      }
+    })
+  }
+
+  it('database 子对象：序列化、inspect、字符串拼接、对象展开均不含密码；Adapter 仍可按属性读取', () => {
+    const config = readFunctionEnvironment(database).database
+    expect(JSON.stringify(config)).not.toContain(secret)
+    expect(inspect(config, { depth: Infinity, showHidden: true })).not.toContain(secret)
+    expect(`${String(config)}`).not.toContain(secret)
+    expect(JSON.stringify({ ...config })).not.toContain(secret)
+    expect(Object.values(config)).not.toContain(secret)
+    expect(config.password).toBe(secret)
+    expect(config).toMatchObject({ host: '10.0.0.8', port: 3306, database: 'qinghuazhi_v2_test', user: 'qhz_v2_app' })
+  })
+
+  it('database 子对象被包进错误 cause 时，inspect(error) 不含密码', () => {
+    const config = readFunctionEnvironment(database).database
+    const error = new Error('连接失败', { cause: config })
+    expect(inspect(error, { depth: Infinity })).not.toContain(secret)
   })
 })

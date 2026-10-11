@@ -21,13 +21,15 @@ const validEnvironment = {
  */
 describe('数据库连接参数读取', () => {
   test('五项必需参数齐全时返回严格解析后的连接参数', () => {
-    expect(readDatabaseConnectionConfig(validEnvironment)).toEqual({
+    const config = readDatabaseConnectionConfig(validEnvironment)
+    expect({ ...config }).toEqual({
       host: '10.0.0.8',
       port: Number('3306'),
       database: 'qinghuazhi_v2_test',
-      user: 'qhz_v2_app',
-      password: 'never-print-this-secret'
+      user: 'qhz_v2_app'
     })
+    // password 不可枚举（对象展开拿不到），但 Adapter 仍可按属性名读取原值。
+    expect(config.password).toBe('never-print-this-secret')
   })
 
   test('任一参数缺失或为空时失败关闭，且错误只列变量名不含任何取值', () => {
@@ -69,6 +71,8 @@ describe('数据库连接参数读取', () => {
       V2_MYSQL_POOL_SIZE: '50',
       V2_MYSQL_CONNECT_TIMEOUT_MS: '100'
     })
-    expect(Object.keys(config).sort()).toEqual(['database', 'host', 'password', 'port', 'user'])
+    // password 为不可枚举字段，单独断言其存在；其余可枚举字段中不得出现连接池或超时等 pending 字段。
+    expect(Object.keys(config).sort()).toEqual(['database', 'host', 'port', 'user'])
+    expect(Object.getOwnPropertyNames(config)).toContain('password')
   })
 })
